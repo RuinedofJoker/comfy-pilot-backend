@@ -21,4 +21,5 @@ The project maintains comprehensive coding standards and patterns in `cursor/` d
 
 All code must strictly adhere to these patterns and standards for consistency and maintainability.
 
-在项目的需求设计阶段尽量将设计以画图的形式展现，使用PlantUML的语法在`docs/claudecode/uml`下新建图的源代码文件
+你所写的所有文档内容(docs)全部放到`docs/claudecode`下，其他的目录对你写文档(docs)都是只读的，用户会将你的文档迁移到对应的目录，你可以在输出文档后推荐用户迁移到哪个目录下
+在项目的需求设计阶段尽量将设计以画图的形式展现，使用PlantUML的语法在`docs/claudecode/uml`下新建图的源代码文件，需求说明以md的语法在`docs/claudecode/md`下新建文件
