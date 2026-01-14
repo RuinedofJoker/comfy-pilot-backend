@@ -6,4 +6,5 @@ alwaysApply: true
 
 # 项目结构规范
 
-TODO: 结合项目进行添加
+## 项目架构
+项目使用DDD做基本架构
