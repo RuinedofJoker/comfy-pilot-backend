@@ -1,0 +1,10 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: comfy-pilot-backend
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
