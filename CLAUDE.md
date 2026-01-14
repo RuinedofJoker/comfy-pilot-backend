@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+Always respond in Chinese-simplified
+
 ## Cursor Rules Specifications Summary
 The project maintains comprehensive coding standards and patterns in `cursor/` directory:
 
@@ -18,3 +20,5 @@ The project maintains comprehensive coding standards and patterns in `cursor/` d
 
 
 All code must strictly adhere to these patterns and standards for consistency and maintainability.
+
+在项目的需求设计阶段尽量将设计以画图的形式展现，使用PlantUML的语法在`docs/claudecode/uml`下新建图的源代码文件
