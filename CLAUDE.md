@@ -1,6 +1,7 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Cursor Rules Specifications Summary
+The project maintains comprehensive coding standards and patterns in `cursor/` directory:
 
 @cursor/base/core.mdc
 @cursor/base/general.mdc
@@ -14,3 +15,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 @cursor/other/document.mdc
 @cursor/other/git.mdc
 @cursor/other/gitflow.mdc
+
+
+All code must strictly adhere to these patterns and standards for consistency and maintainability.
