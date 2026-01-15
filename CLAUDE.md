@@ -3,20 +3,20 @@
 Always respond in Chinese-simplified
 
 ## Cursor Rules Specifications Summary
-The project maintains comprehensive coding standards and patterns in `cursor/` directory:
+The project maintains comprehensive coding standards and patterns in `.cursor/rules/` directory:
 
-@cursor/base/core.mdc
-@cursor/base/general.mdc
-@cursor/base/project-structure.mdc
-@cursor/base/tech-stack.mdc
+@.cursor/rules/base/core.mdc
+@.cursor/rules/base/general.mdc
+@.cursor/rules/base/project-structure.mdc
+@.cursor/rules/base/tech-stack.mdc
 
-@cursor/languages/java.mdc
+@.cursor/rules/languages/java.mdc
 
-@cursor/frameworks/springboot.mdc
+@.cursor/rules/frameworks/springboot.mdc
 
-@cursor/other/document.mdc
-@cursor/other/git.mdc
-@cursor/other/gitflow.mdc
+@.cursor/rules/other/document.mdc
+@.cursor/rules/other/git.mdc
+@.cursor/rules/other/gitflow.mdc
 
 
 All code must strictly adhere to these patterns and standards for consistency and maintainability.

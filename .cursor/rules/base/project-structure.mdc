@@ -1,0 +1,95 @@
+---
+description: 项目约定的代码结构规范
+globs:
+alwaysApply: true
+---
+
+# 项目结构规范
+## 项目目录规范
+- 项目的需求文档和基本设计都在`docs/requirements`目录里
+- 项目的原型图在`docs/prototypes`目录里，每个原型图文件都是一个独立的html文件，文件内的代码需要尽可能的精简，单个原型图html文件代码量不允许超过200行
+
+## 分层架构
+
+项目采用经典的 DDD 四层架构：
+
+```
+org.joker.comfypilot.{module}
+├── interfaces/          # 接口层（用户接口层）
+│   ├── controller/      # REST API 控制器
+│   └── assembler/       # DTO 转换器
+├── application/         # 应用层
+│   ├── service/         # 应用服务
+│   └── dto/            # 数据传输对象
+├── domain/             # 领域层
+│   ├── entity/         # 领域实体
+│   └── repository/     # 仓储接口
+└── infrastructure/     # 基础设施层
+    └── persistence/    # 持久化实现
+        ├── mapper/     # MyBatis Mapper 接口
+        └── po/         # 持久化对象
+        
+### 1 接口层（Interfaces Layer）
+
+**职责**：处理用户请求，暴露 API 接口
+
+- **controller/**：REST API 控制器，处理 HTTP 请求
+- **assembler/**：负责 DTO 与领域对象之间的转换
+
+**示例**：
+```java
+@RestController
+@RequestMapping("/api/v1/workflows")
+public class WorkflowController {
+    // 处理工作流相关的 HTTP 请求
+}
+```
+
+### 2 应用层（Application Layer）
+
+**职责**：编排业务流程，协调领域对象完成业务用例
+
+- **service/**：应用服务，实现具体的业务用例
+- **dto/**：数据传输对象，用于层间数据传递
+
+**示例**：
+```java
+@Service
+public class WorkflowApplicationService {
+    // 编排工作流创建、修改等业务流程
+}
+```
+
+### 3 领域层（Domain Layer）
+
+**职责**：核心业务逻辑，包含领域模型和业务规则
+
+- **entity/**：领域实体，包含业务逻辑和业务规则
+- **repository/**：仓储接口，定义数据访问契约
+
+**示例**：
+```java
+public class Workflow {
+    // 工作流领域实体，包含业务逻辑
+}
+
+public interface WorkflowRepository {
+    // 工作流仓储接口
+}
+```
+
+### 4 基础设施层（Infrastructure Layer）
+
+**职责**：提供技术支持，实现领域层定义的接口
+
+- **persistence/mapper/**：MyBatis Mapper 接口
+- **persistence/po/**：持久化对象（与数据库表对应）
+
+**示例**：
+```java
+@Mapper
+public interface WorkflowMapper extends BaseMapper<WorkflowPO> {
+    // MyBatis-Plus Mapper
+}
+```
+

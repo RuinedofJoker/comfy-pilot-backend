@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>节点参数编辑</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; padding: 20px; }
+.container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.header { padding: 20px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; }
+.header h2 { font-size: 18px; color: #2c3e50; }
+.close-btn { width: 32px; height: 32px; border: none; background: #f5f5f5; border-radius: 50%; cursor: pointer; font-size: 18px; color: #7f8c8d; }
+.node-type { padding: 16px 20px; background: #f8f9fa; border-bottom: 1px solid #e0e0e0; }
+.node-type-label { font-size: 12px; color: #7f8c8d; margin-bottom: 4px; }
+.node-type-value { font-size: 14px; font-weight: 600; color: #3498db; }
+.params-section { padding: 20px; max-height: 500px; overflow-y: auto; }
+.param-group { margin-bottom: 20px; }
+.param-label { display: block; font-size: 14px; color: #2c3e50; margin-bottom: 8px; font-weight: 500; }
+.param-input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+.param-input:focus { outline: none; border-color: #3498db; }
+.param-hint { font-size: 12px; color: #95a5a6; margin-top: 4px; }
+.param-slider { width: 100%; }
+.slider-value { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.slider-value span { font-size: 14px; color: #7f8c8d; }
+.slider-value strong { font-size: 16px; color: #2c3e50; }
+textarea.param-input { min-height: 80px; resize: vertical; font-family: inherit; }
+.actions { padding: 20px; border-top: 1px solid #e0e0e0; display: flex; gap: 12px; }
+.btn { flex: 1; padding: 12px; border: none; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; }
+.btn-primary { background: #3498db; color: white; }
+.btn-primary:hover { background: #2980b9; }
+.btn-secondary { background: #f5f5f5; color: #555; }
+.btn-secondary:hover { background: #e0e0e0; }
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h2>编辑节点参数</h2>
+<button class="close-btn">×</button>
+</div>
+<div class="node-type">
+<div class="node-type-label">节点类型</div>
+<div class="node-type-value">KSampler</div>
+</div>
+<div class="params-section">
+<div class="param-group">
+<label class="param-label">采样器</label>
+<select class="param-input">
+<option>euler</option>
+<option selected>euler_ancestral</option>
+<option>dpm_2</option>
+<option>dpm_2_ancestral</option>
+<option>lms</option>
+<option>dpmpp_2m</option>
+</select>
+</div>
+<div class="param-group">
+<label class="param-label">调度器</label>
+<select class="param-input">
+<option>normal</option>
+<option selected>karras</option>
+<option>exponential</option>
+<option>sgm_uniform</option>
+</select>
+</div>
+<div class="param-group">
+<label class="param-label">采样步数</label>
+<div class="slider-value">
+<span>步数</span>
+<strong>30</strong>
+</div>
+<input type="range" class="param-slider" min="1" max="150" value="30">
+<div class="param-hint">推荐范围: 20-50</div>
+</div>
+<div class="param-group">
+<label class="param-label">CFG Scale</label>
+<div class="slider-value">
+<span>引导强度</span>
+<strong>7.5</strong>
+</div>
+<input type="range" class="param-slider" min="1" max="30" step="0.5" value="7.5">
+<div class="param-hint">控制提示词的影响程度</div>
+</div>
+<div class="param-group">
+<label class="param-label">随机种子</label>
+<input type="number" class="param-input" value="42" placeholder="留空则随机">
+<div class="param-hint">固定种子可重现相同结果</div>
+</div>
+<div class="param-group">
+<label class="param-label">降噪强度</label>
+<div class="slider-value">
+<span>Denoise</span>
+<strong>1.0</strong>
+</div>
+<input type="range" class="param-slider" min="0" max="1" step="0.05" value="1.0">
+<div class="param-hint">1.0 = 完全重绘，0.0 = 不改变</div>
+</div>
+</div>
+<div class="actions">
+<button class="btn btn-secondary">取消</button>
+<button class="btn btn-primary">应用更改</button>
+</div>
+</div>
+<script>
+document.querySelectorAll('.param-slider').forEach(slider => {
+  slider.addEventListener('input', (e) => {
+    const valueDisplay = e.target.parentElement.querySelector('strong');
+    if (valueDisplay) valueDisplay.textContent = e.target.value;
+  });
+});
+</script>
+</body>
+</html>
