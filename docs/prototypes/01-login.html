@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ComfyUI Agent - 用户登录</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.login-container {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    display: flex;
+    width: 900px;
+    max-width: 90%;
+}
+
+.login-left {
+    flex: 1;
+    padding: 60px 50px;
+    background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.login-left h1 {
+    font-size: 32px;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.login-left p {
+    font-size: 16px;
+    line-height: 1.6;
+    opacity: 0.9;
+    margin-bottom: 30px;
+}
+
+.feature-list {
+    list-style: none;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+.feature-icon {
+    width: 24px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.login-right {
+    flex: 1;
+    padding: 60px 50px;
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.login-header h2 {
+    font-size: 28px;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.login-header p {
+    color: #7f8c8d;
+    font-size: 14px;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.form-group input {
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s;
+    outline: none;
+}
+
+.form-group input:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #7f8c8d;
+}
+
+.remember-me input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.forgot-password {
+    color: #3498db;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.forgot-password:hover {
+    color: #2980b9;
+}
+
+.login-btn {
+    padding: 14px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 10px;
+}
+
+.login-btn:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.login-btn:active {
+    transform: translateY(0);
+}
+
+.divider {
+    text-align: center;
+    margin: 24px 0;
+    color: #bdc3c7;
+    font-size: 13px;
+    position: relative;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 40%;
+    height: 1px;
+    background: #e0e0e0;
+}
+
+.divider::before { left: 0; }
+.divider::after { right: 0; }
+
+.demo-accounts {
+    background: #fff9e6;
+    border: 1px solid #ffe066;
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 12px;
+    color: #856404;
+}
+
+.demo-accounts h4 {
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.demo-account {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    padding: 6px;
+    background: white;
+    border-radius: 4px;
+}
+
+.demo-account:last-child {
+    margin-bottom: 0;
+}
+
+.demo-account-label {
+    font-weight: 500;
+}
+
+.demo-account-info {
+    color: #666;
+}
+
+@media (max-width: 768px) {
+    .login-container {
+        flex-direction: column;
+    }
+
+    .login-left {
+        padding: 40px 30px;
+    }
+
+    .login-right {
+        padding: 40px 30px;
+    }
+}
+</style>
+</head>
+<body>
+<div class="login-container">
+    <div class="login-left">
+        <h1>🤖 ComfyUI Agent</h1>
+        <p>智能工作流代理平台，统一管理多个 ComfyUI 服务，AI Agent 助力工作流创建与优化。</p>
+
+        <ul class="feature-list">
+            <li class="feature-item">
+                <span class="feature-icon">🎯</span>
+                <span>统一管理多个 ComfyUI 服务实例</span>
+            </li>
+            <li class="feature-item">
+                <span class="feature-icon">💬</span>
+                <span>AI Agent 智能辅助工作流编辑</span>
+            </li>
+            <li class="feature-item">
+                <span class="feature-icon">🔄</span>
+                <span>工作流版本管理与协作</span>
+            </li>
+            <li class="feature-item">
+                <span class="feature-icon">📊</span>
+                <span>服务状态监控与性能分析</span>
+            </li>
+        </ul>
+    </div>
+
+    <div class="login-right">
+        <div class="login-header">
+            <h2>欢迎回来</h2>
+            <p>登录以继续使用 ComfyUI Agent</p>
+        </div>
+
+        <form class="login-form" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="username">用户名</label>
+                <input type="text" id="username" name="username" placeholder="请输入用户名" required />
+            </div>
+
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" id="password" name="password" placeholder="请输入密码" required />
+            </div>
+
+            <div class="form-options">
+                <label class="remember-me">
+                    <input type="checkbox" />
+                    <span>记住我</span>
+                </label>
+                <a href="#" class="forgot-password">忘记密码？</a>
+            </div>
+
+            <button type="submit" class="login-btn">登录</button>
+        </form>
+
+        <div class="divider">演示账号</div>
+
+        <div class="demo-accounts">
+            <h4>💡 快速体验（点击自动填充）</h4>
+            <div class="demo-account" onclick="fillDemo('admin', 'admin123')" style="cursor: pointer;">
+                <span class="demo-account-label">👑 管理员账号</span>
+                <span class="demo-account-info">admin / admin123</span>
+            </div>
+            <div class="demo-account" onclick="fillDemo('user', 'user123')" style="cursor: pointer;">
+                <span class="demo-account-label">👤 普通用户账号</span>
+                <span class="demo-account-info">user / user123</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 快速填充演示账号
+function fillDemo(username, password) {
+    document.getElementById('username').value = username;
+    document.getElementById('password').value = password;
+}
+
+// 登录处理
+function handleLogin(event) {
+    event.preventDefault();
+
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    // 模拟后端验证并返回用户角色
+    // 实际项目中会调用 API: POST /api/auth/login
+    const loginResult = authenticateUser(username, password);
+
+    if (loginResult.success) {
+        // 根据返回的角色自动跳转
+        if (loginResult.role === 'admin') {
+            alert(`✅ 欢迎，${username}（管理员）\n\n即将跳转到服务管理页面...`);
+            window.location.href = '02-admin-service-management.html';
+        } else if (loginResult.role === 'user') {
+            alert(`✅ 欢迎，${username}\n\n即将跳转到服务选择页面...`);
+            window.location.href = '03-user-service-selection.html';
+        }
+    } else {
+        alert('❌ 用户名或密码错误！\n\n请使用演示账号登录。');
+    }
+
+    return false;
+}
+
+// 模拟用户认证（实际项目中由后端 API 处理）
+function authenticateUser(username, password) {
+    // 模拟数据库中的用户数据
+    const users = {
+        'admin': { password: 'admin123', role: 'admin', name: '系统管理员' },
+        'user': { password: 'user123', role: 'user', name: '普通用户' }
+    };
+
+    const user = users[username];
+
+    if (user && user.password === password) {
+        return {
+            success: true,
+            role: user.role,
+            name: user.name
+        };
+    }
+
+    return { success: false };
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>测试 1: 基础 iframe 嵌入测试</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    padding: 20px;
+    background: #f5f6fa;
+}
+
+.test-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.test-header {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.test-header h1 {
+    font-size: 24px;
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.test-header p {
+    color: #7f8c8d;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.test-status {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.status-item {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.status-item.pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-item.success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-item.error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.iframe-container {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.iframe-wrapper {
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    overflow: hidden;
+    height: 800px;
+}
+
+iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.test-info {
+    background: #e8f4f8;
+    border-left: 4px solid #3498db;
+    padding: 16px;
+    margin-top: 20px;
+    border-radius: 4px;
+}
+
+.test-info h3 {
+    font-size: 16px;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.test-info ul {
+    margin-left: 20px;
+    color: #555;
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+.console-output {
+    background: #2c3e50;
+    color: #ecf0f1;
+    padding: 16px;
+    border-radius: 6px;
+    margin-top: 20px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.console-output .log-item {
+    margin-bottom: 8px;
+    padding: 4px 0;
+    border-bottom: 1px solid #34495e;
+}
+
+.console-output .log-time {
+    color: #95a5a6;
+    margin-right: 8px;
+}
+
+.console-output .log-success {
+    color: #2ecc71;
+}
+
+.console-output .log-error {
+    color: #e74c3c;
+}
+
+.console-output .log-info {
+    color: #3498db;
+}
+</style>
+</head>
+<body>
+<div class="test-container">
+    <div class="test-header">
+        <h1>🧪 测试 1: 基础 iframe 嵌入测试</h1>
+        <p>测试目标：验证 ComfyUI 是否允许被 iframe 嵌入，检测是否有 X-Frame-Options 或 CSP 限制。</p>
+
+        <div class="test-status">
+            <div class="status-item pending" id="loadStatus">⏳ 加载状态: 等待中...</div>
+            <div class="status-item pending" id="errorStatus">❌ 错误检测: 等待中...</div>
+        </div>
+    </div>
+
+    <div class="iframe-container">
+        <h2 style="margin-bottom: 16px; color: #2c3e50;">ComfyUI iframe 嵌入区域</h2>
+        <div class="iframe-wrapper">
+            <iframe
+                src="http://127.0.0.1:8188/"
+                id="comfyuiFrame"
+                onload="handleIframeLoad()"
+                onerror="handleIframeError()"
+            ></iframe>
+        </div>
+    </div>
+
+    <div class="test-info">
+        <h3>📋 测试说明</h3>
+        <ul>
+            <li><strong>成功标志：</strong>iframe 中能正常显示 ComfyUI 界面，可以看到节点编辑器</li>
+            <li><strong>失败标志：</strong>iframe 显示空白、错误信息或被浏览器阻止</li>
+            <li><strong>常见问题：</strong>
+                <ul>
+                    <li>X-Frame-Options: DENY - 完全禁止 iframe 嵌入</li>
+                    <li>X-Frame-Options: SAMEORIGIN - 只允许同域名嵌入</li>
+                    <li>CSP frame-ancestors - 内容安全策略限制</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <div class="console-output" id="consoleOutput">
+        <div class="log-item">
+            <span class="log-time">[00:00:00]</span>
+            <span class="log-info">测试开始...</span>
+        </div>
+    </div>
+</div>
+
+<script>
+let startTime = Date.now();
+
+function getTimestamp() {
+    const elapsed = Date.now() - startTime;
+    const seconds = Math.floor(elapsed / 1000);
+    const ms = elapsed % 1000;
+    return `[${String(seconds).padStart(2, '0')}:${String(ms).padStart(3, '0')}]`;
+}
+
+function addLog(message, type = 'info') {
+    const consoleOutput = document.getElementById('consoleOutput');
+    const logItem = document.createElement('div');
+    logItem.className = 'log-item';
+
+    const timestamp = document.createElement('span');
+    timestamp.className = 'log-time';
+    timestamp.textContent = getTimestamp();
+
+    const content = document.createElement('span');
+    content.className = `log-${type}`;
+    content.textContent = message;
+
+    logItem.appendChild(timestamp);
+    logItem.appendChild(content);
+    consoleOutput.appendChild(logItem);
+
+    // 自动滚动到底部
+    consoleOutput.scrollTop = consoleOutput.scrollHeight;
+}
+
+function handleIframeLoad() {
+    addLog('✅ iframe onload 事件触发', 'success');
+
+    const loadStatus = document.getElementById('loadStatus');
+    loadStatus.className = 'status-item success';
+    loadStatus.textContent = '✅ 加载状态: 成功';
+
+    // 尝试访问 iframe 内容（测试跨域）
+    setTimeout(() => {
+        try {
+            const iframe = document.getElementById('comfyuiFrame');
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+            if (iframeDoc) {
+                addLog('✅ 可以访问 iframe 内容（同域）', 'success');
+                addLog(`   iframe 标题: ${iframeDoc.title}`, 'info');
+
+                const errorStatus = document.getElementById('errorStatus');
+                errorStatus.className = 'status-item success';
+                errorStatus.textContent = '✅ 错误检测: 无错误';
+            }
+        } catch (e) {
+            addLog('⚠️ 无法访问 iframe 内容（跨域限制）', 'error');
+            addLog(`   错误信息: ${e.message}`, 'error');
+            addLog('   这是正常的跨域保护，不影响 iframe 显示', 'info');
+
+            const errorStatus = document.getElementById('errorStatus');
+            errorStatus.className = 'status-item success';
+            errorStatus.textContent = '✅ 错误检测: 跨域保护（正常）';
+        }
+    }, 1000);
+}
+
+function handleIframeError() {
+    addLog('❌ iframe onerror 事件触发', 'error');
+
+    const loadStatus = document.getElementById('loadStatus');
+    loadStatus.className = 'status-item error';
+    loadStatus.textContent = '❌ 加载状态: 失败';
+
+    const errorStatus = document.getElementById('errorStatus');
+    errorStatus.className = 'status-item error';
+    errorStatus.textContent = '❌ 错误检测: 加载失败';
+}
+
+// 监听控制台错误
+window.addEventListener('error', function(e) {
+    if (e.message.includes('frame')) {
+        addLog(`❌ 浏览器错误: ${e.message}`, 'error');
+    }
+});
+
+// 超时检测
+setTimeout(() => {
+    const loadStatus = document.getElementById('loadStatus');
+    if (loadStatus.textContent.includes('等待中')) {
+        addLog('⚠️ 加载超时（10秒），可能存在问题', 'error');
+        loadStatus.className = 'status-item error';
+        loadStatus.textContent = '⚠️ 加载状态: 超时';
+    }
+}, 10000);
+
+addLog('🚀 开始加载 ComfyUI iframe...', 'info');
+addLog(`   目标地址: http://127.0.0.1:8188/`, 'info');
+</script>
+</body>
+</html>

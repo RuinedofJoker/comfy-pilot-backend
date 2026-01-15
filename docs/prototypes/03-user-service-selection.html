@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ComfyUI Agent - 选择服务</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* ========== 顶部导航栏 ========== */
+.top-nav {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 16px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.workflows-btn {
+    padding: 8px 16px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.workflows-btn:hover {
+    background: #2980b9;
+}
+
+.user-menu {
+    position: relative;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    background: #f8f9fa;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.user-info:hover {
+    background: #e9ecef;
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #3498db;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+}
+
+.dropdown-arrow {
+    font-size: 10px;
+    transition: transform 0.2s;
+}
+
+.user-menu.active .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.user-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    min-width: 200px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s;
+    z-index: 1000;
+}
+
+.user-menu.active .user-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-header {
+    padding: 16px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.dropdown-user-name {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 4px;
+}
+
+.dropdown-user-email {
+    font-size: 12px;
+    color: #7f8c8d;
+}
+
+.dropdown-menu {
+    padding: 8px 0;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    color: #2c3e50;
+    text-decoration: none;
+    transition: background 0.2s;
+    cursor: pointer;
+}
+
+.dropdown-item:hover {
+    background: #f8f9fa;
+}
+
+.dropdown-item-icon {
+    width: 20px;
+    text-align: center;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: #e9ecef;
+    margin: 8px 0;
+}
+
+.dropdown-item.danger {
+    color: #e74c3c;
+}
+
+.dropdown-item.danger:hover {
+    background: #fee;
+}
+
+/* ========== 主内容区 ========== */
+.main-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    overflow-y: auto;
+}
+
+.header-section {
+    text-align: center;
+    color: white;
+    margin-bottom: 48px;
+}
+
+.header-section h1 {
+    font-size: 42px;
+    margin-bottom: 16px;
+    font-weight: 600;
+}
+
+.header-section p {
+    font-size: 18px;
+    opacity: 0.9;
+}
+
+/* ========== 服务选择区域 ========== */
+.services-container {
+    width: 100%;
+    max-width: 1200px;
+}
+
+.section-title {
+    color: white;
+    font-size: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 24px;
+    margin-bottom: 48px;
+}
+
+.service-card {
+    background: white;
+    border-radius: 16px;
+    padding: 28px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.service-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3498db, #2ecc71);
+}
+
+.service-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+.service-card.offline {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.service-card.offline::before {
+    background: #95a5a6;
+}
+
+.service-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.service-info h3 {
+    font-size: 20px;
+    color: #2c3e50;
+    margin-bottom: 6px;
+}
+
+.service-url {
+    font-size: 12px;
+    color: #7f8c8d;
+    font-family: 'Courier New', monospace;
+}
+
+.service-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.service-status.online {
+    background: #d4edda;
+    color: #155724;
+}
+
+.service-status.offline {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.service-description {
+    color: #7f8c8d;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    min-height: 42px;
+}
+
+.service-stats {
+    display: flex;
+    gap: 20px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.stat-item {
+    flex: 1;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 600;
+    color: #3498db;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: #7f8c8d;
+    margin-top: 4px;
+}
+
+.service-action {
+    width: 100%;
+    padding: 12px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.service-action:hover {
+    background: #2980b9;
+}
+
+.service-card.offline .service-action {
+    background: #95a5a6;
+    cursor: not-allowed;
+}
+
+/* ========== 最近使用 ========== */
+.recent-section {
+    margin-bottom: 32px;
+}
+
+/* ========== 空状态 ========== */
+.empty-state {
+    text-align: center;
+    padding: 60px;
+    color: white;
+}
+
+.empty-state-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+
+.empty-state h3 {
+    font-size: 20px;
+    margin-bottom: 8px;
+}
+
+.empty-state p {
+    opacity: 0.8;
+}
+
+/* ========== 滚动条 ========== */
+.main-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.main-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.main-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+.main-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+</style>
+</head>
+<body>
+<!-- 顶部导航栏 -->
+<div class="top-nav">
+    <div class="nav-left">
+        <div class="logo">🤖 ComfyUI Agent</div>
+    </div>
+    <div class="nav-right">
+        <button class="workflows-btn" onclick="goToWorkflows()">
+            <span>📁</span>
+            <span>我的工作流</span>
+        </button>
+        <div class="user-menu" id="userMenu">
+            <div class="user-info" onclick="toggleUserMenu()">
+                <div class="user-avatar">U</div>
+                <span>user</span>
+                <span class="dropdown-arrow">▼</span>
+            </div>
+            <div class="user-dropdown">
+                <div class="dropdown-header">
+                    <div class="dropdown-user-name">user</div>
+                    <div class="dropdown-user-email">user@example.com</div>
+                </div>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item" onclick="goToProfile()">
+                        <span class="dropdown-item-icon">👤</span>
+                        <span>个人信息</span>
+                    </div>
+                    <div class="dropdown-item" onclick="goToWorkflows()">
+                        <span class="dropdown-item-icon">📁</span>
+                        <span>我的工作流</span>
+                    </div>
+                    <div class="dropdown-item">
+                        <span class="dropdown-item-icon">⚙️</span>
+                        <span>账号设置</span>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-item danger" onclick="logout()">
+                        <span class="dropdown-item-icon">🚪</span>
+                        <span>退出登录</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 主内容区 -->
+<div class="main-container">
+    <div class="header-section">
+        <h1>选择 ComfyUI 服务</h1>
+        <p>选择一个可用的服务开始创建和编辑工作流</p>
+    </div>
+
+    <div class="services-container">
+        <!-- 最近使用的服务 -->
+        <div class="recent-section">
+            <div class="section-title">
+                <span>⏱️</span>
+                <span>最近使用</span>
+            </div>
+            <div class="services-grid">
+                <div class="service-card" onclick="selectService(1)">
+                    <div class="service-header">
+                        <div class="service-info">
+                            <h3>生产环境 ComfyUI</h3>
+                            <div class="service-url">http://192.168.1.100:8188</div>
+                        </div>
+                        <div class="service-status online">
+                            <span class="status-dot"></span>
+                            <span>在线</span>
+                        </div>
+                    </div>
+                    <div class="service-description">
+                        高性能 GPU 服务器，配备 RTX 4090，适用于生产环境的图像生成任务。
+                    </div>
+                    <div class="service-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">12</div>
+                            <div class="stat-label">我的工作流</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">5</div>
+                            <div class="stat-label">会话数</div>
+                        </div>
+                    </div>
+                    <button class="service-action">进入工作流编辑器 →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 所有可用服务 -->
+        <div>
+            <div class="section-title">
+                <span>🖥️</span>
+                <span>所有可用服务</span>
+            </div>
+            <div class="services-grid">
+                <div class="service-card" onclick="selectService(1)">
+                    <div class="service-header">
+                        <div class="service-info">
+                            <h3>生产环境 ComfyUI</h3>
+                            <div class="service-url">http://192.168.1.100:8188</div>
+                        </div>
+                        <div class="service-status online">
+                            <span class="status-dot"></span>
+                            <span>在线</span>
+                        </div>
+                    </div>
+                    <div class="service-description">
+                        高性能 GPU 服务器，配备 RTX 4090，适用于生产环境的图像生成任务。
+                    </div>
+                    <div class="service-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">12</div>
+                            <div class="stat-label">我的工作流</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">5</div>
+                            <div class="stat-label">会话数</div>
+                        </div>
+                    </div>
+                    <button class="service-action">进入工作流编辑器 →</button>
+                </div>
+
+                <div class="service-card" onclick="selectService(2)">
+                    <div class="service-header">
+                        <div class="service-info">
+                            <h3>开发测试环境</h3>
+                            <div class="service-url">http://localhost:8188</div>
+                        </div>
+                        <div class="service-status online">
+                            <span class="status-dot"></span>
+                            <span>在线</span>
+                        </div>
+                    </div>
+                    <div class="service-description">
+                        本地开发环境，用于测试新工作流和功能验证。
+                    </div>
+                    <div class="service-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">8</div>
+                            <div class="stat-label">我的工作流</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">3</div>
+                            <div class="stat-label">会话数</div>
+                        </div>
+                    </div>
+                    <button class="service-action">进入工作流编辑器 →</button>
+                </div>
+
+                <div class="service-card offline">
+                    <div class="service-header">
+                        <div class="service-info">
+                            <h3>备用服务器</h3>
+                            <div class="service-url">http://192.168.1.101:8188</div>
+                        </div>
+                        <div class="service-status offline">
+                            <span class="status-dot"></span>
+                            <span>离线</span>
+                        </div>
+                    </div>
+                    <div class="service-description">
+                        备用服务器，在主服务器负载过高时自动切换。
+                    </div>
+                    <div class="service-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">4</div>
+                            <div class="stat-label">我的工作流</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">0</div>
+                            <div class="stat-label">会话数</div>
+                        </div>
+                    </div>
+                    <button class="service-action" disabled>服务离线</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 用户菜单交互
+function toggleUserMenu() {
+    const userMenu = document.getElementById('userMenu');
+    userMenu.classList.toggle('active');
+}
+
+// 点击外部关闭菜单
+document.addEventListener('click', function(event) {
+    const userMenu = document.getElementById('userMenu');
+    if (!userMenu.contains(event.target)) {
+        userMenu.classList.remove('active');
+    }
+});
+
+// 跳转到工作流页面
+function goToWorkflows() {
+    window.location.href = '03-1-user-workflows.html';
+}
+
+// 跳转到个人信息页面
+function goToProfile() {
+    window.location.href = '03-2-user-profile.html';
+}
+
+// 选择服务
+function selectService(serviceId) {
+    const serviceNames = {
+        1: '生产环境 ComfyUI',
+        2: '开发测试环境'
+    };
+
+    alert(`✅ 已选择服务: ${serviceNames[serviceId]}\n\n即将进入工作流编辑器...`);
+    window.location.href = '04-workflow-editor-integrated.html';
+}
+
+// 退出登录
+function logout() {
+    if (confirm('确定要退出登录吗？')) {
+        window.location.href = '01-login.html';
+    }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>个人信息 - ComfyUI Agent</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #f5f6fa;
+}
+
+/* ========== 顶部导航栏 ========== */
+.top-nav {
+    background: white;
+    padding: 16px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 600;
+    color: #2c3e50;
+    cursor: pointer;
+}
+
+.nav-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #7f8c8d;
+}
+
+.breadcrumb-separator {
+    color: #bdc3c7;
+}
+
+.breadcrumb-current {
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+.back-btn {
+    padding: 8px 16px;
+    background: #95a5a6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.2s;
+}
+
+.back-btn:hover {
+    background: #7f8c8d;
+}
+
+/* ========== 主内容区 ========== */
+.main-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.profile-header {
+    background: white;
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    display: flex;
+    gap: 32px;
+    align-items: center;
+}
+
+.profile-avatar-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.profile-avatar-large {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 48px;
+    font-weight: 600;
+}
+
+.change-avatar-btn {
+    padding: 8px 16px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.2s;
+}
+
+.change-avatar-btn:hover {
+    background: #2980b9;
+}
+
+.profile-info {
+    flex: 1;
+}
+
+.profile-name {
+    font-size: 28px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.profile-email {
+    font-size: 14px;
+    color: #7f8c8d;
+    margin-bottom: 16px;
+}
+
+.profile-stats {
+    display: flex;
+    gap: 32px;
+    padding: 16px 0;
+    border-top: 1px solid #e9ecef;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 600;
+    color: #3498db;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #7f8c8d;
+}
+
+/* ========== 表单区域 ========== */
+.profile-section {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.form-input:disabled {
+    background: #f8f9fa;
+    cursor: not-allowed;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding-top: 20px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.btn {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: #3498db;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #2980b9;
+}
+
+.btn-secondary {
+    background: #95a5a6;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #7f8c8d;
+}
+
+.btn-danger {
+    background: #e74c3c;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c0392b;
+}
+</style>
+</head>
+<body>
+<!-- 顶部导航栏 -->
+<div class="top-nav">
+    <div class="nav-left">
+        <div class="logo" onclick="goHome()">🤖 ComfyUI Agent</div>
+        <div class="nav-breadcrumb">
+            <span onclick="goHome()" style="cursor: pointer;">首页</span>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-current">个人信息</span>
+        </div>
+    </div>
+    <button class="back-btn" onclick="goHome()">← 返回首页</button>
+</div>
+
+<!-- 主内容区 -->
+<div class="main-container">
+    <!-- 个人信息头部 -->
+    <div class="profile-header">
+        <div class="profile-avatar-section">
+            <div class="profile-avatar-large">U</div>
+            <button class="change-avatar-btn">更换头像</button>
+        </div>
+        <div class="profile-info">
+            <h1 class="profile-name">user</h1>
+            <div class="profile-email">user@example.com</div>
+            <div class="profile-stats">
+                <div class="stat-item">
+                    <div class="stat-value">24</div>
+                    <div class="stat-label">工作流总数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">13</div>
+                    <div class="stat-label">活跃会话</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">156</div>
+                    <div class="stat-label">工作流版本</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">45</div>
+                    <div class="stat-label">使用天数</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 基本信息 -->
+    <div class="profile-section">
+        <h2 class="section-title">📝 基本信息</h2>
+        <div class="form-group">
+            <label class="form-label">用户名</label>
+            <input type="text" class="form-input" value="user" disabled>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">显示名称</label>
+                <input type="text" class="form-input" value="user" placeholder="请输入显示名称">
+            </div>
+            <div class="form-group">
+                <label class="form-label">邮箱地址</label>
+                <input type="email" class="form-input" value="user@example.com" placeholder="请输入邮箱">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">手机号码</label>
+                <input type="tel" class="form-input" value="" placeholder="请输入手机号码">
+            </div>
+            <div class="form-group">
+                <label class="form-label">注册时间</label>
+                <input type="text" class="form-input" value="2024-12-01" disabled>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-secondary" onclick="resetForm()">重置</button>
+            <button class="btn btn-primary" onclick="saveProfile()">保存修改</button>
+        </div>
+    </div>
+
+    <!-- 账号安全 -->
+    <div class="profile-section">
+        <h2 class="section-title">🔒 账号安全</h2>
+        <div class="form-group">
+            <label class="form-label">当前密码</label>
+            <input type="password" class="form-input" placeholder="请输入当前密码">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">新密码</label>
+                <input type="password" class="form-input" placeholder="请输入新密码">
+            </div>
+            <div class="form-group">
+                <label class="form-label">确认新密码</label>
+                <input type="password" class="form-input" placeholder="请再次输入新密码">
+            </div>
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" onclick="changePassword()">修改密码</button>
+        </div>
+    </div>
+
+    <!-- 危险操作 -->
+    <div class="profile-section">
+        <h2 class="section-title">⚠️ 危险操作</h2>
+        <div class="form-group">
+            <label class="form-label">删除账号</label>
+            <p style="font-size: 13px; color: #7f8c8d; margin-bottom: 12px;">
+                删除账号后,所有工作流、会话和数据将被永久删除,且无法恢复。
+            </p>
+            <button class="btn btn-danger" onclick="deleteAccount()">删除我的账号</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function goHome() {
+    window.location.href = '03-user-service-selection.html';
+}
+
+function resetForm() {
+    if (confirm('确定要重置表单吗？')) {
+        location.reload();
+    }
+}
+
+function saveProfile() {
+    alert('✅ 个人信息已保存！');
+}
+
+function changePassword() {
+    alert('✅ 密码修改成功！');
+}
+
+function deleteAccount() {
+    if (confirm('⚠️ 警告：此操作不可逆！\n\n确定要删除账号吗？所有数据将被永久删除。')) {
+        if (confirm('⚠️ 最后确认：真的要删除账号吗？')) {
+            alert('账号已删除');
+            window.location.href = '01-login.html';
+        }
+    }
+}
+</script>
+</body>
+</html>

@@ -29,29 +29,29 @@ public abstract class BasePO implements Serializable {
      * 创建时间（自动填充）
      */
     @TableField(fill = FieldFill.INSERT)
-    private LocalDateTime createdAt;
+    private LocalDateTime createTime;
+
+    /**
+     * 创建人ID（自动填充）
+     */
+    @TableField(fill = FieldFill.INSERT)
+    private Long createBy;
 
     /**
      * 更新时间（自动填充）
      */
     @TableField(fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updatedAt;
+    private LocalDateTime updateTime;
 
     /**
-     * 创建人ID
-     */
-    @TableField(fill = FieldFill.INSERT)
-    private Long createdBy;
-
-    /**
-     * 更新人ID
+     * 更新人ID（自动填充）
      */
     @TableField(fill = FieldFill.INSERT_UPDATE)
-    private Long updatedBy;
+    private Long updateBy;
 
     /**
-     * 逻辑删除标记（0-未删除，1-已删除）
+     * 逻辑删除标记（0-未删除，非0-删除时的时间戳）
      */
     @TableLogic
-    private Integer deleted;
+    private Long isDeleted;
 }

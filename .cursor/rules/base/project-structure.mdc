@@ -5,7 +5,8 @@ alwaysApply: true
 ---
 
 # 项目结构规范
-## 项目目录规范
+## 项目文档目录规范
+- 需求分析和原型设计阶段的产出都放在docs目录下，其中`docs/requirements`中放需求文档，`docs/prototypes`中放原型文档
 - 项目的需求文档和基本设计都在`docs/requirements`目录里
 - 项目的原型图在`docs/prototypes`目录里，每个原型图文件都是一个独立的html文件，文件内的代码需要尽可能的精简，单个原型图html文件代码量不允许超过200行
 
@@ -93,3 +94,8 @@ public interface WorkflowMapper extends BaseMapper<WorkflowPO> {
 }
 ```
 
+## 保留字段说明
+
+为后续扩展，以下字段保留但暂不使用：
+- `createdBy`/`updatedBy`: 创建人/更新人 ID（暂时为 null）
+- `deleted`: 逻辑删除标记

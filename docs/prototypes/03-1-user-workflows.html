@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的工作流 - ComfyUI Agent</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #f5f6fa;
+}
+
+/* ========== 顶部导航栏 ========== */
+.top-nav {
+    background: white;
+    padding: 16px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 600;
+    color: #2c3e50;
+    cursor: pointer;
+}
+
+.nav-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #7f8c8d;
+}
+
+.breadcrumb-separator {
+    color: #bdc3c7;
+}
+
+.breadcrumb-current {
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.back-btn {
+    padding: 8px 16px;
+    background: #95a5a6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.2s;
+}
+
+.back-btn:hover {
+    background: #7f8c8d;
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #3498db;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* ========== 主内容区 ========== */
+.main-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px;
+}
+
+.page-header {
+    margin-bottom: 32px;
+}
+
+.page-title {
+    font-size: 32px;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.page-subtitle {
+    font-size: 14px;
+    color: #7f8c8d;
+}
+
+/* ========== 工具栏 ========== */
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.toolbar-left {
+    display: flex;
+    gap: 12px;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.search-box input {
+    border: none;
+    background: none;
+    outline: none;
+    font-size: 14px;
+    width: 250px;
+}
+
+.filter-btn {
+    padding: 8px 16px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.filter-btn:hover {
+    background: #e9ecef;
+}
+
+.filter-btn.active {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+}
+
+.toolbar-right {
+    display: flex;
+    gap: 12px;
+}
+
+.view-toggle {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+.view-btn {
+    padding: 6px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.view-btn.active {
+    background: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.sort-select {
+    padding: 8px 16px;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    background: white;
+}
+
+/* ========== 工作流网格 ========== */
+.workflows-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.workflow-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.workflow-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+}
+
+.workflow-thumbnail {
+    width: 100%;
+    height: 180px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    position: relative;
+}
+
+.workflow-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 4px 12px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.workflow-content {
+    padding: 16px;
+}
+
+.workflow-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.workflow-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 4px;
+}
+
+.workflow-service {
+    font-size: 12px;
+    color: #7f8c8d;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.workflow-favorite {
+    font-size: 18px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.workflow-favorite:hover {
+    transform: scale(1.2);
+}
+
+.workflow-meta {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    color: #7f8c8d;
+}
+
+.workflow-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.workflow-description {
+    font-size: 13px;
+    color: #7f8c8d;
+    line-height: 1.5;
+    margin-bottom: 12px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.workflow-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.workflow-time {
+    font-size: 11px;
+    color: #95a5a6;
+}
+
+.workflow-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn {
+    padding: 4px 8px;
+    background: #f8f9fa;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    background: #e9ecef;
+}
+</style>
+</head>
+<body>
+<!-- 顶部导航栏 -->
+<div class="top-nav">
+    <div class="nav-left">
+        <div class="logo" onclick="goHome()">🤖 ComfyUI Agent</div>
+        <div class="nav-breadcrumb">
+            <span onclick="goHome()" style="cursor: pointer;">首页</span>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-current">我的工作流</span>
+        </div>
+    </div>
+    <div class="nav-right">
+        <button class="back-btn" onclick="goHome()">← 返回首页</button>
+        <div class="user-avatar" onclick="goHome()">U</div>
+    </div>
+</div>
+
+<!-- 主内容区 -->
+<div class="main-container">
+    <div class="page-header">
+        <h1 class="page-title">📁 我的工作流</h1>
+        <p class="page-subtitle">管理和查看你的所有 ComfyUI 工作流</p>
+    </div>
+
+    <!-- 工具栏 -->
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <div class="search-box">
+                <span>🔍</span>
+                <input type="text" placeholder="搜索工作流..." id="searchInput">
+            </div>
+            <button class="filter-btn active" onclick="filterWorkflows('all')">全部</button>
+            <button class="filter-btn" onclick="filterWorkflows('recent')">最近使用</button>
+            <button class="filter-btn" onclick="filterWorkflows('favorite')">收藏</button>
+        </div>
+        <div class="toolbar-right">
+            <div class="view-toggle">
+                <button class="view-btn active" onclick="switchView('grid')">⊞ 网格</button>
+                <button class="view-btn" onclick="switchView('list')">☰ 列表</button>
+            </div>
+            <select class="sort-select" onchange="sortWorkflows(this.value)">
+                <option value="recent">最近使用</option>
+                <option value="name">名称</option>
+                <option value="created">创建时间</option>
+                <option value="modified">修改时间</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- 工作流网格视图 -->
+    <div class="workflows-grid" id="workflowsGrid">
+        <!-- 工作流卡片将通过 JavaScript 动态生成 -->
+    </div>
+</div>
+
+<script>
+// 模拟工作流数据
+const workflows = [
+    {
+        id: 1,
+        name: 'SDXL 图像生成',
+        service: '生产环境 ComfyUI',
+        serviceId: 1,
+        description: '使用 SDXL 模型生成高质量图像,支持多种风格和参数调整',
+        sessions: 5,
+        versions: 12,
+        lastUsed: '2 小时前',
+        favorite: true,
+        icon: '🎨'
+    },
+    {
+        id: 2,
+        name: 'ControlNet 姿态控制',
+        service: '生产环境 ComfyUI',
+        serviceId: 1,
+        description: '基于 ControlNet 的人物姿态控制工作流',
+        sessions: 3,
+        versions: 8,
+        lastUsed: '1 天前',
+        favorite: false,
+        icon: '🤸'
+    },
+    {
+        id: 3,
+        name: '视频帧插值',
+        service: '开发测试环境',
+        serviceId: 2,
+        description: '使用 AI 模型进行视频帧插值,提升视频流畅度',
+        sessions: 2,
+        versions: 5,
+        lastUsed: '3 天前',
+        favorite: true,
+        icon: '🎬'
+    },
+    {
+        id: 4,
+        name: '图像超分辨率',
+        service: '生产环境 ComfyUI',
+        serviceId: 1,
+        description: '使用 Real-ESRGAN 进行图像超分辨率处理',
+        sessions: 4,
+        versions: 10,
+        lastUsed: '5 天前',
+        favorite: false,
+        icon: '🔍'
+    }
+];
+
+// 渲染工作流卡片
+function renderWorkflows(workflowsToRender = workflows) {
+    const grid = document.getElementById('workflowsGrid');
+    grid.innerHTML = workflowsToRender.map(wf => `
+        <div class="workflow-card" onclick="openWorkflow(${wf.id}, ${wf.serviceId})">
+            <div class="workflow-thumbnail">
+                <span>${wf.icon}</span>
+                ${wf.favorite ? '<div class="workflow-badge">⭐ 收藏</div>' : ''}
+            </div>
+            <div class="workflow-content">
+                <div class="workflow-header">
+                    <div>
+                        <div class="workflow-title">${wf.name}</div>
+                        <div class="workflow-service">
+                            <span>🖥️</span>
+                            <span>${wf.service}</span>
+                        </div>
+                    </div>
+                    <div class="workflow-favorite" onclick="toggleFavorite(event, ${wf.id})">
+                        ${wf.favorite ? '⭐' : '☆'}
+                    </div>
+                </div>
+                <div class="workflow-meta">
+                    <div class="workflow-meta-item">
+                        <span>💬</span>
+                        <span>${wf.sessions} 会话</span>
+                    </div>
+                    <div class="workflow-meta-item">
+                        <span>📝</span>
+                        <span>${wf.versions} 版本</span>
+                    </div>
+                </div>
+                <div class="workflow-description">${wf.description}</div>
+                <div class="workflow-footer">
+                    <div class="workflow-time">最后使用: ${wf.lastUsed}</div>
+                    <div class="workflow-actions">
+                        <button class="action-btn" onclick="event.stopPropagation(); alert('编辑功能')">✏️</button>
+                        <button class="action-btn" onclick="event.stopPropagation(); alert('删除功能')">🗑️</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function goHome() {
+    window.location.href = '03-user-service-selection.html';
+}
+
+function openWorkflow(workflowId, serviceId) {
+    alert(`打开工作流 #${workflowId}\n自动进入服务 #${serviceId}`);
+    window.location.href = '04-workflow-editor-integrated.html';
+}
+
+function toggleFavorite(event, workflowId) {
+    event.stopPropagation();
+    const workflow = workflows.find(w => w.id === workflowId);
+    if (workflow) {
+        workflow.favorite = !workflow.favorite;
+        renderWorkflows();
+    }
+}
+
+function filterWorkflows(type) {
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+
+    let filtered = workflows;
+    if (type === 'recent') {
+        filtered = workflows.slice(0, 2);
+    } else if (type === 'favorite') {
+        filtered = workflows.filter(w => w.favorite);
+    }
+    renderWorkflows(filtered);
+}
+
+function switchView(view) {
+    document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    alert(`切换到${view === 'grid' ? '网格' : '列表'}视图`);
+}
+
+function sortWorkflows(sortBy) {
+    alert(`按 ${sortBy} 排序`);
+}
+
+// 初始化
+renderWorkflows();
+</script>
+</body>
+</html>

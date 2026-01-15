@@ -21,14 +21,14 @@ public class MybatisPlusMetaObjectHandler implements MetaObjectHandler {
         LocalDateTime now = LocalDateTime.now();
 
         // 自动填充创建时间
-        this.strictInsertFill(metaObject, "createdAt", LocalDateTime.class, now);
+        this.strictInsertFill(metaObject, "createTime", LocalDateTime.class, now);
         // 自动填充更新时间
-        this.strictInsertFill(metaObject, "updatedAt", LocalDateTime.class, now);
+        this.strictInsertFill(metaObject, "updateTime", LocalDateTime.class, now);
 
         // 自动填充创建人（从当前登录用户获取，暂时使用默认值）
-        this.strictInsertFill(metaObject, "createdBy", Long.class, getCurrentUserId());
+        this.strictInsertFill(metaObject, "createBy", Long.class, getCurrentUserId());
         // 自动填充更新人
-        this.strictInsertFill(metaObject, "updatedBy", Long.class, getCurrentUserId());
+        this.strictInsertFill(metaObject, "updateBy", Long.class, getCurrentUserId());
     }
 
     /**
@@ -37,9 +37,9 @@ public class MybatisPlusMetaObjectHandler implements MetaObjectHandler {
     @Override
     public void updateFill(MetaObject metaObject) {
         // 自动填充更新时间
-        this.strictUpdateFill(metaObject, "updatedAt", LocalDateTime.class, LocalDateTime.now());
+        this.strictUpdateFill(metaObject, "updateTime", LocalDateTime.class, LocalDateTime.now());
         // 自动填充更新人
-        this.strictUpdateFill(metaObject, "updatedBy", Long.class, getCurrentUserId());
+        this.strictUpdateFill(metaObject, "updateBy", Long.class, getCurrentUserId());
     }
 
     /**

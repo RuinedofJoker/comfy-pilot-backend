@@ -32,14 +32,14 @@ public abstract class BaseEntity<ID extends Serializable> implements Serializabl
      *
      * @return 创建时间
      */
-    public abstract LocalDateTime getCreatedAt();
+    public abstract LocalDateTime getCreateTime();
 
     /**
      * 获取更新时间
      *
      * @return 更新时间
      */
-    public abstract LocalDateTime getUpdatedAt();
+    public abstract LocalDateTime getUpdateTime();
 
     /**
      * 判断是否为新实体（未持久化）
