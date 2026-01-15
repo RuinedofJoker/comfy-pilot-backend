@@ -58,3 +58,29 @@ logging:
     root: INFO
     org.joker.comfypilot: DEBUG
     com.baomidou.mybatisplus: DEBUG
+
+# SpringDoc OpenAPI 配置
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  group-configs:
+    - group: 用户模块
+      paths-to-match: /api/v1/users/**, /api/v1/auth/**
+    - group: 服务模块
+      paths-to-match: /api/v1/comfyui-services/**
+    - group: 工作流模块
+      paths-to-match: /api/v1/workflows/**
+    - group: 会话模块
+      paths-to-match: /api/v1/sessions/**
+    - group: Agent模块
+      paths-to-match: /api/v1/agents/**
+    - group: AI模型模块
+      paths-to-match: /api/v1/models/**, /api/v1/model-providers/**
+    - group: 资源模块
+      paths-to-match: /api/v1/files/**
