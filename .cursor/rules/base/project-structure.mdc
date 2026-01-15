@@ -93,9 +93,3 @@ public interface WorkflowMapper extends BaseMapper<WorkflowPO> {
     // MyBatis-Plus Mapper
 }
 ```
-
-## 保留字段说明
-
-为后续扩展，以下字段保留但暂不使用：
-- `createdBy`/`updatedBy`: 创建人/更新人 ID（暂时为 null）
-- `deleted`: 逻辑删除标记

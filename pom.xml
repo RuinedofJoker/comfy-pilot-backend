@@ -23,7 +23,7 @@
         <fastjson2.version>2.0.53</fastjson2.version>
         <pgvector.version>0.1.6</pgvector.version>
         <mapstruct.version>1.6.3</mapstruct.version>
-        <springdoc.version>2.3.0</springdoc.version>
+        <springdoc.version>2.7.0</springdoc.version>
     </properties>
 
     <dependencies>
