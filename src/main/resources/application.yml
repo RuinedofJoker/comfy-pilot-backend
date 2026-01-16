@@ -72,8 +72,8 @@ springdoc:
   group-configs:
     - group: 用户模块
       paths-to-match: /api/v1/users/**, /api/v1/auth/**
-    - group: 服务模块
-      paths-to-match: /api/v1/comfyui-services/**
+    - group: ComfyUI服务模块
+      paths-to-match: /api/v1/comfyui-servers/**
     - group: 工作流模块
       paths-to-match: /api/v1/workflows/**
     - group: 会话模块
