@@ -20,6 +20,6 @@ public interface UserRoleMapper extends BaseMapper<UserRolePO> {
      */
     @Select("SELECT r.* FROM role r " +
             "INNER JOIN user_role ur ON r.id = ur.role_id " +
-            "WHERE ur.user_id = #{userId} AND r.is_deleted = false")
+            "WHERE ur.user_id = #{userId} AND r.is_deleted = 0")
     List<RolePO> findRolesByUserId(@Param("userId") Long userId);
 }

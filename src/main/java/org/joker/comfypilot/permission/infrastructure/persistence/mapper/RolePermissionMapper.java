@@ -25,7 +25,7 @@ public interface RolePermissionMapper extends BaseMapper<RolePermissionPO> {
             "<foreach item='roleId' collection='roleIds' open='(' separator=',' close=')'>" +
             "#{roleId}" +
             "</foreach>" +
-            " AND p.is_deleted = false" +
+            " AND p.is_deleted = 0" +
             "</script>")
     List<PermissionPO> findPermissionsByRoleIds(@Param("roleIds") List<Long> roleIds);
 }

@@ -30,8 +30,7 @@ public class RoleRepositoryImpl implements RoleRepository {
     @Override
     public Optional<Role> findByRoleCode(String roleCode) {
         LambdaQueryWrapper<RolePO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(RolePO::getRoleCode, roleCode)
-                .eq(RolePO::getIsDeleted, false);
+        wrapper.eq(RolePO::getRoleCode, roleCode);
         RolePO po = roleMapper.selectOne(wrapper);
         return Optional.ofNullable(roleConverter.toDomain(po));
     }
@@ -39,8 +38,7 @@ public class RoleRepositoryImpl implements RoleRepository {
     @Override
     public boolean existsByRoleCode(String roleCode) {
         LambdaQueryWrapper<RolePO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(RolePO::getRoleCode, roleCode)
-                .eq(RolePO::getIsDeleted, false);
+        wrapper.eq(RolePO::getRoleCode, roleCode);
         return roleMapper.selectCount(wrapper) > 0;
     }
 

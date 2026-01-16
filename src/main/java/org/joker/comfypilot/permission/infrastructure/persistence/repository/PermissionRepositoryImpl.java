@@ -32,8 +32,7 @@ public class PermissionRepositoryImpl implements PermissionRepository {
     @Override
     public Optional<Permission> findByPermissionCode(String permissionCode) {
         LambdaQueryWrapper<PermissionPO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(PermissionPO::getPermissionCode, permissionCode)
-                .eq(PermissionPO::getIsDeleted, false);
+        wrapper.eq(PermissionPO::getPermissionCode, permissionCode);
         PermissionPO po = permissionMapper.selectOne(wrapper);
         return Optional.ofNullable(permissionConverter.toDomain(po));
     }

@@ -58,6 +58,6 @@ public abstract class BasePO implements Serializable {
     /**
      * 逻辑删除标记（0-未删除，非0-删除时的时间戳）
      */
-    @TableLogic
+    @TableLogic(value = "0", delval = "1")
     private Long isDeleted;
 }

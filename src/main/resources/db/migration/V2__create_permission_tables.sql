@@ -3,7 +3,7 @@
 
 -- 1. 创建角色表
 CREATE TABLE IF NOT EXISTS role (
-    id BIGSERIAL PRIMARY KEY,
+    id BIGINT PRIMARY KEY,
     role_code VARCHAR(50) NOT NULL,
     role_name VARCHAR(100) NOT NULL,
     description VARCHAR(500),
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS role (
     create_by BIGINT,
     update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_by BIGINT,
-    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    is_deleted BIGINT NOT NULL DEFAULT 0,
     CONSTRAINT uk_role_code UNIQUE (role_code)
 );
 
@@ -26,17 +26,20 @@ COMMENT ON COLUMN role.create_time IS '创建时间';
 COMMENT ON COLUMN role.create_by IS '创建人ID';
 COMMENT ON COLUMN role.update_time IS '更新时间';
 COMMENT ON COLUMN role.update_by IS '更新人ID';
-COMMENT ON COLUMN role.is_deleted IS '逻辑删除标记';
+COMMENT ON COLUMN role.is_deleted IS '逻辑删除标记（0-未删除，非0-删除时的时间戳）';
 
 -- 2. 创建权限表
 CREATE TABLE IF NOT EXISTS permission (
-    id BIGSERIAL PRIMARY KEY,
+    id BIGINT PRIMARY KEY,
     permission_code VARCHAR(100) NOT NULL,
     permission_name VARCHAR(100) NOT NULL,
     resource_type VARCHAR(50) NOT NULL,
     description VARCHAR(500),
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    create_by BIGINT,
+    update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_by BIGINT,
+    is_deleted BIGINT NOT NULL DEFAULT 0,
     CONSTRAINT uk_permission_code UNIQUE (permission_code)
 );
 
@@ -47,11 +50,14 @@ COMMENT ON COLUMN permission.permission_name IS '权限名称';
 COMMENT ON COLUMN permission.resource_type IS '资源类型';
 COMMENT ON COLUMN permission.description IS '权限描述';
 COMMENT ON COLUMN permission.create_time IS '创建时间';
-COMMENT ON COLUMN permission.is_deleted IS '逻辑删除标记';
+COMMENT ON COLUMN permission.create_by IS '创建人ID';
+COMMENT ON COLUMN permission.update_time IS '更新时间';
+COMMENT ON COLUMN permission.update_by IS '更新人ID';
+COMMENT ON COLUMN permission.is_deleted IS '逻辑删除标记（0-未删除，非0-删除时的时间戳）';
 
 -- 3. 创建角色权限关联表
 CREATE TABLE IF NOT EXISTS role_permission (
-    id BIGSERIAL PRIMARY KEY,
+    id BIGINT PRIMARY KEY,
     role_id BIGINT NOT NULL,
     permission_id BIGINT NOT NULL,
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -68,7 +74,7 @@ COMMENT ON COLUMN role_permission.create_time IS '创建时间';
 
 -- 4. 创建用户角色关联表
 CREATE TABLE IF NOT EXISTS user_role (
-    id BIGSERIAL PRIMARY KEY,
+    id BIGINT PRIMARY KEY,
     user_id BIGINT NOT NULL,
     role_id BIGINT NOT NULL,
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
