@@ -17,7 +17,7 @@ alwaysApply: true
 org.joker.comfypilot.{module}
 ├── interfaces/          # 接口层（用户接口层）
 │   ├── controller/      # REST API 控制器
-│   └── assembler/       # DTO 转换器
+│   └── converter/       # DTO 转换器（如果其他层也需要converter一样的在对应层的位置定义converter包）
 ├── application/         # 应用层
 │   ├── service/         # 应用服务
 │   └── dto/            # 数据传输对象
@@ -34,7 +34,7 @@ org.joker.comfypilot.{module}
 **职责**：处理用户请求，暴露 API 接口
 
 - **controller/**：REST API 控制器，处理 HTTP 请求
-- **assembler/**：负责 DTO 与领域对象之间的转换
+- **converter/**：负责 DTO 与领域对象之间的转换(统一使用MapStruct技术转换)
 
 **示例**：
 ```java
@@ -42,6 +42,18 @@ org.joker.comfypilot.{module}
 @RequestMapping("/api/v1/workflows")
 public class WorkflowController {
     // 处理工作流相关的 HTTP 请求
+}
+
+import org.mapstruct.Mapper;
+
+@Mapper(componentModel = "spring")
+public interface WorkflowDTOConverter {
+
+    // 处理interfaces和application层实体相关的转换
+    WorkflowDTO workflowToWorkflowDTO(Workflow workflow);
+
+    Workflow workflowDTOToWorkflow(WorkflowDTO workflowDTO);
+
 }
 ```
 

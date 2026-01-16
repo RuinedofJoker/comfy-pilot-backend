@@ -62,7 +62,7 @@ Controller → ApplicationService → DomainEntity → Repository
 7. **创建应用服务**（application/service）
 8. **定义 DTO**（application/dto）
 9. **创建控制器**（interfaces/controller）
-10. **编写 Assembler**（interfaces/assembler）
+10. **编写 converter**（interfaces/converter）
 
 ## 其他规范
 - 项目已集成 PGVector 扩展，用于向量相似度搜索，默认使用的数据库启用了PGVector插件
