@@ -2,6 +2,7 @@ package org.joker.comfypilot.common.config;
 
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import org.apache.ibatis.reflection.MetaObject;
+import org.joker.comfypilot.auth.infrastructure.context.UserContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -44,12 +45,13 @@ public class MybatisPlusMetaObjectHandler implements MetaObjectHandler {
 
     /**
      * 获取当前登录用户ID
-     * TODO: 集成 Spring Security 后从 SecurityContext 获取
+     * 从 UserContextHolder 获取当前用户ID
      *
-     * @return 用户ID
+     * @return 用户ID，未登录时返回0
      */
     private Long getCurrentUserId() {
-        // 暂时返回默认值，后续集成认证后从 SecurityContext 获取
-        return 0L;
+        Long userId = UserContextHolder.getCurrentUserId();
+        // 如果未登录或获取失败，返回默认值0
+        return userId != null ? userId : 0L;
     }
 }

@@ -115,6 +115,18 @@ public class User extends BaseEntity<Long> {
     }
 
     /**
+     * 更新密码
+     *
+     * @param passwordHash 新密码哈希值
+     */
+    public void updatePassword(String passwordHash) {
+        if (passwordHash == null || passwordHash.trim().isEmpty()) {
+            throw new IllegalArgumentException("密码哈希值不能为空");
+        }
+        this.passwordHash = passwordHash;
+    }
+
+    /**
      * 更新最后登录信息
      *
      * @param loginTime 登录时间

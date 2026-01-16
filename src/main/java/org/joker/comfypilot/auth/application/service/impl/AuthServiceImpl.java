@@ -41,6 +41,8 @@ public class AuthServiceImpl implements AuthService {
     private final TokenRedisRepository tokenRedisRepository;
     private final SessionRedisRepository sessionRedisRepository;
     private final org.joker.comfypilot.permission.application.service.PermissionService permissionService;
+    private final org.joker.comfypilot.auth.infrastructure.redis.repository.PasswordResetTokenRedisRepository passwordResetTokenRedisRepository;
+    private final org.joker.comfypilot.notification.application.service.EmailService emailService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -192,32 +194,68 @@ public class AuthServiceImpl implements AuthService {
         String resetToken = UUID.randomUUID().toString();
 
         // 保存到Redis (TTL 15分钟)
-        // TODO: 实现PasswordResetTokenRedisRepository并保存
+        org.joker.comfypilot.auth.infrastructure.redis.model.PasswordResetTokenRedis tokenRedis =
+                org.joker.comfypilot.auth.infrastructure.redis.model.PasswordResetTokenRedis.builder()
+                        .userId(user.getId())
+                        .token(resetToken)
+                        .expiresAt(LocalDateTime.now().plusMinutes(15))
+                        .isUsed(false)
+                        .createTime(LocalDateTime.now())
+                        .build();
+        passwordResetTokenRedisRepository.saveResetToken(tokenRedis);
 
-        // TODO: 调用通知模块发送重置邮件
-        log.info("密码重置邮件已发送, email: {}", request.getEmail());
+        // 调用通知模块发送重置邮件
+        try {
+            emailService.sendPasswordResetEmail(user.getEmail(), resetToken);
+            log.info("密码重置邮件已发送, email: {}", request.getEmail());
+        } catch (Exception e) {
+            log.error("发送密码重置邮件失败, email: {}, error: {}", request.getEmail(), e.getMessage());
+            throw new BusinessException("发送密码重置邮件失败，请稍后重试");
+        }
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void resetPassword(ResetPasswordRequest request) {
-        log.info("确认密码重置");
+        log.info("确认密码重置, token: {}", request.getToken());
 
-        // TODO: 从Redis验证重置令牌有效性
-        // TODO: 检查令牌是否过期或已使用
+        // 从Redis验证重置令牌有效性
+        org.joker.comfypilot.auth.infrastructure.redis.model.PasswordResetTokenRedis tokenRedis =
+                passwordResetTokenRedisRepository.getResetToken(request.getToken());
 
-        // 临时实现：直接通过token查找用户（实际应该从Redis获取userId）
-        // 这里需要等待PasswordResetTokenRedisRepository实现后完善
+        if (tokenRedis == null) {
+            throw new BusinessException("重置令牌无效或已过期");
+        }
 
-        // 验证新密码强度（已在DTO层验证）
+        // 检查令牌是否已使用
+        if (tokenRedis.getIsUsed()) {
+            throw new BusinessException("重置令牌已被使用");
+        }
+
+        // 检查令牌是否过期
+        if (LocalDateTime.now().isAfter(tokenRedis.getExpiresAt())) {
+            throw new BusinessException("重置令牌已过期");
+        }
+
+        // 获取用户ID
+        Long userId = tokenRedis.getUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException("用户不存在"));
+
         // 使用BCrypt加密新密码
         String newPasswordHash = passwordEncoder.encode(request.getNewPassword());
 
-        // TODO: 从Redis获取userId，更新用户密码
-        // TODO: 在Redis中标记令牌为已使用
-        // TODO: 撤销该用户所有现有Token
+        // 更新用户密码
+        user.updatePassword(newPasswordHash);
+        userRepository.save(user);
 
-        log.info("密码重置成功");
+        // 在Redis中标记令牌为已使用
+        passwordResetTokenRedisRepository.markTokenAsUsed(request.getToken(), LocalDateTime.now());
+
+        // 撤销该用户所有现有Token（强制重新登录）
+        revokeAllUserTokens(userId);
+
+        log.info("密码重置成功, userId: {}", userId);
     }
 
     /**
@@ -272,6 +310,7 @@ public class AuthServiceImpl implements AuthService {
 
         UserSessionRedis session = UserSessionRedis.builder()
                 .userId(user.getId())
+                .userCode(user.getUserCode())
                 .email(user.getEmail())
                 .username(user.getUsername())
                 .roles(roles)
@@ -280,6 +319,14 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         sessionRedisRepository.saveSession(session);
+    }
+
+    /**
+     * 撤销用户所有Token
+     */
+    private void revokeAllUserTokens(Long userId) {
+        tokenRedisRepository.revokeAllUserTokens(userId);
+        log.info("已撤销用户所有Token, userId: {}", userId);
     }
 
     /**

@@ -115,4 +115,29 @@ public class TokenRedisRepository {
         String key = USER_TOKENS_PREFIX + userId;
         redisUtil.sSet(key, token);
     }
+
+    /**
+     * 撤销用户所有Token
+     */
+    public void revokeAllUserTokens(Long userId) {
+        String key = USER_TOKENS_PREFIX + userId;
+        Object tokensObj = redisUtil.sGet(key);
+
+        if (tokensObj instanceof java.util.Set) {
+            @SuppressWarnings("unchecked")
+            java.util.Set<Object> tokens = (java.util.Set<Object>) tokensObj;
+
+            for (Object tokenObj : tokens) {
+                String token = tokenObj.toString();
+                // 尝试撤销访问令牌
+                revokeToken(token, TokenType.ACCESS);
+                // 尝试撤销刷新令牌
+                revokeToken(token, TokenType.REFRESH);
+            }
+
+            // 清空用户Token列表
+            redisUtil.del(key);
+            log.info("已撤销用户所有Token, userId: {}", userId);
+        }
+    }
 }

@@ -27,6 +27,11 @@ public class UserSessionRedis implements Serializable {
     private Long userId;
 
     /**
+     * 用户编码
+     */
+    private String userCode;
+
+    /**
      * 用户邮箱
      */
     private String email;
