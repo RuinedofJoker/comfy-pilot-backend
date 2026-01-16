@@ -1,0 +1,134 @@
+package org.joker.comfypilot.workflow.interfaces.controller;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.joker.comfypilot.auth.infrastructure.context.UserContextHolder;
+import org.joker.comfypilot.common.interfaces.response.Result;
+import org.joker.comfypilot.workflow.application.dto.*;
+import org.joker.comfypilot.workflow.application.service.WorkflowService;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+/**
+ * 工作流控制器
+ */
+@Tag(name = "工作流管理", description = "工作流创建、查询、编辑、锁定相关接口")
+@RestController
+@RequestMapping("/api/v1/workflows")
+@RequiredArgsConstructor
+public class WorkflowController {
+
+    private final WorkflowService workflowService;
+
+    /**
+     * 创建工作流
+     */
+    @Operation(summary = "创建工作流", description = "创建新的工作流")
+    @PostMapping
+    public Result<WorkflowDTO> createWorkflow(@Validated @RequestBody CreateWorkflowRequest request) {
+        Long userId = UserContextHolder.getCurrentUserId();
+        WorkflowDTO dto = workflowService.createWorkflow(request, userId);
+        return Result.success(dto);
+    }
+
+    /**
+     * 查询工作流列表
+     */
+    @Operation(summary = "查询工作流列表", description = "查询工作流列表，支持按ComfyUI服务、锁定状态、创建人过滤")
+    @GetMapping
+    public Result<List<WorkflowDTO>> listWorkflows(
+            @Parameter(description = "ComfyUI服务ID") @RequestParam(required = false) Long comfyuiServerId,
+            @Parameter(description = "是否锁定") @RequestParam(required = false) Boolean isLocked,
+            @Parameter(description = "创建人ID") @RequestParam(required = false) Long createBy) {
+        List<WorkflowDTO> list = workflowService.listWorkflows(comfyuiServerId, isLocked, createBy);
+        return Result.success(list);
+    }
+
+    /**
+     * 查询工作流详情
+     */
+    @Operation(summary = "查询工作流详情", description = "根据工作流ID查询详细信息")
+    @GetMapping("/{id}")
+    public Result<WorkflowDTO> getWorkflowById(
+            @Parameter(description = "工作流ID", required = true) @PathVariable Long id) {
+        WorkflowDTO dto = workflowService.getById(id);
+        return Result.success(dto);
+    }
+
+    /**
+     * 更新工作流信息
+     */
+    @Operation(summary = "更新工作流信息", description = "更新工作流的基本信息（名称、描述、缩略图）")
+    @PutMapping("/{id}")
+    public Result<WorkflowDTO> updateWorkflow(
+            @Parameter(description = "工作流ID", required = true) @PathVariable Long id,
+            @Validated @RequestBody UpdateWorkflowRequest request) {
+        Long userId = UserContextHolder.getCurrentUserId();
+        WorkflowDTO dto = workflowService.updateWorkflow(id, request, userId);
+        return Result.success(dto);
+    }
+
+    /**
+     * 删除工作流
+     */
+    @Operation(summary = "删除工作流", description = "删除指定的工作流")
+    @DeleteMapping("/{id}")
+    public Result<Void> deleteWorkflow(
+            @Parameter(description = "工作流ID", required = true) @PathVariable Long id) {
+        Long userId = UserContextHolder.getCurrentUserId();
+        workflowService.deleteWorkflow(id, userId);
+        return Result.success();
+    }
+
+    /**
+     * 保存工作流内容
+     */
+    @Operation(summary = "保存工作流内容", description = "保存工作流的激活内容（用户手动保存或Ctrl+S）")
+    @PostMapping("/{id}/content")
+    public Result<WorkflowDTO> saveContent(
+            @Parameter(description = "工作流ID", required = true) @PathVariable Long id,
+            @Validated @RequestBody SaveWorkflowContentRequest request) {
+        Long userId = UserContextHolder.getCurrentUserId();
+        WorkflowDTO dto = workflowService.saveContent(id, request, userId);
+        return Result.success(dto);
+    }
+
+    /**
+     * 获取工作流内容
+     */
+    @Operation(summary = "获取工作流内容", description = "获取工作流的激活内容（JSON格式）")
+    @GetMapping("/{id}/content")
+    public Result<String> getContent(
+            @Parameter(description = "工作流ID", required = true) @PathVariable Long id) {
+        String content = workflowService.getContent(id);
+        return Result.success(content);
+    }
+
+    /**
+     * 锁定工作流
+     */
+    @Operation(summary = "锁定工作流", description = "锁定工作流，防止其他用户编辑")
+    @PostMapping("/{id}/lock")
+    public Result<WorkflowDTO> lockWorkflow(
+            @Parameter(description = "工作流ID", required = true) @PathVariable Long id) {
+        Long userId = UserContextHolder.getCurrentUserId();
+        WorkflowDTO dto = workflowService.lockWorkflow(id, userId);
+        return Result.success(dto);
+    }
+
+    /**
+     * 解锁工作流
+     */
+    @Operation(summary = "解锁工作流", description = "解锁工作流，允许其他用户编辑")
+    @PostMapping("/{id}/unlock")
+    public Result<WorkflowDTO> unlockWorkflow(
+            @Parameter(description = "工作流ID", required = true) @PathVariable Long id) {
+        Long userId = UserContextHolder.getCurrentUserId();
+        WorkflowDTO dto = workflowService.unlockWorkflow(id, userId);
+        return Result.success(dto);
+    }
+}
