@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的工作流 - ComfyUI Agent</title>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #202020;
+    color: #ffffff;
+}
+
+/* ========== SVG 图标样式 ========== */
+.icon {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+    flex-shrink: 0;
+}
+
+.icon-lg {
+    width: 20px;
+    height: 20px;
+}
+
+/* ========== 顶部导航栏 ========== */
+.top-nav {
+    background: #353535;
+    border-bottom: 1px solid #444444;
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+.logo-icon {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #999999;
+}
+
+.breadcrumb-link {
+    color: #999999;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.breadcrumb-link:hover {
+    color: #cccccc;
+}
+
+.breadcrumb-separator {
+    color: #666666;
+}
+
+.breadcrumb-current {
+    color: #cccccc;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.nav-btn {
+    padding: 6px 12px;
+    background: #2a2a2a;
+    color: #cccccc;
+    border: 1px solid #444444;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 400;
+}
+
+.nav-btn:hover {
+    background: #3a3a3a;
+    border-color: #555555;
+    color: #ffffff;
+}
+
+.user-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #4a9eff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+/* ========== 主内容区 ========== */
+.main-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+}
+
+.page-header {
+    margin-bottom: 24px;
+}
+
+.page-title {
+    font-size: 24px;
+    color: #ffffff;
+    margin-bottom: 8px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.page-subtitle {
+    font-size: 13px;
+    color: #999999;
+}
+
+/* ========== 工具栏 ========== */
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    background: #353535;
+    border: 1px solid #444444;
+    border-radius: 6px;
+}
+
+.toolbar-left {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: #2a2a2a;
+    border: 1px solid #444444;
+    border-radius: 4px;
+    transition: border-color 0.2s;
+}
+
+.search-box:focus-within {
+    border-color: #4a9eff;
+}
+
+.search-box input {
+    border: none;
+    background: none;
+    outline: none;
+    font-size: 13px;
+    color: #ffffff;
+    width: 200px;
+}
+
+.search-box input::placeholder {
+    color: #666666;
+}
+
+.filter-btn {
+    padding: 6px 12px;
+    background: #2a2a2a;
+    border: 1px solid #444444;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    color: #cccccc;
+    transition: all 0.2s;
+}
+
+.filter-btn:hover {
+    background: #3a3a3a;
+    border-color: #555555;
+}
+
+.filter-btn.active {
+    background: #4a9eff;
+    color: #ffffff;
+    border-color: #4a9eff;
+}
+
+.toolbar-right {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.view-toggle {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    background: #2a2a2a;
+    border: 1px solid #444444;
+    border-radius: 4px;
+}
+
+.view-btn {
+    padding: 5px 10px;
+    background: transparent;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    color: #cccccc;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.view-btn.active {
+    background: #353535;
+    color: #ffffff;
+}
+
+.sort-select {
+    padding: 6px 10px;
+    border: 1px solid #444444;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    background: #2a2a2a;
+    color: #cccccc;
+    outline: none;
+}
+
+.sort-select:hover {
+    border-color: #555555;
+}
+
+/* ========== 工作流网格 ========== */
+.workflows-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+}
+
+.workflow-card {
+    background: #353535;
+    border: 1px solid #444444;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.workflow-card:hover {
+    border-color: #4a9eff;
+    background: #3a3a3a;
+}
+
+.workflow-thumbnail {
+    width: 100%;
+    height: 160px;
+    background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    position: relative;
+    border-bottom: 1px solid #444444;
+}
+
+.workflow-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 4px 10px;
+    background: rgba(74, 158, 255, 0.9);
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 400;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.workflow-content {
+    padding: 16px;
+}
+
+.workflow-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.workflow-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: #ffffff;
+    margin-bottom: 6px;
+}
+
+.workflow-service {
+    font-size: 11px;
+    color: #777777;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.workflow-favorite {
+    font-size: 16px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    color: #999999;
+}
+
+.workflow-favorite.active {
+    color: #ffd700;
+}
+
+.workflow-favorite:hover {
+    transform: scale(1.15);
+}
+
+.workflow-meta {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 10px;
+    font-size: 11px;
+    color: #777777;
+}
+
+.workflow-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.workflow-description {
+    font-size: 12px;
+    color: #999999;
+    line-height: 1.5;
+    margin-bottom: 12px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 36px;
+}
+
+.workflow-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 10px;
+    border-top: 1px solid #444444;
+}
+
+.workflow-time {
+    font-size: 11px;
+    color: #666666;
+}
+
+.workflow-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.action-btn {
+    padding: 4px 8px;
+    background: #2a2a2a;
+    border: 1px solid #444444;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+    color: #cccccc;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.action-btn:hover {
+    background: #3a3a3a;
+    border-color: #555555;
+    color: #ffffff;
+}
+
+/* ========== 滚动条 ========== */
+.main-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.main-container::-webkit-scrollbar-track {
+    background: #2a2a2a;
+}
+
+.main-container::-webkit-scrollbar-thumb {
+    background: #444444;
+    border-radius: 4px;
+}
+
+.main-container::-webkit-scrollbar-thumb:hover {
+    background: #555555;
+}
+
+/* ========== 模态框 ========== */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal {
+    background: #353535;
+    border: 1px solid #444444;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #444444;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.modal-close {
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: none;
+    color: #999999;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.modal-close:hover {
+    background: #2a2a2a;
+    color: #ffffff;
+}
+
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: #2a2a2a;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: #444444;
+    border-radius: 3px;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #cccccc;
+    margin-bottom: 8px;
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+    width: 100%;
+    padding: 8px 12px;
+    background: #2a2a2a;
+    border: 1px solid #444444;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #ffffff;
+    transition: all 0.2s;
+    outline: none;
+    font-family: inherit;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+    border-color: #4a9eff;
+    background: #2f2f2f;
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+    color: #666666;
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.form-select {
+    cursor: pointer;
+}
+
+.modal-footer {
+    padding: 16px 20px;
+    border-top: 1px solid #444444;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.modal-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 400;
+}
+
+.modal-btn-cancel {
+    background: #2a2a2a;
+    color: #cccccc;
+    border: 1px solid #444444;
+}
+
+.modal-btn-cancel:hover {
+    background: #3a3a3a;
+    border-color: #555555;
+}
+
+.modal-btn-primary {
+    background: #4a9eff;
+    color: #ffffff;
+}
+
+.modal-btn-primary:hover {
+    background: #3d8de6;
+}
+
+/* ========== 响应式 ========== */
+@media (max-width: 768px) {
+    .top-nav {
+        padding: 10px 16px;
+    }
+
+    .main-container {
+        padding: 16px;
+    }
+
+    .toolbar {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+
+    .toolbar-left,
+    .toolbar-right {
+        flex-wrap: wrap;
+    }
+
+    .workflows-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .search-box input {
+        width: 150px;
+    }
+}
+</style>
+</head>
+<body>
+<!-- SVG 图标定义 -->
+<svg style="display: none;">
+    <!-- 服务器图标 -->
+    <symbol id="icon-server" viewBox="0 0 24 24">
+        <path d="M20 13H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1v-6c0-.55-.45-1-1-1zM7 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM20 3H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1zM7 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+    </symbol>
+
+    <!-- 文件夹图标 -->
+    <symbol id="icon-folder" viewBox="0 0 24 24">
+        <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
+    </symbol>
+
+    <!-- 搜索图标 -->
+    <symbol id="icon-search" viewBox="0 0 24 24">
+        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+    </symbol>
+
+    <!-- 网格视图图标 -->
+    <symbol id="icon-grid" viewBox="0 0 24 24">
+        <path d="M4 11h5V5H4v6zm0 7h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-7h5V5h-5v6zm6-6v6h5V5h-5z"/>
+    </symbol>
+
+    <!-- 列表视图图标 -->
+    <symbol id="icon-list" viewBox="0 0 24 24">
+        <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+    </symbol>
+
+    <!-- 星标图标 -->
+    <symbol id="icon-star" viewBox="0 0 24 24">
+        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+    </symbol>
+
+    <!-- 星标空心图标 -->
+    <symbol id="icon-star-outline" viewBox="0 0 24 24">
+        <path d="M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z"/>
+    </symbol>
+
+    <!-- 编辑图标 -->
+    <symbol id="icon-edit" viewBox="0 0 24 24">
+        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+    </symbol>
+
+    <!-- 删除图标 -->
+    <symbol id="icon-delete" viewBox="0 0 24 24">
+        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+    </symbol>
+
+    <!-- 时钟图标 -->
+    <symbol id="icon-clock" viewBox="0 0 24 24">
+        <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+    </symbol>
+
+    <!-- 消息图标 -->
+    <symbol id="icon-message" viewBox="0 0 24 24">
+        <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
+    </symbol>
+
+    <!-- 版本图标 -->
+    <symbol id="icon-version" viewBox="0 0 24 24">
+        <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+    </symbol>
+
+    <!-- 返回箭头图标 -->
+    <symbol id="icon-arrow-back" viewBox="0 0 24 24">
+        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+    </symbol>
+</svg>
+
+<!-- 顶部导航栏 -->
+<div class="top-nav">
+    <div class="nav-left">
+        <div class="logo" onclick="goHome()">
+            <div class="logo-icon">
+                <svg class="icon icon-lg" style="fill: #ffffff;">
+                    <use href="#icon-server"></use>
+                </svg>
+            </div>
+            <span>ComfyUI Agent</span>
+        </div>
+        <div class="nav-breadcrumb">
+            <span class="breadcrumb-link" onclick="goHome()">首页</span>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-current">我的工作流</span>
+        </div>
+    </div>
+    <div class="nav-right">
+        <button class="nav-btn" onclick="goHome()">
+            <svg class="icon">
+                <use href="#icon-arrow-back"></use>
+            </svg>
+            <span>返回首页</span>
+        </button>
+        <div class="user-avatar" onclick="goHome()">U</div>
+    </div>
+</div>
+
+<!-- 主内容区 -->
+<div class="main-container">
+    <div class="page-header">
+        <h1 class="page-title">
+            <svg class="icon icon-lg">
+                <use href="#icon-folder"></use>
+            </svg>
+            <span>我的工作流</span>
+        </h1>
+        <p class="page-subtitle">管理和查看你的所有 ComfyUI 工作流</p>
+    </div>
+
+    <!-- 工具栏 -->
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <div class="search-box">
+                <svg class="icon">
+                    <use href="#icon-search"></use>
+                </svg>
+                <input type="text" placeholder="搜索工作流..." id="searchInput">
+            </div>
+            <button class="filter-btn active" onclick="filterWorkflows('all')">全部</button>
+            <button class="filter-btn" onclick="filterWorkflows('recent')">最近使用</button>
+            <button class="filter-btn" onclick="filterWorkflows('favorite')">收藏</button>
+        </div>
+        <div class="toolbar-right">
+            <div class="view-toggle">
+                <button class="view-btn active" onclick="switchView('grid')">
+                    <svg class="icon">
+                        <use href="#icon-grid"></use>
+                    </svg>
+                    <span>网格</span>
+                </button>
+                <button class="view-btn" onclick="switchView('list')">
+                    <svg class="icon">
+                        <use href="#icon-list"></use>
+                    </svg>
+                    <span>列表</span>
+                </button>
+            </div>
+            <select class="sort-select" onchange="sortWorkflows(this.value)">
+                <option value="recent">最近使用</option>
+                <option value="name">名称</option>
+                <option value="created">创建时间</option>
+                <option value="modified">修改时间</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- 工作流网格视图 -->
+    <div class="workflows-grid" id="workflowsGrid">
+        <!-- 工作流卡片将通过 JavaScript 动态生成 -->
+    </div>
+</div>
+
+<!-- 编辑工作流模态框 -->
+<div class="modal-overlay" id="editModal" onclick="closeModalOnOverlay(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <div class="modal-title">
+                <svg class="icon">
+                    <use href="#icon-edit"></use>
+                </svg>
+                <span>编辑工作流</span>
+            </div>
+            <button class="modal-close" onclick="closeEditModal()">
+                <span style="font-size: 20px;">×</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="editWorkflowForm">
+                <div class="form-group">
+                    <label class="form-label">工作流名称</label>
+                    <input type="text" class="form-input" id="editName" placeholder="输入工作流名称" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">工作流描述</label>
+                    <textarea class="form-textarea" id="editDescription" placeholder="输入工作流描述"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">关联服务</label>
+                    <select class="form-select" id="editService">
+                        <option value="1">生产环境 ComfyUI</option>
+                        <option value="2">开发测试环境</option>
+                        <option value="3">备用服务器</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">环境标签</label>
+                    <input type="text" class="form-input" id="editTags" placeholder="输入标签，用逗号分隔">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" onclick="closeEditModal()">取消</button>
+            <button class="modal-btn modal-btn-primary" onclick="saveWorkflow()">保存</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// 模拟工作流数据
+const workflows = [
+    {
+        id: 1,
+        name: 'SDXL 图像生成',
+        service: '生产环境 ComfyUI',
+        serviceId: 1,
+        description: '使用 SDXL 模型生成高质量图像，支持多种风格和参数调整',
+        sessions: 5,
+        versions: 12,
+        lastUsed: '2 小时前',
+        favorite: true,
+        icon: '🎨'
+    },
+    {
+        id: 2,
+        name: 'ControlNet 姿态控制',
+        service: '生产环境 ComfyUI',
+        serviceId: 1,
+        description: '基于 ControlNet 的人物姿态控制工作流',
+        sessions: 3,
+        versions: 8,
+        lastUsed: '1 天前',
+        favorite: false,
+        icon: '🤸'
+    },
+    {
+        id: 3,
+        name: '视频帧插值',
+        service: '开发测试环境',
+        serviceId: 2,
+        description: '使用 AI 模型进行视频帧插值，提升视频流畅度',
+        sessions: 2,
+        versions: 5,
+        lastUsed: '3 天前',
+        favorite: true,
+        icon: '🎬'
+    },
+    {
+        id: 4,
+        name: '图像超分辨率',
+        service: '生产环境 ComfyUI',
+        serviceId: 1,
+        description: '使用 Real-ESRGAN 进行图像超分辨率处理',
+        sessions: 4,
+        versions: 10,
+        lastUsed: '5 天前',
+        favorite: false,
+        icon: '🔍'
+    }
+];
+
+// 渲染工作流卡片
+function renderWorkflows(workflowsToRender = workflows) {
+    const grid = document.getElementById('workflowsGrid');
+    grid.innerHTML = workflowsToRender.map(wf => `
+        <div class="workflow-card" onclick="openWorkflow(${wf.id}, ${wf.serviceId})">
+            <div class="workflow-thumbnail">
+                <span>${wf.icon}</span>
+                ${wf.favorite ? `
+                <div class="workflow-badge">
+                    <svg class="icon" style="width: 12px; height: 12px; fill: #ffffff;">
+                        <use href="#icon-star"></use>
+                    </svg>
+                    <span>收藏</span>
+                </div>
+                ` : ''}
+            </div>
+            <div class="workflow-content">
+                <div class="workflow-header">
+                    <div>
+                        <div class="workflow-title">${wf.name}</div>
+                        <div class="workflow-service">
+                            <svg class="icon">
+                                <use href="#icon-server"></use>
+                            </svg>
+                            <span>${wf.service}</span>
+                        </div>
+                    </div>
+                    <div class="workflow-favorite ${wf.favorite ? 'active' : ''}" onclick="toggleFavorite(event, ${wf.id})">
+                        <svg class="icon">
+                            <use href="#icon-${wf.favorite ? 'star' : 'star-outline'}"></use>
+                        </svg>
+                    </div>
+                </div>
+                <div class="workflow-meta">
+                    <div class="workflow-meta-item">
+                        <svg class="icon">
+                            <use href="#icon-message"></use>
+                        </svg>
+                        <span>${wf.sessions} 会话</span>
+                    </div>
+                    <div class="workflow-meta-item">
+                        <svg class="icon">
+                            <use href="#icon-version"></use>
+                        </svg>
+                        <span>${wf.versions} 版本</span>
+                    </div>
+                </div>
+                <div class="workflow-description">${wf.description}</div>
+                <div class="workflow-footer">
+                    <div class="workflow-time">
+                        <svg class="icon" style="width: 12px; height: 12px;">
+                            <use href="#icon-clock"></use>
+                        </svg>
+                        ${wf.lastUsed}
+                    </div>
+                    <div class="workflow-actions">
+                        <button class="action-btn" onclick="event.stopPropagation(); editWorkflow(${wf.id})">
+                            <svg class="icon">
+                                <use href="#icon-edit"></use>
+                            </svg>
+                        </button>
+                        <button class="action-btn" onclick="event.stopPropagation(); deleteWorkflow(${wf.id})">
+                            <svg class="icon">
+                                <use href="#icon-delete"></use>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// 导航函数
+function goHome() {
+    window.location.href = '03-user-service-selection-ui.html';
+}
+
+function openWorkflow(workflowId, serviceId) {
+    alert(`打开工作流 #${workflowId}\n自动进入服务 #${serviceId}`);
+    // window.location.href = '04-workflow-editor-integrated-ui.html';
+}
+
+// 收藏切换
+function toggleFavorite(event, workflowId) {
+    event.stopPropagation();
+    const workflow = workflows.find(w => w.id === workflowId);
+    if (workflow) {
+        workflow.favorite = !workflow.favorite;
+        renderWorkflows();
+    }
+}
+
+// 筛选工作流
+function filterWorkflows(type) {
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+
+    let filtered = workflows;
+    if (type === 'recent') {
+        filtered = workflows.slice(0, 2);
+    } else if (type === 'favorite') {
+        filtered = workflows.filter(w => w.favorite);
+    }
+    renderWorkflows(filtered);
+}
+
+// 切换视图
+function switchView(view) {
+    document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.closest('.view-btn').classList.add('active');
+    alert(`切换到${view === 'grid' ? '网格' : '列表'}视图`);
+}
+
+// 排序工作流
+function sortWorkflows(sortBy) {
+    alert(`按 ${sortBy} 排序`);
+}
+
+// 编辑工作流
+let currentEditingWorkflowId = null;
+
+function editWorkflow(workflowId) {
+    currentEditingWorkflowId = workflowId;
+    const workflow = workflows.find(w => w.id === workflowId);
+
+    if (workflow) {
+        // 填充表单数据
+        document.getElementById('editName').value = workflow.name;
+        document.getElementById('editDescription').value = workflow.description;
+        document.getElementById('editService').value = workflow.serviceId;
+        document.getElementById('editTags').value = workflow.tags || '';
+
+        // 显示模态框
+        document.getElementById('editModal').classList.add('active');
+    }
+}
+
+// 关闭模态框
+function closeEditModal() {
+    document.getElementById('editModal').classList.remove('active');
+    currentEditingWorkflowId = null;
+}
+
+// 点击遮罩层关闭
+function closeModalOnOverlay(event) {
+    if (event.target === event.currentTarget) {
+        closeEditModal();
+    }
+}
+
+// 保存工作流
+function saveWorkflow() {
+    const workflow = workflows.find(w => w.id === currentEditingWorkflowId);
+
+    if (workflow) {
+        // 更新工作流数据
+        workflow.name = document.getElementById('editName').value;
+        workflow.description = document.getElementById('editDescription').value;
+        workflow.serviceId = parseInt(document.getElementById('editService').value);
+        workflow.tags = document.getElementById('editTags').value;
+
+        // 更新服务名称
+        const serviceNames = {
+            1: '生产环境 ComfyUI',
+            2: '开发测试环境',
+            3: '备用服务器'
+        };
+        workflow.service = serviceNames[workflow.serviceId];
+
+        // 重新渲染
+        renderWorkflows();
+
+        // 关闭模态框
+        closeEditModal();
+
+        alert('工作流已保存！');
+    }
+}
+
+// 删除工作流
+function deleteWorkflow(workflowId) {
+    if (confirm('确定要删除这个工作流吗？')) {
+        alert(`删除工作流 #${workflowId}`);
+    }
+}
+
+// 初始化
+renderWorkflows();
+</script>
+</body>
+</html>

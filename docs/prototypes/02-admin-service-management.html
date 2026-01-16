@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>服务管理 - ComfyUI Pilot</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #252525; color: #cccccc; display: flex; height: 100vh; overflow: hidden; }
+
+/* 侧边栏 */
+.sidebar { width: 240px; background: #282828; border-right: 1px solid #3a3a3a; display: flex; flex-direction: column; }
+.logo { padding: 16px; border-bottom: 1px solid #3a3a3a; font-size: 13px; font-weight: 500; color: #ffffff; }
+.nav { flex: 1; padding: 8px 0; overflow-y: auto; }
+.nav-item { padding: 8px 16px; font-size: 12px; color: #999999; cursor: pointer; transition: all 0.15s; }
+.nav-item:hover { background: #333333; color: #cccccc; }
+.nav-item.active { background: #3a3a3a; color: #ffffff; border-left: 2px solid #4a9eff; }
+
+/* 主内容 */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.header { padding: 12px 20px; background: #282828; border-bottom: 1px solid #3a3a3a; display: flex; justify-content: space-between; align-items: center; }
+.header h1 { font-size: 15px; font-weight: 500; color: #ffffff; }
+.btn { padding: 6px 10px; background: #3a3a3a; border: 1px solid #444444; border-radius: 3px; font-size: 12px; color: #cccccc; cursor: pointer; transition: all 0.15s; }
+.btn:hover { background: #454545; color: #ffffff; }
+.btn-primary { background: #4a9eff; border-color: #4a9eff; color: #ffffff; }
+.btn-primary:hover { background: #5aa8ff; }
+
+/* 内容区 */
+.content { flex: 1; padding: 16px; overflow-y: auto; }
+.services { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+.service-card { background: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 3px; padding: 12px; transition: all 0.15s; }
+.service-card:hover { background: #333333; border-color: #444444; }
+.service-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px; }
+.service-name { font-size: 13px; font-weight: 500; color: #ffffff; }
+.service-url { font-size: 11px; color: #777777; margin-top: 2px; font-family: 'Consolas', monospace; }
+.status { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 3px; font-size: 11px; }
+.status.online { background: rgba(39, 174, 96, 0.15); color: #27ae60; }
+.status.offline { background: rgba(231, 76, 60, 0.15); color: #e74c3c; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.service-desc { font-size: 12px; color: #999999; margin-bottom: 10px; line-height: 1.4; }
+.service-stats { display: flex; gap: 16px; padding: 8px 0; border-top: 1px solid #3a3a3a; border-bottom: 1px solid #3a3a3a; margin-bottom: 10px; }
+.stat { font-size: 11px; color: #777777; }
+.stat-value { font-size: 13px; color: #cccccc; font-weight: 500; }
+.service-actions { display: flex; gap: 6px; }
+.service-actions .btn { flex: 1; padding: 4px 8px; font-size: 11px; }
+
+/* 模态框 */
+.modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); align-items: center; justify-content: center; z-index: 1000; }
+.modal.show { display: flex; }
+.modal-content { background: #2a2a2a; border: 1px solid #444444; border-radius: 4px; width: 90%; max-width: 480px; }
+.modal-header { padding: 16px; border-bottom: 1px solid #3a3a3a; display: flex; justify-content: space-between; align-items: center; }
+.modal-title { font-size: 15px; font-weight: 500; color: #ffffff; }
+.close { background: none; border: none; font-size: 20px; color: #777777; cursor: pointer; padding: 0; width: 24px; height: 24px; }
+.close:hover { color: #cccccc; }
+.modal-body { padding: 16px; }
+.form-group { margin-bottom: 12px; }
+.form-group label { display: block; font-size: 12px; color: #cccccc; margin-bottom: 4px; }
+.form-group input, .form-group textarea { width: 100%; padding: 8px 12px; background: #1e1e1e; border: 1px solid #3a3a3a; border-radius: 4px; font-size: 13px; color: #cccccc; outline: none; transition: border-color 0.2s; }
+.form-group input:focus, .form-group textarea:focus { border-color: #555555; }
+.form-group textarea { resize: vertical; min-height: 60px; font-family: inherit; }
+.form-hint { font-size: 11px; color: #777777; margin-top: 3px; }
+.modal-footer { padding: 12px 16px; border-top: 1px solid #3a3a3a; display: flex; justify-content: flex-end; gap: 8px; }
+
+/* 滚动条 */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #444444; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #555555; }
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="logo">ComfyUI Pilot</div>
+  <div class="nav">
+    <div class="nav-item active">服务管理</div>
+    <div class="nav-item">Agent配置</div>
+    <div class="nav-item">模型管理</div>
+    <div class="nav-item">用户管理</div>
+    <div class="nav-item">系统监控</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="header">
+    <h1>ComfyUI 服务管理</h1>
+    <button class="btn btn-primary" onclick="openModal()">+ 添加服务</button>
+  </div>
+
+  <div class="content">
+    <div class="services" id="services"></div>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span class="modal-title">添加服务</span>
+      <button class="close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="form">
+        <div class="form-group">
+          <label>服务名称 *</label>
+          <input type="text" placeholder="生产环境 ComfyUI" required>
+        </div>
+        <div class="form-group">
+          <label>服务地址 *</label>
+          <input type="url" placeholder="http://192.168.1.100:8188" required>
+          <div class="form-hint">完整的 ComfyUI 服务 URL</div>
+        </div>
+        <div class="form-group">
+          <label>描述</label>
+          <textarea placeholder="服务描述..."></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="save()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const data = [
+  {name:'生产环境', url:'http://192.168.1.100:8188', desc:'高性能 GPU 服务器，RTX 4090', status:'online', workflows:156, users:23, uptime:'98%'},
+  {name:'开发测试', url:'http://localhost:8188', desc:'本地开发环境', status:'online', workflows:42, users:5, uptime:'95%'},
+  {name:'备用服务器', url:'http://192.168.1.101:8188', desc:'备用服务器', status:'offline', workflows:89, users:0, uptime:'--'}
+];
+
+services.innerHTML = data.map(s => `
+  <div class="service-card">
+    <div class="service-header">
+      <div>
+        <div class="service-name">${s.name}</div>
+        <div class="service-url">${s.url}</div>
+      </div>
+      <span class="status ${s.status}">
+        <span class="status-dot"></span>
+        ${s.status === 'online' ? '在线' : '离线'}
+      </span>
+    </div>
+    <div class="service-desc">${s.desc}</div>
+    <div class="service-stats">
+      <div class="stat"><div class="stat-value">${s.workflows}</div>工作流</div>
+      <div class="stat"><div class="stat-value">${s.users}</div>用户</div>
+      <div class="stat"><div class="stat-value">${s.uptime}</div>可用率</div>
+    </div>
+    <div class="service-actions">
+      <button class="btn" onclick="alert('测试连接')">测试</button>
+      <button class="btn" onclick="openModal()">编辑</button>
+      <button class="btn" onclick="confirm('确认删除?')&&alert('已删除')">删除</button>
+    </div>
+  </div>
+`).join('');
+
+function openModal() { modal.classList.add('show'); }
+function closeModal() { modal.classList.remove('show'); }
+function save() { form.checkValidity() ? (alert('已保存'), closeModal()) : form.reportValidity(); }
+modal.onclick = e => e.target === modal && closeModal();
+</script>
+</body>
+</html>
