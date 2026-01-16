@@ -3,6 +3,7 @@ package org.joker.comfypilot.user.application.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.common.exception.ResourceNotFoundException;
+import org.joker.comfypilot.user.application.converter.UserDTOConverter;
 import org.joker.comfypilot.user.application.dto.UpdateUserRequest;
 import org.joker.comfypilot.user.application.dto.UserDTO;
 import org.joker.comfypilot.user.application.service.UserService;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final UserDTOConverter dtoConverter;
 
     @Override
     public UserDTO getCurrentUser(Long userId) {
@@ -28,7 +30,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
 
-        return convertToDTO(user);
+        return dtoConverter.toDTO(user);
     }
 
     @Override
@@ -53,21 +55,6 @@ public class UserServiceImpl implements UserService {
         User updatedUser = userRepository.save(user);
 
         log.info("用户信息更新成功, userId: {}", userId);
-        return convertToDTO(updatedUser);
-    }
-
-    /**
-     * 转换为DTO
-     */
-    private UserDTO convertToDTO(User user) {
-        return UserDTO.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .username(user.getUsername())
-                .avatarUrl(user.getAvatarUrl())
-                .status(user.getStatus())
-                .lastLoginTime(user.getLastLoginTime())
-                .createTime(user.getCreateTime())
-                .build();
+        return dtoConverter.toDTO(updatedUser);
     }
 }

@@ -1,6 +1,9 @@
 package org.joker.comfypilot.common.application.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -10,6 +13,9 @@ import java.time.LocalDateTime;
  * 所有 DTO 对象都应继承此类
  */
 @Data
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public abstract class BaseDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -22,10 +28,10 @@ public abstract class BaseDTO implements Serializable {
     /**
      * 创建时间
      */
-    private LocalDateTime createdAt;
+    private LocalDateTime createTime;
 
     /**
      * 更新时间
      */
-    private LocalDateTime updatedAt;
+    private LocalDateTime updateTime;
 }

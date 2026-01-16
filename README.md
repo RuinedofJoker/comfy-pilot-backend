@@ -340,8 +340,8 @@ public class YourController {
 所有领域实体继承 `BaseEntity`，提供统一的基础字段：
 
 - **id**：主键（Long 类型）
-- **createdAt**：创建时间
-- **updatedAt**：更新时间
+- **createTime**：创建时间
+- **updateTime**：更新时间
 - **deleted**：逻辑删除标记
 
 详细说明请参考：[实体基类使用说明.md](docs/architecture/实体基类使用说明.md)
