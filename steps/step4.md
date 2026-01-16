@@ -6,12 +6,11 @@
 
 - [一、Step3 完成情况](#一step3-完成情况)
 - [二、Step4 目标](#二step4-目标)
-- [三、数据模型设计](#三数据模型设计)
-- [四、领域层实现](#四领域层实现)
-- [五、基础设施层实现](#五基础设施层实现)
-- [六、应用层实现](#六应用层实现)
-- [七、接口层实现](#七接口层实现)
-- [八、数据库迁移](#八数据库迁移)
+- [三、核心设计](#三核心设计)
+- [四、已完成功能](#四已完成功能)
+- [五、实现文件清单](#五实现文件清单)
+- [六、问题修复记录](#六问题修复记录)
+- [七、下一步计划](#七下一步计划)
 
 ---
 
@@ -49,23 +48,25 @@
 ### 2.2 功能范围
 
 **ComfyUI服务模块核心功能**：
-- 手动创建ComfyUI服务（管理员）
-- 代码注册ComfyUI服务（开发者）
-- 服务信息查询（列表/详情）
-- 服务信息更新（权限控制）
-- 服务删除（权限控制）
-- 服务连接测试
-- 服务健康检查
+- ✅ 手动创建ComfyUI服务（管理员）
+- ⏳ 代码注册ComfyUI服务（开发者）
+- ✅ 服务信息查询（列表/详情）
+- ✅ 服务信息更新（权限控制）
+- ✅ 服务删除（权限控制）
+- ⏳ 服务连接测试
+- ⏳ 服务健康检查
 
-### 2.3 设计要点
+---
 
-#### 2.3.1 服务注册来源
+## 三、核心设计
+
+### 3.1 服务注册来源
 
 **两种注册方式**：
 1. **手动创建（MANUAL）**：管理员通过管理页面创建
 2. **代码注册（CODE_BASED）**：开发者通过代码方式注册
 
-#### 2.3.2 唯一标识符（server_key）
+### 3.2 唯一标识符（server_key）
 
 **设计规则**：
 - 全局唯一，用于定位ComfyUI服务
@@ -77,7 +78,7 @@
   - 开发者必须手动指定 `server_key`
   - 支持幂等性（重复注册更新基本信息）
 
-#### 2.3.3 权限控制策略
+### 3.3 权限控制策略
 
 根据 `source_type` 字段控制可编辑范围：
 
@@ -93,50 +94,26 @@
 | max_retries | ✅ 可编辑 | ❌ 不可编辑 |
 | is_enabled | ✅ 可编辑 | ❌ 不可编辑 |
 
-#### 2.3.4 认证模式设计
-
-**auth_mode 字段**：
-- 类型：VARCHAR(20)
-- 默认值：NULL（无认证）
-- 当前支持：NULL（无认证）
-- 预留扩展：BASIC_AUTH、OAUTH2、API_KEY 等
-
-**api_key 字段**：
-- 保留字段，用于未来认证扩展
-- 当前可以存储，但不强制使用
-
----
-
-## 三、数据模型设计
-
-### 3.1 comfyui_server 表结构
+### 3.4 数据库表结构
 
 **表名**: `comfyui_server`
 
-**字段定义**:
+**核心字段**:
+- `id` - 主键ID（雪花算法）
+- `server_key` - 服务唯一标识符（UNIQUE）
+- `server_name` - 服务名称
+- `description` - 服务描述
+- `base_url` - ComfyUI服务地址
+- `auth_mode` - 认证模式（NULL/BASIC_AUTH/OAUTH2等）
+- `api_key` - API密钥（预留字段）
+- `timeout_seconds` - 请求超时时间（秒，默认30）
+- `max_retries` - 最大重试次数（默认3）
+- `source_type` - 注册来源（MANUAL/CODE_BASED）
+- `is_enabled` - 是否启用（默认TRUE）
+- `last_health_check_time` - 最后健康检查时间
+- `health_status` - 健康状态（HEALTHY/UNHEALTHY/UNKNOWN）
 
-| 字段名 | 类型 | 约束 | 说明 |
-|--------|------|------|------|
-| id | BIGINT | PRIMARY KEY | 主键ID（雪花算法） |
-| server_key | VARCHAR(100) | NOT NULL UNIQUE | 服务唯一标识符 |
-| server_name | VARCHAR(100) | NOT NULL | 服务名称 |
-| description | VARCHAR(500) | | 服务描述 |
-| base_url | VARCHAR(255) | NOT NULL | ComfyUI服务地址 |
-| auth_mode | VARCHAR(20) | | 认证模式（NULL/BASIC_AUTH/OAUTH2等） |
-| api_key | VARCHAR(255) | | API密钥（预留字段） |
-| timeout_seconds | INT | DEFAULT 30 | 请求超时时间（秒） |
-| max_retries | INT | DEFAULT 3 | 最大重试次数 |
-| source_type | VARCHAR(20) | NOT NULL | 注册来源：MANUAL/CODE_BASED |
-| is_enabled | BOOLEAN | DEFAULT TRUE | 是否启用 |
-| last_health_check_time | TIMESTAMP | | 最后健康检查时间 |
-| health_status | VARCHAR(20) | | 健康状态：HEALTHY/UNHEALTHY/UNKNOWN |
-| create_time | TIMESTAMP | NOT NULL | 创建时间 |
-| create_by | BIGINT | NOT NULL | 创建人ID |
-| update_time | TIMESTAMP | NOT NULL | 更新时间 |
-| update_by | BIGINT | NOT NULL | 更新人ID |
-| is_deleted | BIGINT | DEFAULT 0 | 逻辑删除标记 |
-
-**索引设计**:
+**索引**:
 - PRIMARY KEY: `id`
 - UNIQUE INDEX: `uk_server_key` (server_key)
 - INDEX: `idx_source_type` (source_type)
@@ -145,177 +122,156 @@
 
 ---
 
-## 四、领域层实现
+## 四、已完成功能
 
-### 4.1 枚举定义
+### 4.1 手动创建ComfyUI服务 ✅
 
-#### 4.1.1 ServerSourceType - 服务注册来源
+**完成时间**: 2026-01-16
 
-**文件**: `src/main/java/org/joker/comfypilot/cfsvr/domain/enums/ServerSourceType.java`
+**实现内容**:
+1. ✅ 完整的DDD四层架构实现
+2. ✅ serverKey支持管理员指定或自动生成UUID
+3. ✅ serverKey唯一性校验
+4. ✅ 权限控制（基于source_type的领域层验证）
+5. ✅ 完整的CRUD操作
+6. ✅ 数据库迁移脚本
 
-**枚举值**:
-- MANUAL - 手动创建
-- CODE_BASED - 代码注册
-
-#### 4.1.2 HealthStatus - 健康状态
-
-**文件**: `src/main/java/org/joker/comfypilot/cfsvr/domain/enums/HealthStatus.java`
-
-**枚举值**:
-- HEALTHY - 健康
-- UNHEALTHY - 不健康
-- UNKNOWN - 未知
-
-### 4.2 领域实体
-
-#### 4.2.1 ComfyuiServer - ComfyUI服务实体
-
-**文件**: `src/main/java/org/joker/comfypilot/cfsvr/domain/entity/ComfyuiServer.java`
-
-**核心字段**:
-- id - 服务ID
-- serverKey - 服务唯一标识符
-- serverName - 服务名称
-- description - 服务描述
-- baseUrl - ComfyUI服务地址
-- authMode - 认证模式
-- apiKey - API密钥
-- timeoutSeconds - 请求超时时间
-- maxRetries - 最大重试次数
-- sourceType - 注册来源
-- isEnabled - 是否启用
-- lastHealthCheckTime - 最后健康检查时间
-- healthStatus - 健康状态
-
-**核心方法**:
-- `canModifyConnectionConfig()` - 判断是否允许修改连接配置
-- `updateBasicInfo(String serverName, String description)` - 更新基本信息
-- `updateConnectionConfig(...)` - 更新连接配置（权限控制）
-- `setEnabled(Boolean enabled)` - 启用/禁用服务（权限控制）
-- `updateHealthStatus(HealthStatus status)` - 更新健康状态
-
-### 4.3 仓储接口
-
-**文件**: `src/main/java/org/joker/comfypilot/cfsvr/domain/repository/ComfyuiServerRepository.java`
-
-**核心方法**:
-- `findById(Long id)` - 根据ID查询
-- `findByServerKey(String serverKey)` - 根据serverKey查询
-- `findAll()` - 查询所有服务
-- `findBySourceType(ServerSourceType sourceType)` - 根据来源类型查询
-- `findByIsEnabled(Boolean isEnabled)` - 根据启用状态查询
-- `save(ComfyuiServer server)` - 保存服务
-- `deleteById(Long id)` - 删除服务
-
----
-
-## 五、基础设施层实现
-
-### 5.1 持久化对象
-
-**文件**: `src/main/java/org/joker/comfypilot/cfsvr/infrastructure/persistence/po/ComfyuiServerPO.java`
-
-### 5.2 Mapper接口
-
-**文件**: `src/main/java/org/joker/comfypilot/cfsvr/infrastructure/persistence/mapper/ComfyuiServerMapper.java`
-
-### 5.3 转换器
-
-**文件**: `src/main/java/org/joker/comfypilot/cfsvr/infrastructure/persistence/converter/ComfyuiServerConverter.java`
-
-### 5.4 仓储实现
-
-**文件**: `src/main/java/org/joker/comfypilot/cfsvr/infrastructure/persistence/repository/ComfyuiServerRepositoryImpl.java`
-
----
-
-## 六、应用层实现
-
-### 6.1 DTO定义
-
-#### 6.1.1 ComfyuiServerDTO - 服务信息DTO
-
-**文件**: `src/main/java/org/joker/comfypilot/cfsvr/application/dto/ComfyuiServerDTO.java`
-
-#### 6.1.2 CreateServerRequest - 创建服务请求
-
-**文件**: `src/main/java/org/joker/comfypilot/cfsvr/application/dto/CreateServerRequest.java`
-
-**字段**:
-- serverKey - 服务唯一标识符（可选，不填则自动生成UUID）
-- serverName - 服务名称（必填）
-- description - 服务描述
-- baseUrl - ComfyUI服务地址（必填）
-- authMode - 认证模式
-- apiKey - API密钥
-- timeoutSeconds - 请求超时时间
-- maxRetries - 最大重试次数
-
-#### 6.1.3 UpdateServerRequest - 更新服务请求
-
-**文件**: `src/main/java/org/joker/comfypilot/cfsvr/application/dto/UpdateServerRequest.java`
-
-#### 6.1.4 RegisterServerByCodeRequest - 代码注册请求
-
-**文件**: `src/main/java/org/joker/comfypilot/cfsvr/application/dto/RegisterServerByCodeRequest.java`
-
-### 6.2 服务接口
-
-**文件**: `src/main/java/org/joker/comfypilot/cfsvr/application/service/ComfyuiServerService.java`
-
-**核心方法**:
-- `createManually(CreateServerRequest request)` - 手动创建服务
-- `registerByCode(RegisterServerByCodeRequest request)` - 代码注册服务
-- `updateServer(Long id, UpdateServerRequest request)` - 更新服务
-- `deleteServer(Long id)` - 删除服务
-- `getById(Long id)` - 根据ID查询
-- `getByServerKey(String serverKey)` - 根据serverKey查询
-- `listServers(ServerSourceType sourceType, Boolean isEnabled)` - 查询服务列表
-- `testConnection(Long id)` - 测试连接
-- `performHealthCheck()` - 批量健康检查
-
-### 6.3 服务实现
-
-**文件**: `src/main/java/org/joker/comfypilot/cfsvr/application/service/impl/ComfyuiServerServiceImpl.java`
-
----
-
-## 七、接口层实现
-
-### 7.1 Controller
-
-**文件**: `src/main/java/org/joker/comfypilot/cfsvr/interfaces/controller/ComfyuiServerController.java`
+**核心特性**:
+- **serverKey可选**：不指定则自动生成UUID
+- **重复检查**：指定serverKey时检查是否已存在
+- **权限控制**：MANUAL类型可修改所有字段，CODE_BASED类型仅可修改基本信息
+- **删除保护**：CODE_BASED类型服务不允许通过管理页面删除
 
 **API端点**:
-- `POST /api/v1/comfyui-servers` - 创建服务（手动）
-- `POST /api/v1/comfyui-servers/register` - 注册服务（代码）
+- `POST /api/v1/comfyui-servers` - 创建服务
 - `GET /api/v1/comfyui-servers` - 查询服务列表
 - `GET /api/v1/comfyui-servers/{id}` - 查询服务详情
 - `GET /api/v1/comfyui-servers/key/{serverKey}` - 根据serverKey查询
 - `PUT /api/v1/comfyui-servers/{id}` - 更新服务
 - `DELETE /api/v1/comfyui-servers/{id}` - 删除服务
-- `POST /api/v1/comfyui-servers/{id}/test` - 测试连接
-
-### 7.2 DTO转换器
-
-**文件**: `src/main/java/org/joker/comfypilot/cfsvr/application/converter/ComfyuiServerDTOConverter.java`
 
 ---
 
-## 八、数据库迁移
+## 五、实现文件清单
 
-### 8.1 创建迁移脚本
+### 5.1 领域层 (Domain Layer)
 
-**文件**: `src/main/resources/db/migration/V5__create_comfyui_server_table.sql`
+**枚举类**:
+- `ServerSourceType.java` - 服务注册来源枚举（MANUAL/CODE_BASED）
+- `HealthStatus.java` - 健康状态枚举（HEALTHY/UNHEALTHY/UNKNOWN）
+
+**实体类**:
+- `ComfyuiServer.java` - ComfyUI服务领域实体
+  - 核心方法：`canModifyConnectionConfig()`, `updateBasicInfo()`, `updateConnectionConfig()`, `setEnabled()`, `updateHealthStatus()`
+
+**仓储接口**:
+- `ComfyuiServerRepository.java` - 仓储接口定义
+
+### 5.2 基础设施层 (Infrastructure Layer)
+
+**持久化对象**:
+- `ComfyuiServerPO.java` - 持久化对象
+
+**Mapper接口**:
+- `ComfyuiServerMapper.java` - MyBatis-Plus Mapper
+
+**转换器**:
+- `ComfyuiServerConverter.java` - PO ↔ Entity 转换器（MapStruct）
+
+**仓储实现**:
+- `ComfyuiServerRepositoryImpl.java` - 仓储接口实现
+
+### 5.3 应用层 (Application Layer)
+
+**DTO类**:
+- `ComfyuiServerDTO.java` - 服务信息DTO
+- `CreateServerRequest.java` - 创建服务请求DTO
+- `UpdateServerRequest.java` - 更新服务请求DTO
+
+**转换器**:
+- `ComfyuiServerDTOConverter.java` - Entity ↔ DTO 转换器（MapStruct）
+
+**服务接口**:
+- `ComfyuiServerService.java` - 应用服务接口
+
+**服务实现**:
+- `ComfyuiServerServiceImpl.java` - 应用服务实现
+  - 核心方法：`createManually()`, `updateServer()`, `deleteServer()`, `getById()`, `getByServerKey()`, `listServers()`
+
+### 5.4 接口层 (Interfaces Layer)
+
+**Controller**:
+- `ComfyuiServerController.java` - REST API控制器
+
+### 5.5 数据库迁移
+
+**迁移脚本**:
+- `V5__create_comfyui_server_table.sql` - 创建comfyui_server表
 
 ---
 
-## 当前进度
+## 六、问题修复记录
 
-- [ ] 数据模型设计
-- [ ] 领域层实现
-- [ ] 基础设施层实现
-- [ ] 应用层实现
-- [ ] 接口层实现
-- [ ] 数据库迁移
+### 6.1 认证拦截器逻辑错误修复 ✅
+
+**问题描述**:
+- 文件：`AuthInterceptor.java:46`
+- 错误：Token验证失败时返回`true`（放行），应该返回`false`（拦截）
+
+**修复内容**:
+所有认证失败场景改为返回`false`并设置401响应：
+- Token验证失败 → 拦截并返回401
+- Token不存在于Redis → 拦截并返回401
+- Token已被撤销 → 拦截并返回401
+- 用户会话不存在 → 拦截并返回401
+- 认证异常 → 拦截并返回500
+
+**修复时间**: 2026-01-16
+
+---
+
+## 七、下一步计划
+
+### 7.1 待实现功能
+
+1. [ ] **代码注册ComfyUI服务功能**
+   - RegisterServerByCodeRequest DTO
+   - registerByCode() 服务方法
+   - 幂等性处理逻辑
+   - 启动时自动注册
+
+2. [ ] **服务连接测试功能**
+   - testConnection() 方法
+   - HTTP连接测试
+   - 超时和重试处理
+
+3. [ ] **服务健康检查功能**
+   - performHealthCheck() 方法
+   - 定时任务调度
+   - 健康状态更新
+
+4. [ ] **完整的集成测试**
+   - 单元测试
+   - 集成测试
+   - API测试
+
+---
+
+## 八、当前进度
+
+- [x] 数据模型设计 ✅
+- [x] 领域层实现 ✅
+- [x] 基础设施层实现 ✅
+- [x] 应用层实现 ✅（手动创建功能）
+- [x] 接口层实现 ✅（手动创建功能）
+- [x] 数据库迁移 ✅
+- [ ] 代码注册功能实现
+- [ ] 服务连接测试
+- [ ] 服务健康检查
 - [ ] 测试验证
+
+---
+
+**Step4 状态**: 进行中（手动创建功能已完成，代码注册功能待实现）
+
+**最后更新**: 2026-01-16
