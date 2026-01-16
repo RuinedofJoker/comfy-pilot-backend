@@ -70,17 +70,29 @@ springdoc:
     tags-sorter: alpha
     operations-sorter: alpha
   group-configs:
-    - group: 用户模块
-      paths-to-match: /api/v1/users/**, /api/v1/auth/**
-    - group: ComfyUI服务模块
+    # 业务核心模块
+    - group: 01-用户模块
+      paths-to-match: /api/v1/users/**
+    - group: 02-认证模块
+      paths-to-match: /api/v1/auth/**
+    - group: 03-权限模块
+      paths-to-match: /api/v1/roles/**, /api/v1/permissions/**
+    - group: 04-ComfyUI服务模块
       paths-to-match: /api/v1/comfyui-servers/**
-    - group: 工作流模块
+    - group: 05-工作流模块
       paths-to-match: /api/v1/workflows/**
-    - group: 会话模块
+    - group: 06-会话模块
       paths-to-match: /api/v1/sessions/**
-    - group: Agent模块
+    - group: 07-Agent模块
       paths-to-match: /api/v1/agents/**
-    - group: AI模型模块
+    - group: 08-AI模型模块
       paths-to-match: /api/v1/models/**, /api/v1/model-providers/**
-    - group: 资源模块
-      paths-to-match: /api/v1/files/**
+    - group: 09-资源模块
+      paths-to-match: /api/v1/files/**, /api/v1/resources/**
+    # 支撑服务模块
+    - group: 10-通知模块
+      paths-to-match: /api/v1/notifications/**, /api/v1/email/**
+    - group: 11-监控模块
+      paths-to-match: /api/v1/monitor/**, /api/v1/health/**
+    - group: 12-审计日志模块
+      paths-to-match: /api/v1/audit-logs/**
