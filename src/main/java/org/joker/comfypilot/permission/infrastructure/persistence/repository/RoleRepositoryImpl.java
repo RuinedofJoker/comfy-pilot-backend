@@ -1,0 +1,66 @@
+package org.joker.comfypilot.permission.infrastructure.persistence.repository;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import lombok.RequiredArgsConstructor;
+import org.joker.comfypilot.permission.domain.entity.Role;
+import org.joker.comfypilot.permission.domain.repository.RoleRepository;
+import org.joker.comfypilot.permission.infrastructure.persistence.converter.RoleConverter;
+import org.joker.comfypilot.permission.infrastructure.persistence.mapper.RoleMapper;
+import org.joker.comfypilot.permission.infrastructure.persistence.po.RolePO;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+/**
+ * 角色仓储实现
+ */
+@Repository
+@RequiredArgsConstructor
+public class RoleRepositoryImpl implements RoleRepository {
+
+    private final RoleMapper roleMapper;
+    private final RoleConverter roleConverter;
+
+    @Override
+    public Optional<Role> findById(Long id) {
+        RolePO po = roleMapper.selectById(id);
+        return Optional.ofNullable(roleConverter.toDomain(po));
+    }
+
+    @Override
+    public Optional<Role> findByRoleCode(String roleCode) {
+        LambdaQueryWrapper<RolePO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(RolePO::getRoleCode, roleCode)
+                .eq(RolePO::getIsDeleted, false);
+        RolePO po = roleMapper.selectOne(wrapper);
+        return Optional.ofNullable(roleConverter.toDomain(po));
+    }
+
+    @Override
+    public boolean existsByRoleCode(String roleCode) {
+        LambdaQueryWrapper<RolePO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(RolePO::getRoleCode, roleCode)
+                .eq(RolePO::getIsDeleted, false);
+        return roleMapper.selectCount(wrapper) > 0;
+    }
+
+    @Override
+    public Role save(Role role) {
+        RolePO po = roleConverter.toPO(role);
+        if (po.getId() == null) {
+            roleMapper.insert(po);
+        } else {
+            roleMapper.updateById(po);
+        }
+        return roleConverter.toDomain(po);
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        RolePO po = roleMapper.selectById(id);
+        if (po != null) {
+            po.setIsDeleted(System.currentTimeMillis());
+            roleMapper.updateById(po);
+        }
+    }
+}

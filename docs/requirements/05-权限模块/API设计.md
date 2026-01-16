@@ -4,14 +4,52 @@
 
 ## 接口列表
 
-### 角色管理
-- 角色CRUD
+### 1. 获取当前用户角色
 
-### 权限管理
-- 权限定义管理
-- 角色权限关联
+**接口说明**: 获取当前登录用户的角色列表
 
-### 权限校验
-- 权限验证接口
+**请求**:
+- 方法: `GET`
+- 路径: `/api/v1/permissions/my-roles`
+- 认证: 需要 Bearer Token
 
-> 待实现时填充具体接口定义、请求参数、响应格式
+**响应**:
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": [
+    {
+      "roleCode": "ADMIN",
+      "roleName": "管理员"
+    },
+    {
+      "roleCode": "USER",
+      "roleName": "普通用户"
+    }
+  ]
+}
+```
+
+### 2. 获取当前用户权限
+
+**接口说明**: 获取当前登录用户的权限列表
+
+**请求**:
+- 方法: `GET`
+- 路径: `/api/v1/permissions/my-permissions`
+- 认证: 需要 Bearer Token
+
+**响应**:
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": [
+    "workflow:create",
+    "workflow:read",
+    "workflow:update",
+    "workflow:delete"
+  ]
+}
+```

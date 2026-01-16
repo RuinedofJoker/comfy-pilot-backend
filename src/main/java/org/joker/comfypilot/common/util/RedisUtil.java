@@ -26,12 +26,13 @@ public class RedisUtil {
      * 指定缓存失效时间
      *
      * @param key  键
-     * @param time 时间(秒)
+     * @param time 时间
+     * @param unit 时间单位
      */
-    public boolean expire(String key, long time) {
+    public boolean expire(String key, long time, TimeUnit unit) {
         try {
             if (time > 0) {
-                redisTemplate.expire(key, time, TimeUnit.SECONDS);
+                redisTemplate.expire(key, time, unit);
             }
             return true;
         } catch (Exception e) {
@@ -112,13 +113,14 @@ public class RedisUtil {
      *
      * @param key   键
      * @param value 值
-     * @param time  时间(秒) time要大于0 如果time小于等于0 将设置无限期
+     * @param time  时间 time要大于0 如果time小于等于0 将设置无限期
+     * @param unit  时间单位
      * @return true成功 false 失败
      */
-    public boolean set(String key, Object value, long time) {
+    public boolean set(String key, Object value, long time, TimeUnit unit) {
         try {
             if (time > 0) {
-                redisTemplate.opsForValue().set(key, value, time, TimeUnit.SECONDS);
+                redisTemplate.opsForValue().set(key, value, time, unit);
             } else {
                 set(key, value);
             }
@@ -199,14 +201,15 @@ public class RedisUtil {
      *
      * @param key  键
      * @param map  对应多个键值
-     * @param time 时间(秒)
+     * @param time 时间
+     * @param unit 时间单位
      * @return true成功 false失败
      */
-    public boolean hSetAll(String key, Map<String, Object> map, long time) {
+    public boolean hSetAll(String key, Map<String, Object> map, long time, TimeUnit unit) {
         try {
             redisTemplate.opsForHash().putAll(key, map);
             if (time > 0) {
-                expire(key, time);
+                expire(key, time, unit);
             }
             return true;
         } catch (Exception e) {
@@ -237,14 +240,15 @@ public class RedisUtil {
      * @param key   键
      * @param item  项
      * @param value 值
-     * @param time  时间(秒) 注意:如果已存在的hash表有时间,这里将会替换原有的时间
+     * @param time  时间 注意:如果已存在的hash表有时间,这里将会替换原有的时间
+     * @param unit  时间单位
      * @return true 成功 false失败
      */
-    public boolean hSet(String key, String item, Object value, long time) {
+    public boolean hSet(String key, String item, Object value, long time, TimeUnit unit) {
         try {
             redisTemplate.opsForHash().put(key, item, value);
             if (time > 0) {
-                expire(key, time);
+                expire(key, time, unit);
             }
             return true;
         } catch (Exception e) {
@@ -345,15 +349,16 @@ public class RedisUtil {
      * 将set数据放入缓存
      *
      * @param key    键
-     * @param time   时间(秒)
+     * @param time   时间
+     * @param unit   时间单位
      * @param values 值 可以是多个
      * @return 成功个数
      */
-    public long sSet(String key, long time, Object... values) {
+    public long sSet(String key, long time, TimeUnit unit, Object... values) {
         try {
             Long count = redisTemplate.opsForSet().add(key, values);
             if (time > 0) {
-                expire(key, time);
+                expire(key, time, unit);
             }
             return count != null ? count : 0;
         } catch (Exception e) {
@@ -456,13 +461,14 @@ public class RedisUtil {
      *
      * @param key   键
      * @param value 值
-     * @param time  时间(秒)
+     * @param time  时间
+     * @param unit  时间单位
      */
-    public boolean lSet(String key, Object value, long time) {
+    public boolean lSet(String key, Object value, long time, TimeUnit unit) {
         try {
             redisTemplate.opsForList().rightPush(key, value);
             if (time > 0) {
-                expire(key, time);
+                expire(key, time, unit);
             }
             return true;
         } catch (Exception e) {
@@ -490,13 +496,14 @@ public class RedisUtil {
      *
      * @param key   键
      * @param value 值
-     * @param time  时间(秒)
+     * @param time  时间
+     * @param unit  时间单位
      */
-    public boolean lSet(String key, List<Object> value, long time) {
+    public boolean lSet(String key, List<Object> value, long time, TimeUnit unit) {
         try {
             redisTemplate.opsForList().rightPushAll(key, value);
             if (time > 0) {
-                expire(key, time);
+                expire(key, time, unit);
             }
             return true;
         } catch (Exception e) {
