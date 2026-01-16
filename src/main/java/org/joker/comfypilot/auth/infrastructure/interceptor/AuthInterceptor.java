@@ -31,12 +31,12 @@ public class AuthInterceptor implements HandlerInterceptor {
     private static final String BEARER_PREFIX = "Bearer ";
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         // 从请求头获取Token
         String authHeader = request.getHeader(AUTHORIZATION_HEADER);
         if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
             log.debug("请求未携带Token");
-            return true;
+            return true; // 没有Token，放行（由权限注解控制是否需要认证）
         }
 
         String token = authHeader.substring(BEARER_PREFIX.length());
@@ -45,20 +45,29 @@ public class AuthInterceptor implements HandlerInterceptor {
             // 验证Token
             if (!jwtUtil.validateToken(token)) {
                 log.warn("Token验证失败");
-                return true;
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"code\":401,\"message\":\"Token验证失败\"}");
+                return false; // 拦截请求
             }
 
             // 从Redis查询Token信息
             UserTokenRedis tokenRedis = tokenRedisRepository.getAccessToken(token);
             if (tokenRedis == null) {
                 log.warn("Token不存在于Redis");
-                return true;
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"code\":401,\"message\":\"Token不存在或已过期\"}");
+                return false; // 拦截请求
             }
 
             // 检查Token是否被撤销
             if (tokenRedis.getIsRevoked()) {
                 log.warn("Token已被撤销");
-                return true;
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"code\":401,\"message\":\"Token已被撤销\"}");
+                return false; // 拦截请求
             }
 
             // 获取用户ID
@@ -68,7 +77,10 @@ public class AuthInterceptor implements HandlerInterceptor {
             UserSessionRedis session = sessionRedisRepository.getSession(userId);
             if (session == null) {
                 log.warn("用户会话不存在, userId: {}", userId);
-                return true;
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"code\":401,\"message\":\"用户会话不存在，请重新登录\"}");
+                return false; // 拦截请求
             }
 
             // 设置到ThreadLocal
@@ -78,11 +90,14 @@ public class AuthInterceptor implements HandlerInterceptor {
             sessionRedisRepository.refreshSession(userId);
 
             log.debug("用户认证成功, userId: {}", userId);
-            return true;
+            return true; // 认证成功，放行
 
         } catch (Exception e) {
             log.error("认证拦截器异常", e);
-            return true;
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"code\":500,\"message\":\"认证服务异常\"}");
+            return false; // 异常情况也应该拦截
         }
     }
 

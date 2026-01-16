@@ -26,6 +26,11 @@ public class RegisterRequest {
     @Email(message = "邮箱格式不正确")
     private String email;
 
+    @Schema(description = "用户名", example = "张三", required = true)
+    @NotBlank(message = "用户名不能为空")
+    @Size(min = 2, max = 50, message = "用户名长度必须在2-50个字符之间")
+    private String username;
+
     @Schema(description = "密码（最小8位，包含字母和数字）", example = "password123", required = true)
     @NotBlank(message = "密码不能为空")
     @Size(min = 8, message = "密码长度不能少于8位")
