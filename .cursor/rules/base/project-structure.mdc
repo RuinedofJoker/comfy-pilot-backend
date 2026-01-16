@@ -8,6 +8,7 @@ alwaysApply: true
 ## 项目文档目录规范
 - 项目的文档产出都放在docs目录下
 - 项目的需求文档和基本设计都在`docs/requirements`目录里
+- 项目的UI设计图都在`docs/prototypes`目录里
 
 ## 分层架构
 
