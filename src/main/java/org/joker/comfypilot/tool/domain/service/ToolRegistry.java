@@ -11,32 +11,9 @@ import java.util.List;
 public interface ToolRegistry {
 
     /**
-     * 获取所有工具实例
-     * 用于 Agent 构建时注入工具
-     *
-     * @return 所有工具实例数组
-     */
-    Object[] getAllTools();
-
-    /**
-     * 根据类名获取工具实例
-     *
-     * @param className 工具类名
-     * @return 工具实例，如果不存在返回 null
-     */
-    Object getToolByClassName(String className);
-
-    /**
-     * 获取所有工具实例列表
-     *
-     * @return 所有工具实例列表
-     */
-    List<Object> getToolList();
-
-    /**
      * 检查工具是否存在
      *
-     * @param className 工具类名
+     * @param className 工具名
      * @return true-存在，false-不存在
      */
     boolean exists(String className);
@@ -50,18 +27,11 @@ public interface ToolRegistry {
     List<ToolSpecification> getAllToolSpecifications();
 
     /**
-     * 根据类名获取工具的 ToolSpecification 列表
+     * 根据工具名获取工具
      *
-     * @param className 工具类名
-     * @return 该工具类的所有 ToolSpecification 列表，如果不存在返回空列表
+     * @param toolName 工具名
+     * @return 该工具
      */
-    List<ToolSpecification> getToolSpecificationsByClassName(String className);
+    Tool getToolByName(String toolName);
 
-    /**
-     * 根据类名和方法名获取工具的 ToolSpecification
-     *
-     * @param className 工具类名
-     * @return 该工具类下的工具方法对应的 ToolSpecification，如果不存在返回null
-     */
-    ToolSpecification getToolSpecificationByMethodName(String className, String methodName);
 }

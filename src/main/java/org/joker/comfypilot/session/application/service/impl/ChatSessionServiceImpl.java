@@ -171,14 +171,14 @@ public class ChatSessionServiceImpl implements ChatSessionService {
             AgentExecutionResponse response = agentExecutor.execute(executionContext);
 
             // 8. 保存助手消息
-            ChatMessage assistantMessage = ChatMessage.builder()
+            /*ChatMessage assistantMessage = ChatMessage.builder()
                     .sessionId(chatSession.getId())
                     .role(MessageRole.ASSISTANT)
                     .content(response.getOutput())
                     .createTime(LocalDateTime.now())
                     .updateTime(LocalDateTime.now())
                     .build();
-            chatMessageRepository.save(assistantMessage);
+            chatMessageRepository.save(assistantMessage);*/
 
             log.info("消息发送成功: sessionCode={}", sessionCode);
 

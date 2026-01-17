@@ -1,7 +1,5 @@
 package org.joker.comfypilot.agent.domain.service;
 
-import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
-import org.joker.comfypilot.agent.application.dto.AgentExecutionResponse;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 
 import java.util.Map;
@@ -51,7 +49,7 @@ public interface Agent {
 
     /**
      * 获取 Agent Scope 配置
-     * 对应 langchain4j 的 AgentScope 概念
+     * 对应 langchain4j 的 agentic-scope 概念
      * 在执行时会自动解析并注入到执行上下文中
      *
      * @return Agent Scope 配置，key-value 形式

@@ -1,5 +1,6 @@
 package org.joker.comfypilot.session.infrastructure.persistence.po;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.AllArgsConstructor;
@@ -42,6 +43,6 @@ public class ChatMessagePO extends BasePO {
     /**
      * 元数据（JSONB类型）
      */
-    @com.baomidou.mybatisplus.annotation.TableField(typeHandler = JacksonTypeHandler.class)
+    @TableField(typeHandler = JacksonTypeHandler.class)
     private Map<String, Object> metadata;
 }

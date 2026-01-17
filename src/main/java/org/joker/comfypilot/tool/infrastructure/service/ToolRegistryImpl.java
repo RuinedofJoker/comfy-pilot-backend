@@ -1,10 +1,11 @@
 package org.joker.comfypilot.tool.infrastructure.service;
 
-import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.agent.tool.ToolSpecifications;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.joker.comfypilot.common.exception.BusinessException;
+import org.joker.comfypilot.tool.domain.service.Tool;
 import org.joker.comfypilot.tool.domain.service.ToolRegistry;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
@@ -12,8 +13,6 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,11 +26,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ToolRegistryImpl implements ToolRegistry, ApplicationContextAware {
 
     /**
-     * 工具实例映射表
-     * Key: 工具类的简单类名（如 "WorkflowTool"）
-     * Value: 工具实例（Spring Bean）
+     * 工具映射表
+     * Key: 工具名
+     * Value: 工具对象
      */
-    private final Map<String, Object> toolMap = new ConcurrentHashMap<>();
+    private final Map<String, Tool> toolMap = new ConcurrentHashMap<>();
 
     private ApplicationContext applicationContext;
 
@@ -92,7 +91,7 @@ public class ToolRegistryImpl implements ToolRegistry, ApplicationContextAware {
         // 检查所有方法是否有 @Tool 注解
         Method[] methods = clazz.getDeclaredMethods();
         for (Method method : methods) {
-            if (method.isAnnotationPresent(Tool.class)) {
+            if (method.isAnnotationPresent(dev.langchain4j.agent.tool.Tool.class)) {
                 return true;
             }
         }
@@ -113,119 +112,37 @@ public class ToolRegistryImpl implements ToolRegistry, ApplicationContextAware {
             className = className.substring(0, className.indexOf("$$"));
         }
 
-        toolMap.put(className, toolBean);
-
-        // 统计该工具类中的 @Tool 方法数量
-        int methodCount = countToolMethods(toolBean);
-        log.info("注册工具: className={}, toolMethods=", className, methodCount);
-    }
-
-    /**
-     * 统计工具类中 @Tool 方法的数量
-     *
-     * @param toolBean 工具 Bean 实例
-     * @return @Tool 方法数量
-     */
-    private int countToolMethods(Object toolBean) {
-        int count = 0;
+        int methodCount = 0;
         Method[] methods = toolBean.getClass().getDeclaredMethods();
         for (Method method : methods) {
-            if (method.isAnnotationPresent(Tool.class)) {
-                count++;
+            method.setAccessible(true);
+            if (method.isAnnotationPresent(dev.langchain4j.agent.tool.Tool.class)) {
+                ToolSpecification toolSpecification = ToolSpecifications.toolSpecificationFrom(method);
+                String toolName = toolSpecification.name();
+                if (toolMap.containsKey(toolName)) {
+                    throw new BusinessException("注册工具出错:工具名:" + toolName + " 重复！");
+                }
+                toolMap.put(toolName, new ExecutableTool(toolName, method, toolBean, toolSpecification));
+                methodCount++;
             }
         }
-        return count;
+
+        log.info("注册工具: className={}, toolMethods={}", className, methodCount);
     }
 
     @Override
-    public Object[] getAllTools() {
-        return toolMap.values().toArray();
-    }
-
-    @Override
-    public Object getToolByClassName(String className) {
-        return toolMap.get(className);
-    }
-
-    @Override
-    public List<Object> getToolList() {
-        return new ArrayList<>(toolMap.values());
-    }
-
-    @Override
-    public boolean exists(String className) {
-        return toolMap.containsKey(className);
+    public boolean exists(String toolName) {
+        return toolMap.containsKey(toolName);
     }
 
     @Override
     public List<ToolSpecification> getAllToolSpecifications() {
-        List<ToolSpecification> allSpecifications = new ArrayList<>();
-
-        // 遍历所有工具实例，提取 ToolSpecification
-        for (Object toolBean : toolMap.values()) {
-            try {
-                List<ToolSpecification> specifications = ToolSpecifications.toolSpecificationsFrom(toolBean);
-                allSpecifications.addAll(specifications);
-            } catch (Exception e) {
-                log.warn("无法从工具实例提取 ToolSpecification: {}, 原因: {}",
-                        toolBean.getClass().getSimpleName(), e.getMessage());
-            }
-        }
-
-        log.debug("提取到 {} 个 ToolSpecification", allSpecifications.size());
-        return allSpecifications;
+        return toolMap.values().stream().map(Tool::toolSpecification).toList();
     }
 
     @Override
-    public List<ToolSpecification> getToolSpecificationsByClassName(String className) {
-        Object toolBean = toolMap.get(className);
-
-        if (toolBean == null) {
-            log.warn("工具类不存在: {}", className);
-            return Collections.emptyList();
-        }
-
-        try {
-            List<ToolSpecification> specifications = ToolSpecifications.toolSpecificationsFrom(toolBean);
-            log.debug("从工具类 {} 提取到 {} 个 ToolSpecification", className, specifications.size());
-            return specifications;
-        } catch (Exception e) {
-            log.error("无法从工具类 {} 提取 ToolSpecification: {}", className, e.getMessage());
-            return Collections.emptyList();
-        }
+    public Tool getToolByName(String toolName) {
+        return toolMap.get(toolName);
     }
 
-    @Override
-    public ToolSpecification getToolSpecificationByMethodName(String className, String methodName) {
-        Object toolBean = toolMap.get(className);
-
-        if (toolBean == null) {
-            log.warn("工具类不存在: {}", className);
-            return null;
-        }
-
-        try {
-            // 获取工具类的所有方法
-            Method[] methods = toolBean.getClass().getDeclaredMethods();
-
-            // 查找匹配的方法
-            for (Method method : methods) {
-                // 检查方法是否有 @Tool 注解且方法名匹配
-                if (method.isAnnotationPresent(Tool.class) && method.getName().equals(methodName)) {
-                    // 使用 langchain4j 的 API 从方法提取 ToolSpecification
-                    ToolSpecification specification = ToolSpecifications.toolSpecificationFrom(method);
-                    log.debug("从工具类 {} 的方法 {} 提取到 ToolSpecification", className, methodName);
-                    return specification;
-                }
-            }
-
-            log.warn("工具类 {} 中未找到方法: {}", className, methodName);
-            return null;
-
-        } catch (Exception e) {
-            log.error("无法从工具类 {} 的方法 {} 提取 ToolSpecification: {}",
-                    className, methodName, e.getMessage());
-            return null;
-        }
-    }
 }
