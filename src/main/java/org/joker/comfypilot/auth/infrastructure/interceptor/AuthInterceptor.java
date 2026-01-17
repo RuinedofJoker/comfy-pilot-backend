@@ -8,6 +8,7 @@ import org.joker.comfypilot.auth.infrastructure.redis.model.UserTokenRedis;
 import org.joker.comfypilot.auth.infrastructure.redis.repository.SessionRedisRepository;
 import org.joker.comfypilot.auth.infrastructure.redis.repository.TokenRedisRepository;
 import org.joker.comfypilot.auth.infrastructure.util.JwtUtil;
+import org.joker.comfypilot.common.constant.AuthConstants;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -27,19 +28,16 @@ public class AuthInterceptor implements HandlerInterceptor {
     private final TokenRedisRepository tokenRedisRepository;
     private final SessionRedisRepository sessionRedisRepository;
 
-    private static final String AUTHORIZATION_HEADER = "Authorization";
-    private static final String BEARER_PREFIX = "Bearer ";
-
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         // 从请求头获取Token
-        String authHeader = request.getHeader(AUTHORIZATION_HEADER);
-        if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
+        String authHeader = request.getHeader(AuthConstants.AUTHORIZATION_HEADER);
+        if (authHeader == null || !authHeader.startsWith(AuthConstants.BEARER_PREFIX)) {
             log.debug("请求未携带Token");
             return true; // 没有Token，放行（由权限注解控制是否需要认证）
         }
 
-        String token = authHeader.substring(BEARER_PREFIX.length());
+        String token = authHeader.substring(AuthConstants.BEARER_PREFIX.length());
 
         try {
             // 验证Token

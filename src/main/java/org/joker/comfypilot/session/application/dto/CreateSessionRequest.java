@@ -20,9 +20,6 @@ public class CreateSessionRequest implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @Schema(description = "Agent ID", required = true)
-    private Long agentId;
-
     @Schema(description = "会话标题")
     private String title;
 }

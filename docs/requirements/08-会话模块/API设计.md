@@ -24,7 +24,6 @@
 **请求参数**：
 ```json
 {
-  "agentId": 1,
   "title": "工作流编辑会话"
 }
 ```
@@ -32,7 +31,6 @@
 **参数说明**：
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| agentId | Long | 是 | Agent ID |
 | title | String | 否 | 会话标题 |
 
 **响应示例**：
@@ -40,15 +38,7 @@
 {
   "code": 200,
   "message": "success",
-  "data": {
-    "id": 1,
-    "sessionCode": "SESSION_20260117_001",
-    "agentId": 1,
-    "title": "工作流编辑会话",
-    "status": "ACTIVE",
-    "createTime": "2026-01-17T10:00:00Z",
-    "updateTime": "2026-01-17T10:00:00Z"
-  }
+  "data": "SESSION_20260117_001"
 }
 ```
 
@@ -353,7 +343,6 @@ ws.onmessage = (event) => {
 {
   "type": "START_SESSION",
   "data": {
-    "agentId": 1,
     "title": "工作流编辑会话"
   },
   "timestamp": 1705478400000
@@ -364,7 +353,6 @@ ws.onmessage = (event) => {
 | 字段名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
 | type | String | 是 | 消息类型，固定为 START_SESSION |
-| data.agentId | Long | 是 | Agent ID |
 | data.title | String | 否 | 会话标题 |
 | timestamp | Long | 是 | 时间戳（毫秒） |
 
@@ -389,6 +377,7 @@ ws.onmessage = (event) => {
   "type": "USER_MESSAGE",
   "sessionCode": "session_abc123def456",
   "content": "请帮我创建一个图像生成工作流",
+  "agentCode": "workflow_agent",
   "timestamp": 1705478400000
 }
 ```
@@ -399,6 +388,7 @@ ws.onmessage = (event) => {
 | type | String | 是 | 消息类型，固定为 USER_MESSAGE |
 | sessionCode | String | 是 | 会话编码 |
 | content | String | 是 | 消息内容 |
+| agentCode | String | 是 | Agent编码 |
 | timestamp | Long | 是 | 时间戳（毫秒） |
 
 ---

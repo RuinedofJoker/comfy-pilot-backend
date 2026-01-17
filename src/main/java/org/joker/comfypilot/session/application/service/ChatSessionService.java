@@ -15,12 +15,11 @@ public interface ChatSessionService {
     /**
      * 创建会话（WebSocket版本）
      *
-     * @param userId  用户ID
-     * @param agentId Agent ID
-     * @param title   会话标题
+     * @param userId 用户ID
+     * @param title  会话标题
      * @return 会话编码
      */
-    String createSession(Long userId, Long agentId, String title);
+    String createSession(Long userId, String title);
 
     /**
      * 根据会话编码查询会话
@@ -43,10 +42,11 @@ public interface ChatSessionService {
      *
      * @param sessionCode 会话编码
      * @param content     消息内容
+     * @param agentCode   Agent编码
      * @param context     WebSocket会话上下文
      * @param session     WebSocket会话
      */
-    void sendMessageAsync(String sessionCode, String content, WebSocketSessionContext context, WebSocketSession session);
+    void sendMessageAsync(String sessionCode, String content, String agentCode, WebSocketSessionContext context, WebSocketSession session);
 
     /**
      * 查询会话消息历史

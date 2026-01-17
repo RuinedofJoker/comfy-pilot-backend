@@ -10,6 +10,9 @@ import org.joker.comfypilot.session.domain.enums.WebSocketMessageType;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
 /**
  * WebSocket流式输出回调实现
  */
@@ -42,7 +45,7 @@ public class WebSocketStreamCallback implements StreamCallback {
                 .type(WebSocketMessageType.AGENT_TOOL_CALL.name())
                 .sessionCode(sessionCode)
                 .content(toolName)
-                .data(java.util.Map.of("toolName", toolName, "toolArgs", toolArgs))
+                .data(Map.of("toolName", toolName, "toolArgs", toolArgs))
                 .timestamp(System.currentTimeMillis())
                 .build();
 
@@ -50,9 +53,12 @@ public class WebSocketStreamCallback implements StreamCallback {
     }
 
     @Override
-    public void onRequestInput(String prompt) {
+    public CompletableFuture<String> onRequestInput(String prompt) {
         log.info("Agent请求用户输入: sessionCode={}, prompt={}", sessionCode, prompt);
         sendMessage(WebSocketMessageType.AGENT_REQUEST_INPUT, prompt);
+
+        // 创建并返回等待用户响应的Future
+        return sessionContext.requestUserInput();
     }
 
     @Override

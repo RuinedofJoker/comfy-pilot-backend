@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -38,6 +39,11 @@ public class WebSocketSessionContext {
      * 中断标志
      */
     private AtomicBoolean interrupted;
+
+    /**
+     * 用户响应Future（用于等待用户输入）
+     */
+    private volatile CompletableFuture<String> userResponseFuture;
 
     /**
      * 创建时间
@@ -90,5 +96,35 @@ public class WebSocketSessionContext {
      */
     public void updateActiveTime() {
         this.lastActiveTime = System.currentTimeMillis();
+    }
+
+    /**
+     * 请求用户输入（创建等待Future）
+     *
+     * @return 用户响应的Future
+     */
+    public CompletableFuture<String> requestUserInput() {
+        this.userResponseFuture = new CompletableFuture<>();
+        return this.userResponseFuture;
+    }
+
+    /**
+     * 提供用户响应（完成Future）
+     *
+     * @param response 用户响应内容
+     */
+    public void provideUserResponse(String response) {
+        if (this.userResponseFuture != null && !this.userResponseFuture.isDone()) {
+            this.userResponseFuture.complete(response);
+        }
+    }
+
+    /**
+     * 检查是否正在等待用户输入
+     *
+     * @return true表示正在等待
+     */
+    public boolean isWaitingForUserInput() {
+        return this.userResponseFuture != null && !this.userResponseFuture.isDone();
     }
 }

@@ -36,7 +36,7 @@ public class ChatSession extends BaseEntity<Long> {
     private Long userId;
 
     /**
-     * Agent ID
+     * Agent ID（已废弃，改为在消息级别指定 agentCode）
      */
     private Long agentId;
 
@@ -89,13 +89,5 @@ public class ChatSession extends BaseEntity<Long> {
      */
     public boolean isActive() {
         return SessionStatus.ACTIVE.equals(this.status);
-    }
-
-    /**
-     * 领域行为：切换Agent
-     */
-    public void changeAgent(Long newAgentId) {
-        this.agentId = newAgentId;
-        this.updateTime = LocalDateTime.now();
     }
 }

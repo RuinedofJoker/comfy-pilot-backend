@@ -11,7 +11,6 @@ CREATE TABLE IF NOT EXISTS chat_session (
     id BIGINT PRIMARY KEY,
     session_code VARCHAR(50) NOT NULL,
     user_id BIGINT NOT NULL,
-    agent_id BIGINT NOT NULL,
     title VARCHAR(200),
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     is_deleted INTEGER NOT NULL DEFAULT 0,
@@ -26,7 +25,6 @@ CREATE UNIQUE INDEX uk_session_code ON chat_session(session_code) WHERE is_delet
 
 -- 创建普通索引
 CREATE INDEX idx_chat_session_user_id ON chat_session(user_id);
-CREATE INDEX idx_chat_session_agent_id ON chat_session(agent_id);
 CREATE INDEX idx_chat_session_status ON chat_session(status);
 CREATE INDEX idx_chat_session_create_time ON chat_session(create_time);
 CREATE INDEX idx_chat_session_is_deleted ON chat_session(is_deleted);

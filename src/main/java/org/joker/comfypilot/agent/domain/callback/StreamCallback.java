@@ -1,5 +1,7 @@
 package org.joker.comfypilot.agent.domain.callback;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * Agent流式输出回调接口
  */
@@ -26,11 +28,12 @@ public interface StreamCallback {
     void onToolCall(String toolName, String toolArgs);
 
     /**
-     * 当Agent请求用户输入时调用
+     * 当Agent请求用户输入时调用（阻塞等待用户响应）
      *
      * @param prompt 提示信息
+     * @return 用户响应的Future
      */
-    void onRequestInput(String prompt);
+    CompletableFuture<String> onRequestInput(String prompt);
 
     /**
      * 当Agent完成输出时调用

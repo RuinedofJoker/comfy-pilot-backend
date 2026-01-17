@@ -29,7 +29,7 @@ public class ChatSessionController {
     @PostMapping
     public Result<String> createSession(@RequestBody CreateSessionRequest request) {
         Long userId = UserContextHolder.getCurrentUserId();
-        String sessionCode = chatSessionService.createSession(userId, request.getAgentId(), request.getTitle());
+        String sessionCode = chatSessionService.createSession(userId, request.getTitle());
         return Result.success(sessionCode);
     }
 

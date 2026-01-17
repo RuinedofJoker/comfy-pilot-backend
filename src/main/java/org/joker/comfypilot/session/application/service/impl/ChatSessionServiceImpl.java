@@ -45,8 +45,8 @@ public class ChatSessionServiceImpl implements ChatSessionService {
 
     @Override
     @Transactional
-    public String createSession(Long userId, Long agentId, String title) {
-        log.info("创建会话: userId={}, agentId={}", userId, agentId);
+    public String createSession(Long userId, String title) {
+        log.info("创建会话: userId={}", userId);
 
         // 生成会话编码
         String sessionCode = "session_" + UUID.randomUUID().toString().replace("-", "");
@@ -55,7 +55,7 @@ public class ChatSessionServiceImpl implements ChatSessionService {
         ChatSession chatSession = ChatSession.builder()
                 .sessionCode(sessionCode)
                 .userId(userId)
-                .agentId(agentId)
+                .agentId(null)  // 不再在会话级别指定Agent
                 .title(title != null ? title : "新会话")
                 .status(SessionStatus.ACTIVE)
                 .createTime(LocalDateTime.now())
@@ -121,10 +121,10 @@ public class ChatSessionServiceImpl implements ChatSessionService {
 
     @Override
     @Async
-    public void sendMessageAsync(String sessionCode, String content,
+    public void sendMessageAsync(String sessionCode, String content, String agentCode,
                                   WebSocketSessionContext wsContext,
                                   WebSocketSession webSocketSession) {
-        log.info("异步发送消息: sessionCode={}, content={}", sessionCode, content);
+        log.info("异步发送消息: sessionCode={}, agentCode={}, content={}", sessionCode, agentCode, content);
 
         try {
             // 标记开始执行
@@ -161,8 +161,7 @@ public class ChatSessionServiceImpl implements ChatSessionService {
                     .isStreamable(true)
                     .build();
 
-            // 6. 获取Agent执行上下文
-            String agentCode = getAgentCode(chatSession.getAgentId());
+            // 6. 获取Agent执行上下文（直接使用传入的agentCode）
             AgentExecutionContext executionContext = agentExecutor.getExecutionContext(agentCode, agentRequest);
 
             // 设置流式回调
@@ -188,14 +187,5 @@ public class ChatSessionServiceImpl implements ChatSessionService {
             wsContext.completeExecution();
             throw new RuntimeException("消息发送失败: " + e.getMessage(), e);
         }
-    }
-
-    /**
-     * 根据agentId获取agentCode
-     * TODO: 这里需要调用Agent模块的服务来获取agentCode
-     */
-    private String getAgentCode(Long agentId) {
-        // 临时实现,后续需要从Agent模块获取
-        return "workflow_agent";
     }
 }
