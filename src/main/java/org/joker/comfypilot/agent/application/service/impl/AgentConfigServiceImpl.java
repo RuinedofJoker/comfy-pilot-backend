@@ -1,0 +1,95 @@
+package org.joker.comfypilot.agent.application.service.impl;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.joker.comfypilot.agent.application.converter.AgentConfigDTOConverter;
+import org.joker.comfypilot.agent.application.dto.AgentConfigDTO;
+import org.joker.comfypilot.agent.application.service.AgentConfigService;
+import org.joker.comfypilot.agent.domain.entity.AgentConfig;
+import org.joker.comfypilot.agent.domain.repository.AgentConfigRepository;
+import org.joker.comfypilot.common.exception.BusinessException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * Agent配置服务实现
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class AgentConfigServiceImpl implements AgentConfigService {
+
+    private final AgentConfigRepository agentConfigRepository;
+    private final AgentConfigDTOConverter dtoConverter;
+
+    @Override
+    public List<AgentConfigDTO> getAllAgents() {
+        List<AgentConfig> agents = agentConfigRepository.findAll();
+        return agents.stream()
+                .map(dtoConverter::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<AgentConfigDTO> getEnabledAgents() {
+        List<AgentConfig> agents = agentConfigRepository.findAll();
+        return agents.stream()
+                .filter(AgentConfig::isEnabled)
+                .map(dtoConverter::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public AgentConfigDTO getAgentById(Long id) {
+        AgentConfig agent = agentConfigRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Agent不存在"));
+        return dtoConverter.toDTO(agent);
+    }
+
+    @Override
+    public AgentConfigDTO getAgentByCode(String agentCode) {
+        AgentConfig agent = agentConfigRepository.findByAgentCode(agentCode)
+                .orElseThrow(() -> new BusinessException("Agent不存在: " + agentCode));
+        return dtoConverter.toDTO(agent);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public AgentConfigDTO updateAgentInfo(Long id, String name, String description) {
+        AgentConfig agent = agentConfigRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Agent不存在"));
+
+        agent.updateNameAndDescription(name, description);
+        agent = agentConfigRepository.update(agent);
+
+        log.info("更新Agent信息成功: id={}, name={}", id, name);
+        return dtoConverter.toDTO(agent);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void enableAgent(Long id) {
+        AgentConfig agent = agentConfigRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Agent不存在"));
+
+        agent.enable();
+        agentConfigRepository.update(agent);
+
+        log.info("启用Agent成功: id={}", id);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void disableAgent(Long id) {
+        AgentConfig agent = agentConfigRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Agent不存在"));
+
+        agent.disable();
+        agentConfigRepository.update(agent);
+
+        log.info("禁用Agent成功: id={}", id);
+    }
+}
