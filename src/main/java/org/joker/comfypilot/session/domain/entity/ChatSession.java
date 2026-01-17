@@ -61,10 +61,10 @@ public class ChatSession extends BaseEntity<Long> {
     private LocalDateTime updateTime;
 
     /**
-     * 领域行为：关闭会话
+     * 领域行为：归档会话
      */
-    public void close() {
-        this.status = SessionStatus.CLOSED;
+    public void archive() {
+        this.status = SessionStatus.ARCHIVED;
         this.updateTime = LocalDateTime.now();
     }
 
@@ -89,5 +89,13 @@ public class ChatSession extends BaseEntity<Long> {
      */
     public boolean isActive() {
         return SessionStatus.ACTIVE.equals(this.status);
+    }
+
+    /**
+     * 领域行为：切换Agent
+     */
+    public void changeAgent(Long newAgentId) {
+        this.agentId = newAgentId;
+        this.updateTime = LocalDateTime.now();
     }
 }

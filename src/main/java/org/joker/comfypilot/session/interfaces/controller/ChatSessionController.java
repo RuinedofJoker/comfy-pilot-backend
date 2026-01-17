@@ -9,7 +9,6 @@ import org.joker.comfypilot.common.interfaces.response.Result;
 import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
 import org.joker.comfypilot.session.application.dto.ChatSessionDTO;
 import org.joker.comfypilot.session.application.dto.CreateSessionRequest;
-import org.joker.comfypilot.session.application.dto.SendMessageRequest;
 import org.joker.comfypilot.session.application.service.ChatSessionService;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,12 +25,12 @@ public class ChatSessionController {
 
     private final ChatSessionService chatSessionService;
 
-    @Operation(summary = "创建会话", description = "创建一个新的对话会话")
+    @Operation(summary = "创建会话", description = "创建一个新的对话会话（返回会话编码）")
     @PostMapping
-    public Result<ChatSessionDTO> createSession(@RequestBody CreateSessionRequest request) {
+    public Result<String> createSession(@RequestBody CreateSessionRequest request) {
         Long userId = UserContextHolder.getCurrentUserId();
-        ChatSessionDTO session = chatSessionService.createSession(userId, request);
-        return Result.success(session);
+        String sessionCode = chatSessionService.createSession(userId, request.getAgentId(), request.getTitle());
+        return Result.success(sessionCode);
     }
 
     @Operation(summary = "查询会话详情", description = "根据会话编码查询会话详情")
@@ -52,14 +51,6 @@ public class ChatSessionController {
         return Result.success(sessions);
     }
 
-    @Operation(summary = "发送消息", description = "向会话发送消息并获取AI回复")
-    @PostMapping("/messages")
-    public Result<ChatMessageDTO> sendMessage(@RequestBody SendMessageRequest request) {
-        Long userId = UserContextHolder.getCurrentUserId();
-        ChatMessageDTO message = chatSessionService.sendMessage(userId, request);
-        return Result.success(message);
-    }
-
     @Operation(summary = "查询消息历史", description = "查询会话的所有消息历史")
     @GetMapping("/{sessionCode}/messages")
     public Result<List<ChatMessageDTO>> getMessageHistory(
@@ -70,13 +61,13 @@ public class ChatSessionController {
         return Result.success(messages);
     }
 
-    @Operation(summary = "关闭会话", description = "关闭指定的会话")
-    @PostMapping("/{sessionCode}/close")
-    public Result<Void> closeSession(
+    @Operation(summary = "归档会话", description = "归档指定的会话")
+    @PostMapping("/{sessionCode}/archive")
+    public Result<Void> archiveSession(
             @Parameter(description = "会话编码", required = true)
             @PathVariable String sessionCode) {
 
-        chatSessionService.closeSession(sessionCode);
+        chatSessionService.archiveSession(sessionCode);
         return Result.success(null);
     }
 }

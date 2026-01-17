@@ -11,9 +11,9 @@ public enum SessionStatus {
     ACTIVE("活跃"),
 
     /**
-     * 已关闭 - 会话已结束
+     * 已归档 - 会话已归档
      */
-    CLOSED("已关闭");
+    ARCHIVED("已归档");
 
     private final String description;
 

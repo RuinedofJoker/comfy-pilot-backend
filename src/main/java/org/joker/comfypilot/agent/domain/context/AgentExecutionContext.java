@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionResponse;
+import org.joker.comfypilot.agent.domain.callback.StreamCallback;
 import org.joker.comfypilot.agent.domain.entity.AgentExecutionLog;
 import org.joker.comfypilot.agent.domain.service.Agent;
 
@@ -37,5 +38,14 @@ public class AgentExecutionContext {
     private Map<String, Object> agentConfig;
 
     private Map<String, Object> agentScope;
+
+    private StreamCallback streamCallback;
+
+    /**
+     * 检查是否被中断
+     */
+    public boolean isInterrupted() {
+        return streamCallback != null && streamCallback.isInterrupted();
+    }
 
 }

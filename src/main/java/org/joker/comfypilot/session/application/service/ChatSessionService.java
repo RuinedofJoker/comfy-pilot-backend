@@ -2,8 +2,8 @@ package org.joker.comfypilot.session.application.service;
 
 import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
 import org.joker.comfypilot.session.application.dto.ChatSessionDTO;
-import org.joker.comfypilot.session.application.dto.CreateSessionRequest;
-import org.joker.comfypilot.session.application.dto.SendMessageRequest;
+import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
+import org.springframework.web.socket.WebSocketSession;
 
 import java.util.List;
 
@@ -13,13 +13,14 @@ import java.util.List;
 public interface ChatSessionService {
 
     /**
-     * 创建会话
+     * 创建会话（WebSocket版本）
      *
      * @param userId  用户ID
-     * @param request 创建会话请求
-     * @return 会话DTO
+     * @param agentId Agent ID
+     * @param title   会话标题
+     * @return 会话编码
      */
-    ChatSessionDTO createSession(Long userId, CreateSessionRequest request);
+    String createSession(Long userId, Long agentId, String title);
 
     /**
      * 根据会话编码查询会话
@@ -38,13 +39,14 @@ public interface ChatSessionService {
     List<ChatSessionDTO> getSessionsByUserId(Long userId);
 
     /**
-     * 发送消息
+     * 异步发送消息（WebSocket版本，支持流式输出）
      *
-     * @param userId  用户ID
-     * @param request 发送消息请求
-     * @return 助手回复消息
+     * @param sessionCode 会话编码
+     * @param content     消息内容
+     * @param context     WebSocket会话上下文
+     * @param session     WebSocket会话
      */
-    ChatMessageDTO sendMessage(Long userId, SendMessageRequest request);
+    void sendMessageAsync(String sessionCode, String content, WebSocketSessionContext context, WebSocketSession session);
 
     /**
      * 查询会话消息历史
@@ -55,9 +57,9 @@ public interface ChatSessionService {
     List<ChatMessageDTO> getMessageHistory(String sessionCode);
 
     /**
-     * 关闭会话
+     * 归档会话
      *
      * @param sessionCode 会话编码
      */
-    void closeSession(String sessionCode);
+    void archiveSession(String sessionCode);
 }

@@ -33,6 +33,6 @@ public class ChatSessionDTO extends BaseDTO {
     @Schema(description = "会话标题")
     private String title;
 
-    @Schema(description = "会话状态（ACTIVE, CLOSED）")
+    @Schema(description = "会话状态（ACTIVE, ARCHIVED）")
     private String status;
 }

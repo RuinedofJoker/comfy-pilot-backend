@@ -77,6 +77,22 @@ public class AgentExecutorImpl implements AgentExecutor {
             // 3. 执行Agent
             log.info("开始执行Agent: code={}, sessionId={}, version={}",
                     agentCode, request.getSessionId(), agent.getVersion());
+
+            // 检查是否被中断
+            if (executionContext.isInterrupted()) {
+                log.warn("Agent执行被中断: code={}, sessionId={}", agentCode, request.getSessionId());
+                long executionTime = System.currentTimeMillis() - startTime;
+                executionLog.markFailed("执行被用户中断", executionTime);
+                executionLogRepository.update(executionLog);
+
+                return AgentExecutionResponse.builder()
+                        .logId(executionLog.getId())
+                        .status(ExecutionStatus.FAILED.name())
+                        .errorMessage("执行被用户中断")
+                        .executionTimeMs(executionTime)
+                        .build();
+            }
+
             agent.execute(executionContext);
             AgentExecutionResponse response = executionContext.getResponse();
             response.setExecutionStartMs(startTime);
@@ -107,6 +123,11 @@ public class AgentExecutorImpl implements AgentExecutor {
             executionLogRepository.update(executionLog);
 
             log.error("Agent执行失败: code={}, error={}", agentCode, e.getMessage(), e);
+
+            // 如果有流式回调，通知错误
+            if (executionContext.getStreamCallback() != null) {
+                executionContext.getStreamCallback().onError(e.getMessage());
+            }
 
             return AgentExecutionResponse.builder()
                     .logId(executionLog.getId())

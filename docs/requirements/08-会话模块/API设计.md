@@ -326,87 +326,239 @@
 **连接参数**：
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| token | String | 是 | 认证Token |
+| token | String | 是 | 认证Token（TODO: 待集成认证模块） |
 
 **连接示例**：
 ```javascript
 const ws = new WebSocket('ws://localhost:8080/ws/chat?token=YOUR_TOKEN');
+
+ws.onopen = () => {
+  console.log('WebSocket 连接已建立');
+};
+
+ws.onmessage = (event) => {
+  const message = JSON.parse(event.data);
+  console.log('收到消息:', message);
+};
 ```
 
 ---
 
-### 4.2 发送消息
+### 4.2 开始会话
 
-**消息格式**：
+**消息类型**：`START_SESSION`
+
+**客户端发送**：
 ```json
 {
-  "type": "SEND_MESSAGE",
-  "sessionId": 1,
-  "content": "请帮我创建一个图像生成工作流"
+  "type": "START_SESSION",
+  "data": {
+    "agentId": 1,
+    "title": "工作流编辑会话"
+  },
+  "timestamp": 1705478400000
 }
 ```
 
 **字段说明**：
 | 字段名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| type | String | 是 | 消息类型 |
-| sessionId | Long | 是 | 会话ID |
-| content | String | 是 | 消息内容 |
+| type | String | 是 | 消息类型，固定为 START_SESSION |
+| data.agentId | Long | 是 | Agent ID |
+| data.title | String | 否 | 会话标题 |
+| timestamp | Long | 是 | 时间戳（毫秒） |
 
----
-
-### 4.3 接收消息
-
-**消息格式**：
+**服务端响应**：
 ```json
 {
-  "type": "MESSAGE",
-  "data": {
-    "id": 2,
-    "sessionId": 1,
-    "role": "ASSISTANT",
-    "content": "好的，我来帮你创建一个图像生成工作流...",
-    "metadata": {
-      "model": "gpt-4",
-      "inputTokens": 20,
-      "outputTokens": 100,
-      "executionTimeMs": 1500
-    },
-    "createTime": "2026-01-17T10:00:02Z"
-  }
+  "type": "SESSION_CREATED",
+  "sessionCode": "session_abc123def456",
+  "timestamp": 1705478400100
 }
 ```
 
 ---
 
-### 4.4 心跳保活
+### 4.3 发送用户消息
+
+**消息类型**：`USER_MESSAGE`
 
 **客户端发送**：
 ```json
 {
-  "type": "PING"
+  "type": "USER_MESSAGE",
+  "sessionCode": "session_abc123def456",
+  "content": "请帮我创建一个图像生成工作流",
+  "timestamp": 1705478400000
+}
+```
+
+**字段说明**：
+| 字段名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| type | String | 是 | 消息类型，固定为 USER_MESSAGE |
+| sessionCode | String | 是 | 会话编码 |
+| content | String | 是 | 消息内容 |
+| timestamp | Long | 是 | 时间戳（毫秒） |
+
+---
+
+### 4.4 Agent 流式输出消息
+
+#### 4.4.1 Agent 思考中
+
+**消息类型**：`AGENT_THINKING`
+
+**服务端推送**：
+```json
+{
+  "type": "AGENT_THINKING",
+  "sessionCode": "session_abc123def456",
+  "content": "Agent正在思考中...",
+  "timestamp": 1705478400200
+}
+```
+
+#### 4.4.2 Agent 流式输出
+
+**消息类型**：`AGENT_STREAM`
+
+**服务端推送**：
+```json
+{
+  "type": "AGENT_STREAM",
+  "sessionCode": "session_abc123def456",
+  "content": "好的，我来帮你",
+  "timestamp": 1705478400300
+}
+```
+
+**说明**：Agent 会多次推送此类型消息，每次包含部分内容。
+
+#### 4.4.3 Agent 调用工具
+
+**消息类型**：`AGENT_TOOL_CALL`
+
+**服务端推送**：
+```json
+{
+  "type": "AGENT_TOOL_CALL",
+  "sessionCode": "session_abc123def456",
+  "content": "createWorkflow",
+  "data": {
+    "toolName": "createWorkflow",
+    "toolArgs": "{\"name\":\"图像生成工作流\"}"
+  },
+  "timestamp": 1705478400400
+}
+```
+
+#### 4.4.4 Agent 请求用户输入
+
+**消息类型**：`AGENT_REQUEST_INPUT`
+
+**服务端推送**：
+```json
+{
+  "type": "AGENT_REQUEST_INPUT",
+  "sessionCode": "session_abc123def456",
+  "content": "请提供图像的尺寸（宽x高）",
+  "timestamp": 1705478400500
+}
+```
+
+**客户端响应**：
+```json
+{
+  "type": "USER_RESPONSE",
+  "sessionCode": "session_abc123def456",
+  "content": "512x512",
+  "timestamp": 1705478410000
+}
+```
+
+#### 4.4.5 Agent 执行完成
+
+**消息类型**：`AGENT_COMPLETE`
+
+**服务端推送**：
+```json
+{
+  "type": "AGENT_COMPLETE",
+  "sessionCode": "session_abc123def456",
+  "content": "好的，我来帮你创建一个图像生成工作流。我已经创建了一个基础的工作流模板...",
+  "timestamp": 1705478420000
+}
+```
+
+---
+
+### 4.5 中断执行
+
+**消息类型**：`INTERRUPT`
+
+**客户端发送**：
+```json
+{
+  "type": "INTERRUPT",
+  "sessionCode": "session_abc123def456",
+  "timestamp": 1705478415000
 }
 ```
 
 **服务端响应**：
 ```json
 {
-  "type": "PONG"
+  "type": "EXECUTION_INTERRUPTED",
+  "content": "执行已中断",
+  "timestamp": 1705478415100
 }
 ```
 
 ---
 
-### 4.5 错误消息
+### 4.6 心跳保活
 
-**消息格式**：
+**消息类型**：`PING` / `PONG`
+
+**客户端发送**：
+```json
+{
+  "type": "PING",
+  "timestamp": 1705478430000
+}
+```
+
+**服务端响应**：
+```json
+{
+  "type": "PONG",
+  "timestamp": 1705478430100
+}
+```
+
+**说明**：建议客户端每 30 秒发送一次心跳。
+
+---
+
+### 4.7 错误消息
+
+**消息类型**：`ERROR`
+
+**服务端推送**：
 ```json
 {
   "type": "ERROR",
-  "message": "会话不存在",
-  "code": "SESSION_NOT_FOUND"
+  "error": "会话不存在",
+  "timestamp": 1705478440000
 }
 ```
+
+**常见错误**：
+- "会话不存在" - sessionCode 无效
+- "会话已关闭,无法发送消息" - 会话状态为 ARCHIVED
+- "当前会话正在执行中,请稍后再试" - 同一连接已有 Agent 在执行
+- "处理消息失败: ..." - 其他业务错误
 
 ---
 
