@@ -12,38 +12,163 @@ import org.joker.comfypilot.tool.domain.service.Tool;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
+/**
+ * 可执行工具实现类
+ * <p>
+ * {@link Tool} 接口的默认实现，封装了工具的反射调用逻辑。
+ * 通过 Jackson 进行 JSON 参数解析和结果序列化，支持复杂对象类型。
+ * <p>
+ * <b>核心功能：</b>
+ * <ul>
+ *   <li>自动解析 JSON 参数为 Java 方法参数</li>
+ *   <li>通过反射调用工具方法</li>
+ *   <li>序列化返回值为 JSON 字符串</li>
+ *   <li>完善的异常处理和日志记录</li>
+ * </ul>
+ * <p>
+ * <b>参数解析策略：</b>
+ * <ol>
+ *   <li>优先使用参数名匹配（需要 {@code -parameters} 编译选项）</li>
+ *   <li>如果检测到编译器生成的参数名（arg0, arg1...），降级为索引匹配</li>
+ *   <li>支持基本类型、包装类型、复杂对象、集合等所有 Jackson 支持的类型</li>
+ * </ol>
+ * <p>
+ * <b>使用示例：</b>
+ * <pre>{@code
+ * // 工具定义
+ * @Component
+ * public class UserTool {
+ *     @Tool("创建用户")
+ *     public User createUser(@P("用户名") String name, @P("年龄") int age) {
+ *         return new User(name, age);
+ *     }
+ * }
+ *
+ * // 工具执行
+ * ExecutableTool tool = new ExecutableTool(
+ *     "createUser",
+ *     method,
+ *     userToolInstance,
+ *     toolSpecification
+ * );
+ *
+ * String result = tool.executeTool("createUser", "{\"name\":\"张三\",\"age\":25}");
+ * // 返回: {"name":"张三","age":25}
+ * }</pre>
+ * <p>
+ * <b>注意事项：</b>
+ * <ul>
+ *   <li>确保 Maven/Gradle 配置了 {@code <parameters>true</parameters>} 编译选项</li>
+ *   <li>工具方法必须是 public 的</li>
+ *   <li>参数类型必须是 Jackson 可序列化/反序列化的</li>
+ *   <li>返回值类型必须是 Jackson 可序列化的</li>
+ * </ul>
+ *
+ * @see Tool
+ * @see org.joker.comfypilot.tool.infrastructure.service.ToolRegistryImpl
+ */
 @Slf4j
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
 public class ExecutableTool implements Tool {
 
+    /**
+     * JSON 序列化/反序列化工具
+     * <p>
+     * 用于：
+     * <ul>
+     *   <li>解析 JSON 参数字符串为 Java 对象</li>
+     *   <li>序列化方法返回值为 JSON 字符串</li>
+     * </ul>
+     */
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
+    /**
+     * 工具名称
+     * <p>
+     * 从 {@code @Tool} 注解中提取，如果注解未指定则使用方法名。
+     */
     private String toolName;
+
+    /**
+     * 工具对应的反射方法
+     * <p>
+     * 用于通过反射调用工具的实际执行逻辑。
+     */
     private Method method;
+
+    /**
+     * 工具所属的 Spring Bean 实例
+     * <p>
+     * 工具方法需要通过此实例调用（非静态方法）。
+     */
     private Object instance;
+
+    /**
+     * LangChain4j 工具规范
+     * <p>
+     * 包含工具的完整元数据，用于传递给 LLM。
+     */
     private ToolSpecification toolSpecification;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toolName() {
         return toolName;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Method method() {
         return method;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Object instance() {
         return instance;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ToolSpecification toolSpecification() {
         return toolSpecification;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * <b>执行流程：</b>
+     * <ol>
+     *   <li>记录执行开始日志</li>
+     *   <li>调用 {@link #buildArguments(Method, String)} 解析 JSON 参数</li>
+     *   <li>通过反射调用工具方法</li>
+     *   <li>序列化返回值为 JSON 字符串</li>
+     *   <li>记录执行成功日志</li>
+     * </ol>
+     * <p>
+     * <b>异常处理：</b>
+     * <ul>
+     *   <li>{@link IllegalArgumentException} - 参数类型不匹配或缺少必需参数</li>
+     *   <li>{@link IllegalAccessException} - 方法访问权限不足</li>
+     *   <li>{@link java.lang.reflect.InvocationTargetException} - 方法执行过程中抛出异常</li>
+     *   <li>{@link Exception} - 其他未预期的异常</li>
+     * </ul>
+     * 所有异常都会被捕获、记录日志，并转换为 {@link BusinessException} 抛出。
+     *
+     * @param name      工具名称（用于日志记录）
+     * @param arguments JSON 格式的参数字符串，例如：{@code {"a":10,"b":20}}
+     * @return JSON 格式的执行结果
+     * @throws BusinessException 工具执行失败时抛出，包含详细的错误信息
+     */
     @Override
     public String executeTool(String name, String arguments) {
         try {
@@ -90,11 +215,50 @@ public class ExecutableTool implements Tool {
 
     /**
      * 构建方法参数数组
+     * <p>
+     * 将 JSON 格式的参数字符串解析为 Java 方法参数数组。
+     * 支持两种参数匹配策略：
+     * <ol>
+     *   <li><b>参数名匹配（推荐）：</b>通过参数名从 JSON 中获取对应值</li>
+     *   <li><b>索引匹配（降级）：</b>当检测到编译器生成的参数名时，通过索引获取值</li>
+     * </ol>
+     * <p>
+     * <b>参数名匹配示例：</b>
+     * <pre>{@code
+     * // 方法定义
+     * public int add(int a, int b) { ... }
      *
-     * @param method 目标方法
-     * @param argumentsJson JSON 格式的参数
-     * @return 方法参数数组
-     * @throws Exception 参数解析失败
+     * // JSON 参数
+     * {"a": 10, "b": 20}
+     *
+     * // 解析结果
+     * Object[] args = [10, 20]
+     * }</pre>
+     * <p>
+     * <b>索引匹配示例（降级策略）：</b>
+     * <pre>{@code
+     * // 如果参数名为 arg0, arg1（未启用 -parameters）
+     * // JSON 参数（数组形式）
+     * [10, 20]
+     *
+     * // 解析结果
+     * Object[] args = [10, 20]
+     * }</pre>
+     * <p>
+     * <b>支持的参数类型：</b>
+     * <ul>
+     *   <li>基本类型：int, long, double, boolean 等</li>
+     *   <li>包装类型：Integer, Long, Double, Boolean 等</li>
+     *   <li>字符串：String</li>
+     *   <li>复杂对象：任何 Jackson 可反序列化的 POJO</li>
+     *   <li>集合类型：List, Set, Map 等</li>
+     * </ul>
+     *
+     * @param method        目标方法，用于获取参数信息
+     * @param argumentsJson JSON 格式的参数字符串
+     * @return 方法参数数组，顺序与方法参数定义一致
+     * @throws IllegalArgumentException 参数缺失或格式错误时抛出
+     * @throws Exception                JSON 解析失败或类型转换失败时抛出
      */
     private Object[] buildArguments(Method method, String argumentsJson) throws Exception {
         Parameter[] parameters = method.getParameters();
