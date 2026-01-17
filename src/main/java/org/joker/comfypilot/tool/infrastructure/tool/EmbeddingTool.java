@@ -1,97 +1,78 @@
 package org.joker.comfypilot.tool.infrastructure.tool;
 
+import dev.langchain4j.agent.tool.Tool;
+import dev.langchain4j.agent.tool.P;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.model.application.dto.ModelCapabilityRequest;
 import org.joker.comfypilot.model.application.dto.ModelCapabilityResponse;
 import org.joker.comfypilot.model.application.service.ModelCapabilityService;
 import org.joker.comfypilot.model.domain.enums.ModelCapability;
-import org.joker.comfypilot.tool.domain.enums.ToolType;
-import org.joker.comfypilot.tool.domain.service.Tool;
-import org.joker.comfypilot.tool.domain.valueobject.ToolExecutionMetadata;
-import org.joker.comfypilot.tool.domain.valueobject.ToolExecutionResult;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * 向量生成工具
- * 封装向量生成能力
+ * 提供文本向量化能力
+ * 符合 langchain4j 规范的工具类
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class EmbeddingTool implements Tool {
+public class EmbeddingTool {
 
     private final ModelCapabilityService modelCapabilityService;
 
-    @Override
-    public ToolType getType() {
-        return ToolType.EMBEDDING;
-    }
+    /**
+     * 生成文本向量
+     * 将文本转换为向量表示，用于语义搜索和相似度计算
+     *
+     * @param text 需要向量化的文本
+     * @return 向量生成结果的字符串表示
+     */
+    @Tool("将文本转换为向量表示")
+    public String generateEmbedding(@P("需要向量化的文本") String text) {
 
-    @Override
-    public String getName() {
-        return "embedding";
-    }
-
-    @Override
-    public String getDescription() {
-        return "向量生成工具，用于文本向量化";
-    }
-
-    @Override
-    public Map<String, Object> getParameterSchema() {
-        Map<String, Object> schema = new HashMap<>();
-        schema.put("type", "object");
-
-        Map<String, Object> properties = new HashMap<>();
-
-        // text 参数
-        Map<String, Object> textSchema = new HashMap<>();
-        textSchema.put("type", "string");
-        textSchema.put("description", "需要向量化的文本");
-        properties.put("text", textSchema);
-
-        schema.put("properties", properties);
-        schema.put("required", new String[]{"text"});
-
-        return schema;
-    }
-
-    @Override
-    public ToolExecutionResult execute(Map<String, Object> parameters) {
-        log.info("执行 EmbeddingTool: parameters={}", parameters);
+        log.info("执行 EmbeddingTool.generateEmbedding: text={}", text);
 
         try {
             // 1. 验证参数
-            if (!parameters.containsKey("text")) {
-                return ToolExecutionResult.failure("缺少必需参数: text");
+            if (text == null || text.trim().isEmpty()) {
+                return "错误：文本不能为空";
             }
 
-            // 2. 构建 ModelCapabilityRequest
+            // 2. 构建请求参数
+            Map<String, Object> parameters = new HashMap<>();
+            parameters.put("text", text);
+
+            // 3. 构建 ModelCapabilityRequest
             ModelCapabilityRequest request = ModelCapabilityRequest.builder()
                     .capability(ModelCapability.EMBEDDING)
                     .parameters(parameters)
                     .build();
 
-            // 3. 调用 ModelCapabilityService
+            // 4. 调用 ModelCapabilityService
             ModelCapabilityResponse response = modelCapabilityService.invoke(request);
 
-            // 4. 构建执行元数据
-            ToolExecutionMetadata metadata = ToolExecutionMetadata.builder()
-                    .toolType(getType().getCode())
-                    .toolName(getName())
-                    .modelUsed(response.getMetadata().getModelIdentifier())
-                    .build();
+            // 5. 处理返回结果
+            Object result = response.getResult();
 
-            // 5. 返回成功结果
-            return ToolExecutionResult.success(response.getResult(), metadata);
+            if (result instanceof List) {
+                @SuppressWarnings("unchecked")
+                List<Double> embedding = (List<Double>) result;
+                log.info("EmbeddingTool.generateEmbedding 执行成功，向量维度: {}", embedding.size());
+                return "向量生成成功，维度: " + embedding.size();
+            } else {
+                log.info("EmbeddingTool.generateEmbedding 执行成功");
+                return "向量生成成功";
+            }
 
         } catch (Exception e) {
-            log.error("EmbeddingTool 执行失败", e);
-            return ToolExecutionResult.failure("EmbeddingTool 执行失败: " + e.getMessage());
+            log.error("EmbeddingTool.generateEmbedding 执行失败", e);
+            return "错误：向量生成失败 - " + e.getMessage();
         }
     }
 }
