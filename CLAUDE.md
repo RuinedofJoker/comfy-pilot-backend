@@ -431,3 +431,4 @@ mkdir -p src/main/java/org/joker/comfypilot/{module}/interfaces/dto
 - ✅ API文档完整，便于前后端协作
 - ✅ 符合SOLID原则，代码易于维护和扩展
 - ✅ 与现有模块保持一致的代码风格
+
