@@ -64,12 +64,4 @@ public interface ModelProviderRepository {
      * @return true-被引用，false-未被引用
      */
     boolean isReferencedByModels(Long providerId);
-
-    /**
-     * 检查提供商是否有API密钥
-     *
-     * @param providerId 提供商ID
-     * @return true-有密钥，false-无密钥
-     */
-    boolean hasApiKeys(Long providerId);
 }

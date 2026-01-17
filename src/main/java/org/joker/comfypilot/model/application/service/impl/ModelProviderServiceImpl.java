@@ -99,11 +99,6 @@ public class ModelProviderServiceImpl implements ModelProviderService {
             throw new BusinessException("无法删除提供商：存在关联的模型");
         }
 
-        // 检查是否有API密钥
-        if (providerRepository.hasApiKeys(id)) {
-            throw new BusinessException("无法删除提供商：存在关联的API密钥");
-        }
-
         // 删除
         providerRepository.deleteById(id);
     }

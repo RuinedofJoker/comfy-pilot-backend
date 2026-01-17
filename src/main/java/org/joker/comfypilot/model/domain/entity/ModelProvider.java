@@ -31,7 +31,7 @@ public class ModelProvider extends BaseEntity<Long> {
     private String providerName;
 
     /**
-     * 提供商类型
+     * 提供协议类型
      */
     private ProviderType providerType;
 
@@ -39,6 +39,11 @@ public class ModelProvider extends BaseEntity<Long> {
      * API基础URL
      */
     private String apiBaseUrl;
+
+    /**
+     * API KEY
+     */
+    private String apiKey;
 
     /**
      * 描述信息

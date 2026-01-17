@@ -1,15 +1,22 @@
 package org.joker.comfypilot.agent.domain.agent.workflow;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.model.chat.StreamingChatModel;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
-import org.joker.comfypilot.agent.application.dto.AgentExecutionResponse;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
-import org.joker.comfypilot.agent.domain.enums.ExecutionStatus;
+import org.joker.comfypilot.agent.domain.service.AbstractAgent;
 import org.joker.comfypilot.agent.domain.service.Agent;
+import org.joker.comfypilot.model.domain.repository.ModelProviderRepository;
+import org.joker.comfypilot.model.domain.service.StreamingChatModelFactory;
+import org.joker.comfypilot.tool.domain.service.ToolRegistry;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 简单对话Agent
@@ -17,7 +24,16 @@ import java.util.Map;
  */
 @Slf4j
 @Component
-public class WorkflowAgent implements Agent {
+public class WorkflowAgent extends AbstractAgent implements Agent {
+
+    @Autowired
+    private ToolRegistry toolRegistry;
+    @Autowired
+    private ModelProviderRepository modelProviderRepository;
+    @Autowired
+    private StreamingChatModelFactory streamingChatModelFactory;
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Override
     public String getAgentCode() {
@@ -54,48 +70,22 @@ public class WorkflowAgent implements Agent {
         return config;
     }
 
-    @Override
-    public void execute(AgentExecutionContext executionContext) {
+    protected void executeWithStreaming(AgentExecutionContext executionContext) throws Exception {
+        // 发送ai思考中消息
+        executionContext.getStreamCallback().onThinking();
+
         AgentExecutionRequest request = executionContext.getRequest();
-        log.info("SimpleAgent开始执行: sessionId={}, input={}, isStreamable={}",
-                request.getSessionId(), request.getInput(), request.getIsStreamable());
 
-        try {
-            if (Boolean.TRUE.equals(request.getIsStreamable())) {
-                // 流式的agent直接返回
-                executionContext.setResponse(
-                        AgentExecutionResponse.builder()
-                                .status(ExecutionStatus.RUNNING.name())
-                                .build()
-                );
-            } else {
-                // TODO: 集成langchain4j实现真实的LLM调用
-                // 当前为模拟实现
-                String output = processInput(request.getInput());
+        Map<String, Object> input = OBJECT_MAPPER.readValue(request.getInput(), new TypeReference<>() {
+        });
 
-                executionContext.setResponse(
-                        AgentExecutionResponse.builder()
-                                .output(output)
-                                .status(ExecutionStatus.SUCCESS.name())
-                                .build()
-                );
-            }
-        } catch (Exception e) {
-            log.error("WorkflowAgent执行失败", e);
-            executionContext.setResponse(
-                    AgentExecutionResponse.builder()
-                            .status(ExecutionStatus.FAILED.name())
-                            .errorMessage(e.getMessage())
-                            .build()
-            );
-        }
-    }
+        Map<String, Object> agentConfig = new HashMap<>(executionContext.getAgentConfig());
+        Map<String, Object> agentScope = new HashMap<>(executionContext.getAgentScope());
+        StreamingChatModel streamingModel = streamingChatModelFactory.createStreamingChatModel((String) input.get("llmModel"), agentConfig);
 
-    /**
-     * 处理用户输入（模拟实现）
-     */
-    private String processInput(String input) {
-        // 模拟处理逻辑
-        return "收到您的消息：" + input + "\n这是一个简单的回复示例。";
+        SystemMessage systemMessage = null;
+        LinkedList<ChatMessage> messages = new LinkedList<>();
+        // TODO 查询历史消息填充
+        // TODO 构建
     }
 }

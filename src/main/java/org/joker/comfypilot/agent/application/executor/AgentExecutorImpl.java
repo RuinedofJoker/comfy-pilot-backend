@@ -17,6 +17,7 @@ import org.joker.comfypilot.common.util.TraceIdUtil;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Optional;
 
 /**
@@ -51,8 +52,8 @@ public class AgentExecutorImpl implements AgentExecutor {
         return AgentExecutionContext.builder()
                 .agentCode(agentCode)
                 .agent(agent)
-                .agentConfig(agentConfig.getConfig())
-                .agentScope(agentConfig.getAgentScopeConfig())
+                .agentConfig(Collections.unmodifiableMap(agentConfig.getConfig()))
+                .agentScope(Collections.unmodifiableMap(agentConfig.getAgentScopeConfig()))
                 .userId(request.getUserId())
                 .sessionId(request.getSessionId())
                 .request(request)

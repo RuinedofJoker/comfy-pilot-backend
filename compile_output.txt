@@ -7,41 +7,87 @@
 [INFO] 
 [INFO] --- maven-resources-plugin:3.3.1:resources (default-resources) @ comfy-pilot-backend ---
 [INFO] Copying 1 resource from src\main\resources to target\classes
-[INFO] Copying 10 resources from src\main\resources to target\classes
+[INFO] Copying 12 resources from src\main\resources to target\classes
 [INFO] 
 [INFO] --- maven-compiler-plugin:3.14.1:compile (default-compile) @ comfy-pilot-backend ---
 [INFO] Recompiling the module because of changed source code.
-[INFO] Compiling 211 source files with javac [debug parameters release 21] to target\classes
+[INFO] Compiling 270 source files with javac [debug parameters release 21] to target\classes
 [INFO] -------------------------------------------------------------
 [ERROR] COMPILATION ERROR : 
 [INFO] -------------------------------------------------------------
-[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/executor/OpenAiExecutor.java:[44,16] 非法的表达式开始
-[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/executor/OpenAiExecutor.java:[44,23] 不是语句
-[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/executor/OpenAiExecutor.java:[44,35] 需要';'
-[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/executor/OpenAiExecutor.java:[45,13] 孤立的case
-[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/executor/OpenAiExecutor.java:[45,77] 需要:
-[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/executor/OpenAiExecutor.java:[46,66] 需要:
-[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/executor/OpenAiExecutor.java:[47,20] 需要:
-[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/executor/OpenAiExecutor.java:[47,21] 非法的表达式开始
-[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/executor/OpenAiExecutor.java:[47,23] 需要';'
-[INFO] 9 errors 
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/ChatModelFactoryImpl.java:[97,16] 非法的表达式开始
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/ChatModelFactoryImpl.java:[97,23] 不是语句
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/ChatModelFactoryImpl.java:[97,37] 需要';'
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/ChatModelFactoryImpl.java:[98,13] 孤立的case
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/ChatModelFactoryImpl.java:[98,70] 需要:
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/ChatModelFactoryImpl.java:[99,31] 非法的表达式开始
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/ChatModelFactoryImpl.java:[100,28] 非法的表达式开始
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/ChatModelFactoryImpl.java:[101,70] 需要:
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/StreamingChatModelFactoryImpl.java:[108,16] 非法的表达式开始
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/StreamingChatModelFactoryImpl.java:[108,23] 不是语句
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/StreamingChatModelFactoryImpl.java:[108,37] 需要';'
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/StreamingChatModelFactoryImpl.java:[109,13] 孤立的case
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/StreamingChatModelFactoryImpl.java:[109,70] 需要:
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/StreamingChatModelFactoryImpl.java:[110,31] 非法的表达式开始
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/StreamingChatModelFactoryImpl.java:[111,28] 非法的表达式开始
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/StreamingChatModelFactoryImpl.java:[112,70] 需要:
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[286,41] 未结束的字符串文字
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[286,42] 需要';'
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[287,39] 非法的表达式开始
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[287,41] 需要';'
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[287,47] 非法字符: '\u3002'
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[287,42] 不是语句
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[287,51] 非法字符: '\uff1a'
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[287,48] 不是语句
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[288,41] 不是语句
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[288,48] 需要';'
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[288,53] 不是语句
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[288,64] 需要';'
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[288,65] 不是语句
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[288,69] 需要';'
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[289,47] 需要';'
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[289,49] 未结束的字符串文字
+[INFO] 32 errors 
 [INFO] -------------------------------------------------------------
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD FAILURE
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  1.075 s
-[INFO] Finished at: 2026-01-17T10:55:39+08:00
+[INFO] Total time:  1.279 s
+[INFO] Finished at: 2026-01-18T00:58:30+08:00
 [INFO] ------------------------------------------------------------------------
 [ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.14.1:compile (default-compile) on project comfy-pilot-backend: Compilation failure: Compilation failure: 
-[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/executor/OpenAiExecutor.java:[44,16] 非法的表达式开始
-[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/executor/OpenAiExecutor.java:[44,23] 不是语句
-[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/executor/OpenAiExecutor.java:[44,35] 需要';'
-[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/executor/OpenAiExecutor.java:[45,13] 孤立的case
-[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/executor/OpenAiExecutor.java:[45,77] 需要:
-[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/executor/OpenAiExecutor.java:[46,66] 需要:
-[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/executor/OpenAiExecutor.java:[47,20] 需要:
-[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/executor/OpenAiExecutor.java:[47,21] 非法的表达式开始
-[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/executor/OpenAiExecutor.java:[47,23] 需要';'
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/ChatModelFactoryImpl.java:[97,16] 非法的表达式开始
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/ChatModelFactoryImpl.java:[97,23] 不是语句
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/ChatModelFactoryImpl.java:[97,37] 需要';'
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/ChatModelFactoryImpl.java:[98,13] 孤立的case
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/ChatModelFactoryImpl.java:[98,70] 需要:
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/ChatModelFactoryImpl.java:[99,31] 非法的表达式开始
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/ChatModelFactoryImpl.java:[100,28] 非法的表达式开始
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/ChatModelFactoryImpl.java:[101,70] 需要:
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/StreamingChatModelFactoryImpl.java:[108,16] 非法的表达式开始
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/StreamingChatModelFactoryImpl.java:[108,23] 不是语句
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/StreamingChatModelFactoryImpl.java:[108,37] 需要';'
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/StreamingChatModelFactoryImpl.java:[109,13] 孤立的case
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/StreamingChatModelFactoryImpl.java:[109,70] 需要:
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/StreamingChatModelFactoryImpl.java:[110,31] 非法的表达式开始
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/StreamingChatModelFactoryImpl.java:[111,28] 非法的表达式开始
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/model/infrastructure/service/StreamingChatModelFactoryImpl.java:[112,70] 需要:
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[286,41] 未结束的字符串文字
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[286,42] 需要';'
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[287,39] 非法的表达式开始
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[287,41] 需要';'
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[287,47] 非法字符: '\u3002'
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[287,42] 不是语句
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[287,51] 非法字符: '\uff1a'
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[287,48] 不是语句
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[288,41] 不是语句
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[288,48] 需要';'
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[288,53] 不是语句
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[288,64] 需要';'
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[288,65] 不是语句
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[288,69] 需要';'
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[289,47] 需要';'
+[ERROR] /C:/code/comfy-pilot/comfy-pilot-backend/src/main/java/org/joker/comfypilot/tool/infrastructure/service/ExecutableTool.java:[289,49] 未结束的字符串文字
 [ERROR] -> [Help 1]
 [ERROR] 
 [ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.

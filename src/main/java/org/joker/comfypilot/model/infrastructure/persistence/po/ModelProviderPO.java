@@ -37,6 +37,11 @@ public class ModelProviderPO extends BasePO {
     private String apiBaseUrl;
 
     /**
+     * API KEY
+     */
+    private String apiKey;
+
+    /**
      * 描述信息
      */
     private String description;

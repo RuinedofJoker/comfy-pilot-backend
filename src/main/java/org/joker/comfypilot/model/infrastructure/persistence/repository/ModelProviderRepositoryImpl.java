@@ -7,10 +7,8 @@ import org.joker.comfypilot.model.domain.enums.ProviderType;
 import org.joker.comfypilot.model.domain.repository.ModelProviderRepository;
 import org.joker.comfypilot.model.infrastructure.persistence.converter.ModelProviderConverter;
 import org.joker.comfypilot.model.infrastructure.persistence.mapper.AiModelMapper;
-import org.joker.comfypilot.model.infrastructure.persistence.mapper.ModelApiKeyMapper;
 import org.joker.comfypilot.model.infrastructure.persistence.mapper.ModelProviderMapper;
 import org.joker.comfypilot.model.infrastructure.persistence.po.AiModelPO;
-import org.joker.comfypilot.model.infrastructure.persistence.po.ModelApiKeyPO;
 import org.joker.comfypilot.model.infrastructure.persistence.po.ModelProviderPO;
 import org.springframework.stereotype.Repository;
 
@@ -27,7 +25,6 @@ public class ModelProviderRepositoryImpl implements ModelProviderRepository {
 
     private final ModelProviderMapper mapper;
     private final AiModelMapper aiModelMapper;
-    private final ModelApiKeyMapper apiKeyMapper;
     private final ModelProviderConverter converter;
 
     @Override
@@ -85,12 +82,5 @@ public class ModelProviderRepositoryImpl implements ModelProviderRepository {
         LambdaQueryWrapper<AiModelPO> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(AiModelPO::getProviderId, providerId);
         return aiModelMapper.selectCount(wrapper) > 0;
-    }
-
-    @Override
-    public boolean hasApiKeys(Long providerId) {
-        LambdaQueryWrapper<ModelApiKeyPO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(ModelApiKeyPO::getProviderId, providerId);
-        return apiKeyMapper.selectCount(wrapper) > 0;
     }
 }

@@ -1,5 +1,7 @@
 package org.joker.comfypilot.model.infrastructure.executor;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.request.ChatRequest;
@@ -11,31 +13,27 @@ import dev.langchain4j.model.output.Response;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.common.exception.BusinessException;
-import org.joker.comfypilot.model.application.util.ApiKeyUtil;
 import org.joker.comfypilot.model.domain.entity.AiModel;
-import org.joker.comfypilot.model.domain.entity.ModelApiKey;
 import org.joker.comfypilot.model.domain.entity.ModelProvider;
 import org.joker.comfypilot.model.domain.enums.ModelCapability;
-import org.joker.comfypilot.model.domain.repository.ModelApiKeyRepository;
 import org.joker.comfypilot.model.domain.repository.ModelProviderRepository;
 
 import java.time.Duration;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * OpenAI 执行器抽象类
  * 使用 langchain4j 实现 OpenAI API 调用
- * 子类只需重写 getApiBaseUrl()、getApiKey()、getModelParameters() 即可使用
+ * 从 model_config JSON 中获取 API Key
  */
 @Slf4j
 @RequiredArgsConstructor
 public abstract class OpenAiExecutor extends RemoteApiExecutor {
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private final ModelProviderRepository providerRepository;
-    private final ModelApiKeyRepository apiKeyRepository;
 
     @Override
     protected Map<String, Object> doExecute(AiModel model, ModelCapability capability,
@@ -68,6 +66,7 @@ public abstract class OpenAiExecutor extends RemoteApiExecutor {
                 .messages(UserMessage.from(prompt))
                 .build();
         log.debug("ChatRequest:\n{}", request);
+
         // 调用模型
         ChatResponse response = chatModel.chat(request);
         log.debug("ChatResponse:\n{}", response);
@@ -173,18 +172,32 @@ public abstract class OpenAiExecutor extends RemoteApiExecutor {
 
     /**
      * 获取 API Key（子类可重写）
-     * 默认从 ModelApiKey 中获取第一个启用的密钥
+     * 从 model_config JSON 中获取 apiKey 字段
      */
     protected String getApiKey(AiModel model) {
-        List<ModelApiKey> apiKeys = apiKeyRepository.findByProviderId(model.getProviderId());
+        try {
+            String modelConfig = model.getModelConfig();
+            if (modelConfig == null || modelConfig.isBlank()) {
+                throw new BusinessException("模型配置为空");
+            }
 
-        ModelApiKey enabledKey = apiKeys.stream()
-                .filter(ModelApiKey::isEnabled)
-                .findFirst()
-                .orElseThrow(() -> new BusinessException("未找到启用的 API Key"));
+            JsonNode root = OBJECT_MAPPER.readTree(modelConfig);
+            JsonNode apiKeyNode = root.get("apiKey");
 
-        // 解密 API Key
-        return ApiKeyUtil.decrypt(enabledKey.getApiKey());
+            if (apiKeyNode == null || apiKeyNode.isNull()) {
+                throw new BusinessException("模型配置中未找到 apiKey");
+            }
+
+            String apiKey = apiKeyNode.asText();
+            if (apiKey == null || apiKey.isBlank()) {
+                throw new BusinessException("模型配置中的 apiKey 为空");
+            }
+
+            return apiKey;
+        } catch (Exception e) {
+            log.error("解析模型配置失败: modelIdentifier={}", model.getModelIdentifier(), e);
+            throw new BusinessException("解析模型配置失败: " + e.getMessage());
+        }
     }
 
     /**

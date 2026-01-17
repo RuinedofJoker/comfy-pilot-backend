@@ -3,7 +3,7 @@ package org.joker.comfypilot.model.domain.enums;
 import lombok.Getter;
 
 /**
- * 模型提供商类型枚举
+ * 模型提供协议类型枚举
  */
 @Getter
 public enum ProviderType {
@@ -18,15 +18,7 @@ public enum ProviderType {
      */
     ANTHROPIC("anthropic", "Anthropic"),
 
-    /**
-     * 阿里云
-     */
-    ALIYUN("aliyun", "阿里云"),
-
-    /**
-     * 自定义
-     */
-    CUSTOM("custom", "自定义");
+    ;
 
     private final String code;
     private final String name;

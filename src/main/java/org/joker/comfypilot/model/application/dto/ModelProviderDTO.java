@@ -30,6 +30,9 @@ public class ModelProviderDTO extends BaseDTO {
     @Schema(description = "API基础URL")
     private String apiBaseUrl;
 
+    @Schema(description = "API密钥")
+    private String apiKey;
+
     @Schema(description = "描述信息")
     private String description;
 

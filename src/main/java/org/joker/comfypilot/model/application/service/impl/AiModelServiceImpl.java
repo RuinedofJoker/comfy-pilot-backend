@@ -163,6 +163,13 @@ public class AiModelServiceImpl implements AiModelService {
         modelRepository.save(model);
     }
 
+    @Override
+    public AiModelDTO getByModelIdentifier(String modelIdentifier) {
+        AiModel model = modelRepository.findByModelIdentifier(modelIdentifier)
+                .orElseThrow(() -> new ResourceNotFoundException("AI模型", modelIdentifier));
+        return dtoConverter.toDTO(model);
+    }
+
     /**
      * 验证接入方式是否有效
      */

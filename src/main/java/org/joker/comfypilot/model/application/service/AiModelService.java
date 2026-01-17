@@ -63,4 +63,12 @@ public interface AiModelService {
      * @param id 模型ID
      */
     void disableModel(Long id);
+
+    /**
+     * 根据模型标识符查询
+     *
+     * @param modelIdentifier 模型标识符
+     * @return 模型信息
+     */
+    AiModelDTO getByModelIdentifier(String modelIdentifier);
 }

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
-import org.joker.comfypilot.agent.application.dto.AgentExecutionResponse;
 import org.joker.comfypilot.agent.application.executor.AgentExecutor;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.joker.comfypilot.session.application.converter.ChatSessionDTOConverter;
@@ -168,20 +167,9 @@ public class ChatSessionServiceImpl implements ChatSessionService {
             executionContext.setStreamCallback(streamCallback);
 
             // 7. 执行Agent
-            AgentExecutionResponse response = agentExecutor.execute(executionContext);
-
-            // 8. 保存助手消息
-            /*ChatMessage assistantMessage = ChatMessage.builder()
-                    .sessionId(chatSession.getId())
-                    .role(MessageRole.ASSISTANT)
-                    .content(response.getOutput())
-                    .createTime(LocalDateTime.now())
-                    .updateTime(LocalDateTime.now())
-                    .build();
-            chatMessageRepository.save(assistantMessage);*/
+            agentExecutor.execute(executionContext);
 
             log.info("消息发送成功: sessionCode={}", sessionCode);
-
         } catch (Exception e) {
             log.error("消息发送失败: sessionCode={}, error={}", sessionCode, e.getMessage(), e);
             wsContext.completeExecution();
