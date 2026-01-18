@@ -67,7 +67,7 @@ public class ComfyuiServerServiceImpl implements ComfyuiServerService {
                 .apiKey(request.getApiKey())
                 .timeoutSeconds(request.getTimeoutSeconds() != null ? request.getTimeoutSeconds() : 30)
                 .maxRetries(request.getMaxRetries() != null ? request.getMaxRetries() : 3)
-                .isEnabled(true)
+                .isEnabled(request.getIsEnabled() != null ? request.getIsEnabled() : true)
                 .healthStatus(HealthStatus.UNKNOWN)
                 .advancedFeaturesEnabled(request.getAdvancedFeaturesEnabled() != null ? request.getAdvancedFeaturesEnabled() : false)
                 .advancedFeatures(request.getAdvancedFeatures() != null ?
