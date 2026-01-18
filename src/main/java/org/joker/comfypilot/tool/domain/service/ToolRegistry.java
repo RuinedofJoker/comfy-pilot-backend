@@ -11,10 +11,10 @@ public interface ToolRegistry {
     /**
      * 检查工具是否存在
      *
-     * @param className 工具名
+     * @param toolName 工具名
      * @return true-存在，false-不存在
      */
-    boolean exists(String className);
+    boolean exists(String toolName);
 
     /**
      * 根据工具名获取工具
