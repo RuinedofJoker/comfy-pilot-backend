@@ -32,6 +32,13 @@ public class ToolRegistryImpl implements ToolRegistry, ApplicationContextAware {
      */
     private final Map<String, Tool> toolMap = new ConcurrentHashMap<>();
 
+    /**
+     * Class 到 Tool 列表的映射表
+     * Key: 工具类的 Class 对象
+     * Value: 该类下所有的 Tool 列表
+     */
+    private final Map<Class<?>, List<Tool>> classToolMap = new ConcurrentHashMap<>();
+
     private ApplicationContext applicationContext;
 
     @Override
@@ -105,15 +112,20 @@ public class ToolRegistryImpl implements ToolRegistry, ApplicationContextAware {
      * @param toolBean 工具 Bean 实例
      */
     private void registerTool(Object toolBean) {
-        String className = toolBean.getClass().getSimpleName();
+        Class<?> beanClass = toolBean.getClass();
+        String className = beanClass.getSimpleName();
 
         // 处理 Spring CGLIB 代理类名（如 "WorkflowTool$$EnhancerBySpringCGLIB$$xxx"）
         if (className.contains("$$")) {
             className = className.substring(0, className.indexOf("$$"));
         }
 
+        // 获取实际的类（处理代理类）
+        Class<?> actualClass = getActualClass(beanClass);
+        List<Tool> classTools = new java.util.ArrayList<>();
+
         int methodCount = 0;
-        Method[] methods = toolBean.getClass().getDeclaredMethods();
+        Method[] methods = beanClass.getDeclaredMethods();
         for (Method method : methods) {
             method.setAccessible(true);
             if (method.isAnnotationPresent(dev.langchain4j.agent.tool.Tool.class)) {
@@ -122,12 +134,33 @@ public class ToolRegistryImpl implements ToolRegistry, ApplicationContextAware {
                 if (toolMap.containsKey(toolName)) {
                     throw new BusinessException("注册工具出错:工具名:" + toolName + " 重复！");
                 }
-                toolMap.put(toolName, new ExecutableTool(toolName, method, toolBean, toolSpecification));
+                Tool tool = new ExecutableTool(toolName, method, toolBean, toolSpecification);
+                toolMap.put(toolName, tool);
+                classTools.add(tool);
                 methodCount++;
             }
         }
 
+        // 将该类的所有工具添加到 classToolMap
+        if (!classTools.isEmpty()) {
+            classToolMap.put(actualClass, classTools);
+        }
+
         log.info("注册工具: className={}, toolMethods={}", className, methodCount);
+    }
+
+    /**
+     * 获取实际的类（处理 Spring 代理类）
+     *
+     * @param beanClass Bean 的 Class 对象
+     * @return 实际的类
+     */
+    private Class<?> getActualClass(Class<?> beanClass) {
+        // 如果是 CGLIB 代理类，获取父类（实际类）
+        if (beanClass.getName().contains("$$")) {
+            return beanClass.getSuperclass();
+        }
+        return beanClass;
     }
 
     @Override
@@ -143,6 +176,12 @@ public class ToolRegistryImpl implements ToolRegistry, ApplicationContextAware {
     @Override
     public Tool getToolByName(String toolName) {
         return toolMap.get(toolName);
+    }
+
+    @Override
+    public List<Tool> getToolsByClass(Class<?> clazz) {
+        List<Tool> tools = classToolMap.get(clazz);
+        return tools != null ? tools : List.of();
     }
 
 }

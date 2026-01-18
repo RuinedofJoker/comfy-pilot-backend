@@ -34,4 +34,12 @@ public interface ToolRegistry {
      */
     Tool getToolByName(String toolName);
 
+    /**
+     * 根据 Class 获取该类下所有的 Tool
+     *
+     * @param clazz 工具类的 Class 对象
+     * @return 该类下所有的 Tool 列表
+     */
+    List<Tool> getToolsByClass(Class<?> clazz);
+
 }
