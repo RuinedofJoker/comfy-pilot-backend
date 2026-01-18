@@ -8,7 +8,6 @@ import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerDTO;
 import org.joker.comfypilot.cfsvr.application.dto.CreateServerRequest;
 import org.joker.comfypilot.cfsvr.application.dto.UpdateServerRequest;
 import org.joker.comfypilot.cfsvr.application.service.ComfyuiServerService;
-import org.joker.comfypilot.cfsvr.domain.enums.ServerSourceType;
 import org.joker.comfypilot.common.interfaces.response.Result;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -39,12 +38,11 @@ public class ComfyuiServerController {
     /**
      * 查询服务列表
      */
-    @Operation(summary = "查询服务列表", description = "查询ComfyUI服务列表，支持按来源类型和启用状态过滤")
+    @Operation(summary = "查询服务列表", description = "查询ComfyUI服务列表，支持按启用状态过滤")
     @GetMapping
     public Result<List<ComfyuiServerDTO>> listServers(
-            @Parameter(description = "来源类型：MANUAL/CODE_BASED") @RequestParam(required = false) ServerSourceType sourceType,
             @Parameter(description = "是否启用") @RequestParam(required = false) Boolean isEnabled) {
-        List<ComfyuiServerDTO> list = comfyuiServerService.listServers(sourceType, isEnabled);
+        List<ComfyuiServerDTO> list = comfyuiServerService.listServers(isEnabled);
         return Result.success(list);
     }
 
@@ -73,7 +71,7 @@ public class ComfyuiServerController {
     /**
      * 更新服务信息
      */
-    @Operation(summary = "更新服务信息", description = "更新ComfyUI服务信息，权限根据来源类型自动控制")
+    @Operation(summary = "更新服务信息", description = "更新ComfyUI服务信息")
     @PutMapping("/{id}")
     public Result<ComfyuiServerDTO> updateServer(
             @Parameter(description = "服务ID", required = true) @PathVariable Long id,
@@ -85,7 +83,7 @@ public class ComfyuiServerController {
     /**
      * 删除服务
      */
-    @Operation(summary = "删除服务", description = "删除ComfyUI服务（代码注册的服务不允许删除）")
+    @Operation(summary = "删除服务", description = "删除ComfyUI服务")
     @DeleteMapping("/{id}")
     public Result<Void> deleteServer(
             @Parameter(description = "服务ID", required = true) @PathVariable Long id) {

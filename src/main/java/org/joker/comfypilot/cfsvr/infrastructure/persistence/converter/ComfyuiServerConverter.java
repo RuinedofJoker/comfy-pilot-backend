@@ -1,8 +1,8 @@
 package org.joker.comfypilot.cfsvr.infrastructure.persistence.converter;
 
 import org.joker.comfypilot.cfsvr.domain.entity.ComfyuiServer;
+import org.joker.comfypilot.cfsvr.domain.enums.AuthMode;
 import org.joker.comfypilot.cfsvr.domain.enums.HealthStatus;
-import org.joker.comfypilot.cfsvr.domain.enums.ServerSourceType;
 import org.joker.comfypilot.cfsvr.infrastructure.persistence.po.ComfyuiServerPO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -17,25 +17,25 @@ public interface ComfyuiServerConverter {
     /**
      * PO转领域实体
      */
-    @Mapping(target = "sourceType", source = "sourceType", qualifiedByName = "stringToSourceType")
+    @Mapping(target = "authMode", source = "authMode", qualifiedByName = "stringToAuthMode")
     @Mapping(target = "healthStatus", source = "healthStatus", qualifiedByName = "stringToHealthStatus")
     ComfyuiServer toDomain(ComfyuiServerPO po);
 
     /**
      * 领域实体转PO
      */
-    @Mapping(target = "sourceType", source = "sourceType", qualifiedByName = "sourceTypeToString")
+    @Mapping(target = "authMode", source = "authMode", qualifiedByName = "authModeToString")
     @Mapping(target = "healthStatus", source = "healthStatus", qualifiedByName = "healthStatusToString")
     ComfyuiServerPO toPO(ComfyuiServer domain);
 
-    @Named("stringToSourceType")
-    default ServerSourceType stringToSourceType(String value) {
-        return value != null ? ServerSourceType.valueOf(value) : null;
+    @Named("stringToAuthMode")
+    default AuthMode stringToAuthMode(String value) {
+        return AuthMode.fromCode(value);
     }
 
-    @Named("sourceTypeToString")
-    default String sourceTypeToString(ServerSourceType sourceType) {
-        return sourceType != null ? sourceType.name() : null;
+    @Named("authModeToString")
+    default String authModeToString(AuthMode authMode) {
+        return authMode != null ? authMode.getCode() : null;
     }
 
     @Named("stringToHealthStatus")

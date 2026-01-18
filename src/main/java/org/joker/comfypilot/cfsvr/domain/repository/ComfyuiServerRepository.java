@@ -1,7 +1,6 @@
 package org.joker.comfypilot.cfsvr.domain.repository;
 
 import org.joker.comfypilot.cfsvr.domain.entity.ComfyuiServer;
-import org.joker.comfypilot.cfsvr.domain.enums.ServerSourceType;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,14 +32,6 @@ public interface ComfyuiServerRepository {
      * @return 服务列表
      */
     List<ComfyuiServer> findAll();
-
-    /**
-     * 根据来源类型查询
-     *
-     * @param sourceType 来源类型
-     * @return 服务列表
-     */
-    List<ComfyuiServer> findBySourceType(ServerSourceType sourceType);
 
     /**
      * 根据启用状态查询

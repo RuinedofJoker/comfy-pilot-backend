@@ -29,25 +29,25 @@ public class UpdateServerRequest implements Serializable {
     @Size(max = 500, message = "服务描述长度不能超过500")
     private String description;
 
-    @Schema(description = "ComfyUI服务地址（仅MANUAL类型可修改）")
+    @Schema(description = "ComfyUI服务地址")
     @Size(max = 255, message = "服务地址长度不能超过255")
     private String baseUrl;
 
-    @Schema(description = "认证模式（仅MANUAL类型可修改）")
+    @Schema(description = "认证模式")
     @Size(max = 20, message = "认证模式长度不能超过20")
     private String authMode;
 
-    @Schema(description = "API密钥（仅MANUAL类型可修改）")
+    @Schema(description = "API密钥")
     @Size(max = 255, message = "API密钥长度不能超过255")
     private String apiKey;
 
-    @Schema(description = "请求超时时间（秒）（仅MANUAL类型可修改）")
+    @Schema(description = "请求超时时间（秒）")
     private Integer timeoutSeconds;
 
-    @Schema(description = "最大重试次数（仅MANUAL类型可修改）")
+    @Schema(description = "最大重试次数")
     private Integer maxRetries;
 
-    @Schema(description = "是否启用（仅MANUAL类型可修改）")
+    @Schema(description = "是否启用")
     private Boolean isEnabled;
 
     /**

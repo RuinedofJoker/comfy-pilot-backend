@@ -8,9 +8,10 @@ import org.joker.comfypilot.cfsvr.application.dto.CreateServerRequest;
 import org.joker.comfypilot.cfsvr.application.dto.UpdateServerRequest;
 import org.joker.comfypilot.cfsvr.application.service.ComfyuiServerService;
 import org.joker.comfypilot.cfsvr.domain.entity.ComfyuiServer;
+import org.joker.comfypilot.cfsvr.domain.enums.AuthMode;
 import org.joker.comfypilot.cfsvr.domain.enums.HealthStatus;
-import org.joker.comfypilot.cfsvr.domain.enums.ServerSourceType;
 import org.joker.comfypilot.cfsvr.domain.repository.ComfyuiServerRepository;
+import org.joker.comfypilot.cfsvr.infrastructure.client.ComfyUIClientFactory;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,11 +30,12 @@ public class ComfyuiServerServiceImpl implements ComfyuiServerService {
 
     private final ComfyuiServerRepository repository;
     private final ComfyuiServerDTOConverter dtoConverter;
+    private final ComfyUIClientFactory clientFactory;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ComfyuiServerDTO createManually(CreateServerRequest request) {
-        log.info("手动创建ComfyUI服务, serverName: {}", request.getServerName());
+        log.info("创建ComfyUI服务, serverName: {}", request.getServerName());
 
         // 处理serverKey：如果用户指定则使用，否则自动生成UUID
         String serverKey = request.getServerKey();
@@ -47,24 +49,26 @@ public class ComfyuiServerServiceImpl implements ComfyuiServerService {
             }
         }
 
+        // 转换认证模式
+        AuthMode authMode = AuthMode.fromCode(request.getAuthMode());
+
         // 构建领域实体
         ComfyuiServer server = ComfyuiServer.builder()
                 .serverKey(serverKey)
                 .serverName(request.getServerName())
                 .description(request.getDescription())
                 .baseUrl(request.getBaseUrl())
-                .authMode(request.getAuthMode())
+                .authMode(authMode)
                 .apiKey(request.getApiKey())
                 .timeoutSeconds(request.getTimeoutSeconds() != null ? request.getTimeoutSeconds() : 30)
                 .maxRetries(request.getMaxRetries() != null ? request.getMaxRetries() : 3)
-                .sourceType(ServerSourceType.MANUAL)
                 .isEnabled(true)
                 .healthStatus(HealthStatus.UNKNOWN)
                 .build();
 
         // 保存到数据库
         ComfyuiServer savedServer = repository.save(server);
-        log.info("手动创建ComfyUI服务成功, id: {}, serverKey: {}", savedServer.getId(), savedServer.getServerKey());
+        log.info("创建ComfyUI服务成功, id: {}, serverKey: {}", savedServer.getId(), savedServer.getServerKey());
 
         return dtoConverter.toDTO(savedServer);
     }
@@ -78,27 +82,37 @@ public class ComfyuiServerServiceImpl implements ComfyuiServerService {
         ComfyuiServer server = repository.findById(id)
                 .orElseThrow(() -> new BusinessException("服务不存在"));
 
-        // 更新基本信息（所有类型都允许）
+        // 更新基本信息
         server.updateBasicInfo(request.getServerName(), request.getDescription());
 
-        // 更新连接配置（仅MANUAL类型允许，会在领域实体中校验）
+        // 更新连接配置
+        boolean connectionConfigChanged = false;
         if (request.hasConnectionConfigChanges()) {
+            AuthMode authMode = AuthMode.fromCode(request.getAuthMode());
             server.updateConnectionConfig(
                     request.getBaseUrl(),
-                    request.getAuthMode(),
+                    authMode,
                     request.getApiKey(),
                     request.getTimeoutSeconds(),
                     request.getMaxRetries()
             );
+            connectionConfigChanged = true;
         }
 
-        // 更新启用状态（仅MANUAL类型允许，会在领域实体中校验）
+        // 更新启用状态
         if (request.getIsEnabled() != null) {
             server.setEnabled(request.getIsEnabled());
         }
 
         // 保存更新
         ComfyuiServer updatedServer = repository.save(server);
+
+        // 如果连接配置发生变化，清除客户端缓存
+        if (connectionConfigChanged) {
+            clientFactory.invalidateCache(id);
+            log.info("连接配置已更新，清除客户端缓存, id: {}", id);
+        }
+
         log.info("更新ComfyUI服务成功, id: {}", id);
 
         return dtoConverter.toDTO(updatedServer);
@@ -110,16 +124,15 @@ public class ComfyuiServerServiceImpl implements ComfyuiServerService {
         log.info("删除ComfyUI服务, id: {}", id);
 
         // 检查服务是否存在
-        ComfyuiServer server = repository.findById(id)
+        repository.findById(id)
                 .orElseThrow(() -> new BusinessException("服务不存在"));
 
-        // 代码注册的服务不允许通过管理页面删除
-        if (ServerSourceType.CODE_BASED.equals(server.getSourceType())) {
-            throw new BusinessException("代码注册的服务不允许通过管理页面删除");
-        }
-
+        // 删除服务
         repository.deleteById(id);
-        log.info("删除ComfyUI服务成功, id: {}", id);
+
+        // 清除客户端缓存
+        clientFactory.invalidateCache(id);
+        log.info("删除ComfyUI服务成功并清除缓存, id: {}", id);
     }
 
     @Override
@@ -137,19 +150,11 @@ public class ComfyuiServerServiceImpl implements ComfyuiServerService {
     }
 
     @Override
-    public List<ComfyuiServerDTO> listServers(ServerSourceType sourceType, Boolean isEnabled) {
+    public List<ComfyuiServerDTO> listServers(Boolean isEnabled) {
         List<ComfyuiServer> servers;
 
-        if (sourceType != null && isEnabled != null) {
-            // 同时按来源类型和启用状态过滤
-            servers = repository.findBySourceType(sourceType).stream()
-                    .filter(s -> s.getIsEnabled().equals(isEnabled))
-                    .collect(Collectors.toList());
-        } else if (sourceType != null) {
-            // 仅按来源类型过滤
-            servers = repository.findBySourceType(sourceType);
-        } else if (isEnabled != null) {
-            // 仅按启用状态过滤
+        if (isEnabled != null) {
+            // 按启用状态过滤
             servers = repository.findByIsEnabled(isEnabled);
         } else {
             // 查询所有

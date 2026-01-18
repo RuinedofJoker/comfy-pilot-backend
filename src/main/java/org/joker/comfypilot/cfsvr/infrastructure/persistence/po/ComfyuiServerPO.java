@@ -64,11 +64,6 @@ public class ComfyuiServerPO extends BasePO {
     private Integer maxRetries;
 
     /**
-     * 注册来源
-     */
-    private String sourceType;
-
-    /**
      * 是否启用
      */
     private Boolean isEnabled;

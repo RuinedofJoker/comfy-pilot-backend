@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.cfsvr.domain.entity.ComfyuiServer;
-import org.joker.comfypilot.cfsvr.domain.enums.ServerSourceType;
 import org.joker.comfypilot.cfsvr.domain.repository.ComfyuiServerRepository;
 import org.joker.comfypilot.cfsvr.infrastructure.persistence.converter.ComfyuiServerConverter;
 import org.joker.comfypilot.cfsvr.infrastructure.persistence.mapper.ComfyuiServerMapper;
@@ -43,16 +42,6 @@ public class ComfyuiServerRepositoryImpl implements ComfyuiServerRepository {
     @Override
     public List<ComfyuiServer> findAll() {
         List<ComfyuiServerPO> poList = mapper.selectList(null);
-        return poList.stream()
-                .map(converter::toDomain)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<ComfyuiServer> findBySourceType(ServerSourceType sourceType) {
-        LambdaQueryWrapper<ComfyuiServerPO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(ComfyuiServerPO::getSourceType, sourceType.name());
-        List<ComfyuiServerPO> poList = mapper.selectList(wrapper);
         return poList.stream()
                 .map(converter::toDomain)
                 .collect(Collectors.toList());

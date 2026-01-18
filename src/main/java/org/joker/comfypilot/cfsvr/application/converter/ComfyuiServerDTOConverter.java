@@ -2,6 +2,8 @@ package org.joker.comfypilot.cfsvr.application.converter;
 
 import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerDTO;
 import org.joker.comfypilot.cfsvr.domain.entity.ComfyuiServer;
+import org.joker.comfypilot.cfsvr.domain.enums.AuthMode;
+import org.joker.comfypilot.cfsvr.domain.enums.HealthStatus;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -15,17 +17,17 @@ public interface ComfyuiServerDTOConverter {
     /**
      * Entity转DTO
      */
-    @Mapping(target = "sourceType", source = "sourceType", qualifiedByName = "sourceTypeToString")
+    @Mapping(target = "authMode", source = "authMode", qualifiedByName = "authModeToString")
     @Mapping(target = "healthStatus", source = "healthStatus", qualifiedByName = "healthStatusToString")
     ComfyuiServerDTO toDTO(ComfyuiServer entity);
 
-    @Named("sourceTypeToString")
-    default String sourceTypeToString(org.joker.comfypilot.cfsvr.domain.enums.ServerSourceType sourceType) {
-        return sourceType != null ? sourceType.name() : null;
+    @Named("authModeToString")
+    default String authModeToString(AuthMode authMode) {
+        return authMode != null ? authMode.getCode() : null;
     }
 
     @Named("healthStatusToString")
-    default String healthStatusToString(org.joker.comfypilot.cfsvr.domain.enums.HealthStatus status) {
+    default String healthStatusToString(HealthStatus status) {
         return status != null ? status.name() : null;
     }
 }

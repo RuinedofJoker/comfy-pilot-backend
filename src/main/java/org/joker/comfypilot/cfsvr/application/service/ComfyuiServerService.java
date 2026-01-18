@@ -3,7 +3,6 @@ package org.joker.comfypilot.cfsvr.application.service;
 import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerDTO;
 import org.joker.comfypilot.cfsvr.application.dto.CreateServerRequest;
 import org.joker.comfypilot.cfsvr.application.dto.UpdateServerRequest;
-import org.joker.comfypilot.cfsvr.domain.enums.ServerSourceType;
 
 import java.util.List;
 
@@ -55,9 +54,8 @@ public interface ComfyuiServerService {
     /**
      * 查询服务列表
      *
-     * @param sourceType 来源类型（可选）
-     * @param isEnabled  是否启用（可选）
+     * @param isEnabled 是否启用（可选）
      * @return 服务列表
      */
-    List<ComfyuiServerDTO> listServers(ServerSourceType sourceType, Boolean isEnabled);
+    List<ComfyuiServerDTO> listServers(Boolean isEnabled);
 }

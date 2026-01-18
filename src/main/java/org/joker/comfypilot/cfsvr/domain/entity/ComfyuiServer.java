@@ -4,10 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.joker.comfypilot.cfsvr.domain.enums.AuthMode;
 import org.joker.comfypilot.cfsvr.domain.enums.HealthStatus;
-import org.joker.comfypilot.cfsvr.domain.enums.ServerSourceType;
 import org.joker.comfypilot.common.domain.BaseEntity;
-import org.joker.comfypilot.common.exception.BusinessException;
 
 import java.time.LocalDateTime;
 
@@ -48,12 +47,12 @@ public class ComfyuiServer extends BaseEntity<Long> {
     private String baseUrl;
 
     /**
-     * 认证模式（NULL/BASIC_AUTH/OAUTH2等）
+     * 认证模式
      */
-    private String authMode;
+    private AuthMode authMode;
 
     /**
-     * API密钥
+     * API密钥（用于 Basic Auth 等认证方式）
      */
     private String apiKey;
 
@@ -66,11 +65,6 @@ public class ComfyuiServer extends BaseEntity<Long> {
      * 最大重试次数
      */
     private Integer maxRetries;
-
-    /**
-     * 注册来源
-     */
-    private ServerSourceType sourceType;
 
     /**
      * 是否启用
@@ -97,18 +91,10 @@ public class ComfyuiServer extends BaseEntity<Long> {
      */
     private LocalDateTime updateTime;
 
-    /**
-     * 验证是否允许修改连接配置
-     * 只有手动创建的服务才允许修改连接配置
-     *
-     * @return true-允许修改，false-不允许修改
-     */
-    public boolean canModifyConnectionConfig() {
-        return ServerSourceType.MANUAL.equals(this.sourceType);
-    }
+    // ==================== 业务方法 ====================
 
     /**
-     * 更新基本信息（所有类型都允许）
+     * 更新基本信息
      *
      * @param serverName  服务名称
      * @param description 服务描述
@@ -123,7 +109,7 @@ public class ComfyuiServer extends BaseEntity<Long> {
     }
 
     /**
-     * 更新连接配置（仅MANUAL类型允许）
+     * 更新连接配置
      *
      * @param baseUrl        ComfyUI服务地址
      * @param authMode       认证模式
@@ -131,11 +117,8 @@ public class ComfyuiServer extends BaseEntity<Long> {
      * @param timeoutSeconds 请求超时时间
      * @param maxRetries     最大重试次数
      */
-    public void updateConnectionConfig(String baseUrl, String authMode, String apiKey,
+    public void updateConnectionConfig(String baseUrl, AuthMode authMode, String apiKey,
                                        Integer timeoutSeconds, Integer maxRetries) {
-        if (!canModifyConnectionConfig()) {
-            throw new BusinessException("代码注册的服务不允许修改连接配置");
-        }
         if (baseUrl != null && !baseUrl.trim().isEmpty()) {
             this.baseUrl = baseUrl;
         }
@@ -150,14 +133,11 @@ public class ComfyuiServer extends BaseEntity<Long> {
     }
 
     /**
-     * 启用/禁用服务（仅MANUAL类型允许）
+     * 启用/禁用服务
      *
      * @param enabled 是否启用
      */
     public void setEnabled(Boolean enabled) {
-        if (!canModifyConnectionConfig()) {
-            throw new BusinessException("代码注册的服务不允许修改启用状态");
-        }
         this.isEnabled = enabled;
     }
 
@@ -169,5 +149,14 @@ public class ComfyuiServer extends BaseEntity<Long> {
     public void updateHealthStatus(HealthStatus status) {
         this.healthStatus = status;
         this.lastHealthCheckTime = LocalDateTime.now();
+    }
+
+    /**
+     * 判断服务是否健康
+     *
+     * @return true-健康，false-不健康
+     */
+    public boolean isHealthy() {
+        return HealthStatus.HEALTHY.equals(this.healthStatus);
     }
 }

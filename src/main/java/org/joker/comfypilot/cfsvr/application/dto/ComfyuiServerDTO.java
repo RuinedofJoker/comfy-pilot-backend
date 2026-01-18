@@ -47,9 +47,6 @@ public class ComfyuiServerDTO extends BaseDTO {
     @Schema(description = "最大重试次数")
     private Integer maxRetries;
 
-    @Schema(description = "注册来源：MANUAL/CODE_BASED")
-    private String sourceType;
-
     @Schema(description = "是否启用")
     private Boolean isEnabled;
 
