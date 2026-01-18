@@ -1,7 +1,6 @@
 package org.joker.comfypilot.cfsvr.infrastructure.persistence.repository;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.cfsvr.domain.entity.ComfyuiServer;
 import org.joker.comfypilot.cfsvr.domain.repository.ComfyuiServerRepository;
@@ -10,6 +9,7 @@ import org.joker.comfypilot.cfsvr.infrastructure.persistence.mapper.ComfyuiServe
 import org.joker.comfypilot.cfsvr.infrastructure.persistence.po.ComfyuiServerPO;
 import org.joker.comfypilot.common.util.RedisUtil;
 import org.springframework.stereotype.Repository;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,12 +22,14 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Repository
-@RequiredArgsConstructor
 public class ComfyuiServerRepositoryImpl implements ComfyuiServerRepository {
 
-    private final ComfyuiServerMapper mapper;
-    private final ComfyuiServerConverter converter;
-    private final RedisUtil redisUtil;
+    @Autowired
+    private ComfyuiServerMapper mapper;
+    @Autowired
+    private ComfyuiServerConverter converter;
+    @Autowired
+    private RedisUtil redisUtil;
 
     /**
      * 缓存键前缀

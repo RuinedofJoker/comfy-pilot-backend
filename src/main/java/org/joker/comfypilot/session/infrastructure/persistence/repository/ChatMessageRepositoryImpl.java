@@ -2,13 +2,13 @@ package org.joker.comfypilot.session.infrastructure.persistence.repository;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import lombok.RequiredArgsConstructor;
 import org.joker.comfypilot.session.domain.entity.ChatMessage;
 import org.joker.comfypilot.session.domain.repository.ChatMessageRepository;
 import org.joker.comfypilot.session.infrastructure.persistence.converter.ChatMessageConverter;
 import org.joker.comfypilot.session.infrastructure.persistence.mapper.ChatMessageMapper;
 import org.joker.comfypilot.session.infrastructure.persistence.po.ChatMessagePO;
 import org.springframework.stereotype.Repository;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,11 +18,12 @@ import java.util.stream.Collectors;
  * 消息仓储实现
  */
 @Repository
-@RequiredArgsConstructor
 public class ChatMessageRepositoryImpl implements ChatMessageRepository {
 
-    private final ChatMessageMapper chatMessageMapper;
-    private final ChatMessageConverter chatMessageConverter;
+    @Autowired
+    private ChatMessageMapper chatMessageMapper;
+    @Autowired
+    private ChatMessageConverter chatMessageConverter;
 
     @Override
     public ChatMessage save(ChatMessage chatMessage) {

@@ -1,13 +1,13 @@
 package org.joker.comfypilot.workflow.infrastructure.persistence.repository;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import lombok.RequiredArgsConstructor;
 import org.joker.comfypilot.workflow.domain.entity.WorkflowVersion;
 import org.joker.comfypilot.workflow.domain.repository.WorkflowVersionRepository;
 import org.joker.comfypilot.workflow.infrastructure.persistence.converter.WorkflowVersionConverter;
 import org.joker.comfypilot.workflow.infrastructure.persistence.mapper.WorkflowVersionMapper;
 import org.joker.comfypilot.workflow.infrastructure.persistence.po.WorkflowVersionPO;
 import org.springframework.stereotype.Repository;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,11 +17,12 @@ import java.util.stream.Collectors;
  * 工作流版本仓储实现
  */
 @Repository
-@RequiredArgsConstructor
 public class WorkflowVersionRepositoryImpl implements WorkflowVersionRepository {
 
-    private final WorkflowVersionMapper versionMapper;
-    private final WorkflowVersionConverter versionConverter;
+    @Autowired
+    private WorkflowVersionMapper versionMapper;
+    @Autowired
+    private WorkflowVersionConverter versionConverter;
 
     @Override
     public Optional<WorkflowVersion> findById(Long id) {

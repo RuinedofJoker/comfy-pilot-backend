@@ -2,13 +2,13 @@ package org.joker.comfypilot.auth.interfaces.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.joker.comfypilot.auth.application.dto.*;
 import org.joker.comfypilot.auth.application.service.AuthService;
 import org.joker.comfypilot.auth.infrastructure.context.UserContextHolder;
 import org.joker.comfypilot.common.interfaces.response.Result;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -18,10 +18,10 @@ import jakarta.servlet.http.HttpServletRequest;
 @Tag(name = "认证管理", description = "用户认证相关接口")
 @RestController
 @RequestMapping("/api/v1/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthService authService;
+    @Autowired
+    private AuthService authService;
 
     @Operation(summary = "用户注册", description = "新用户注册账户")
     @PostMapping("/register")

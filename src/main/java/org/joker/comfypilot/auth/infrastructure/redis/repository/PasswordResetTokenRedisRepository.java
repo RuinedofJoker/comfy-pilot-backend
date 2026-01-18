@@ -2,11 +2,11 @@ package org.joker.comfypilot.auth.infrastructure.redis.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.auth.infrastructure.redis.model.PasswordResetTokenRedis;
 import org.joker.comfypilot.common.util.RedisUtil;
 import org.springframework.stereotype.Repository;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.concurrent.TimeUnit;
 
@@ -15,11 +15,12 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @Repository
-@RequiredArgsConstructor
 public class PasswordResetTokenRedisRepository {
 
-    private final RedisUtil redisUtil;
-    private final ObjectMapper objectMapper;
+    @Autowired
+    private RedisUtil redisUtil;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private static final String RESET_TOKEN_PREFIX = "auth:reset_token:";
     private static final long RESET_TOKEN_TTL = 900; // 15分钟

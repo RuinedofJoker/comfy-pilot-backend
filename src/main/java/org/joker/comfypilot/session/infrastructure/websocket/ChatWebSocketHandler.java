@@ -1,7 +1,6 @@
 package org.joker.comfypilot.session.infrastructure.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.common.constant.AuthConstants;
 import org.joker.comfypilot.session.application.dto.WebSocketMessage;
@@ -13,18 +12,21 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * 聊天WebSocket处理器
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class ChatWebSocketHandler extends TextWebSocketHandler {
 
-    private final WebSocketSessionManager sessionManager;
-    private final ChatSessionService chatSessionService;
-    private final ObjectMapper objectMapper;
+    @Autowired
+    private WebSocketSessionManager sessionManager;
+    @Autowired
+    private ChatSessionService chatSessionService;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {

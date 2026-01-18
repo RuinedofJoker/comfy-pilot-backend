@@ -1,13 +1,13 @@
 package org.joker.comfypilot.workflow.infrastructure.persistence.repository;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import lombok.RequiredArgsConstructor;
 import org.joker.comfypilot.workflow.domain.entity.Workflow;
 import org.joker.comfypilot.workflow.domain.repository.WorkflowRepository;
 import org.joker.comfypilot.workflow.infrastructure.persistence.converter.WorkflowConverter;
 import org.joker.comfypilot.workflow.infrastructure.persistence.mapper.WorkflowMapper;
 import org.joker.comfypilot.workflow.infrastructure.persistence.po.WorkflowPO;
 import org.springframework.stereotype.Repository;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,11 +17,12 @@ import java.util.stream.Collectors;
  * 工作流仓储实现
  */
 @Repository
-@RequiredArgsConstructor
 public class WorkflowRepositoryImpl implements WorkflowRepository {
 
-    private final WorkflowMapper workflowMapper;
-    private final WorkflowConverter workflowConverter;
+    @Autowired
+    private WorkflowMapper workflowMapper;
+    @Autowired
+    private WorkflowConverter workflowConverter;
 
     @Override
     public Optional<Workflow> findById(Long id) {

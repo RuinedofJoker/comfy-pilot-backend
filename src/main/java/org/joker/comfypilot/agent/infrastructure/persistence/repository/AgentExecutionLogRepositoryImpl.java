@@ -1,13 +1,13 @@
 package org.joker.comfypilot.agent.infrastructure.persistence.repository;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import lombok.RequiredArgsConstructor;
 import org.joker.comfypilot.agent.domain.entity.AgentExecutionLog;
 import org.joker.comfypilot.agent.domain.repository.AgentExecutionLogRepository;
 import org.joker.comfypilot.agent.infrastructure.persistence.converter.AgentExecutionLogConverter;
 import org.joker.comfypilot.agent.infrastructure.persistence.mapper.AgentExecutionLogMapper;
 import org.joker.comfypilot.agent.infrastructure.persistence.po.AgentExecutionLogPO;
 import org.springframework.stereotype.Repository;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,11 +17,12 @@ import java.util.stream.Collectors;
  * Agent执行日志仓储实现
  */
 @Repository
-@RequiredArgsConstructor
 public class AgentExecutionLogRepositoryImpl implements AgentExecutionLogRepository {
 
-    private final AgentExecutionLogMapper agentExecutionLogMapper;
-    private final AgentExecutionLogConverter agentExecutionLogConverter;
+    @Autowired
+    private AgentExecutionLogMapper agentExecutionLogMapper;
+    @Autowired
+    private AgentExecutionLogConverter agentExecutionLogConverter;
 
     @Override
     public AgentExecutionLog save(AgentExecutionLog log) {

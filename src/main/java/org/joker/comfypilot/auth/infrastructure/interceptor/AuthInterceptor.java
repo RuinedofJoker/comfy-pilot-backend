@@ -1,6 +1,5 @@
 package org.joker.comfypilot.auth.infrastructure.interceptor;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.auth.infrastructure.context.UserContextHolder;
 import org.joker.comfypilot.auth.infrastructure.redis.model.UserSessionRedis;
@@ -11,6 +10,7 @@ import org.joker.comfypilot.auth.infrastructure.util.JwtUtil;
 import org.joker.comfypilot.common.constant.AuthConstants;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -21,12 +21,14 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class AuthInterceptor implements HandlerInterceptor {
 
-    private final JwtUtil jwtUtil;
-    private final TokenRedisRepository tokenRedisRepository;
-    private final SessionRedisRepository sessionRedisRepository;
+    @Autowired
+    private JwtUtil jwtUtil;
+    @Autowired
+    private TokenRedisRepository tokenRedisRepository;
+    @Autowired
+    private SessionRedisRepository sessionRedisRepository;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {

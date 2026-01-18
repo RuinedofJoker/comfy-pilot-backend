@@ -2,11 +2,11 @@ package org.joker.comfypilot.auth.infrastructure.redis.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.auth.infrastructure.redis.model.UserSessionRedis;
 import org.joker.comfypilot.common.util.RedisUtil;
 import org.springframework.stereotype.Repository;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
@@ -16,11 +16,12 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @Repository
-@RequiredArgsConstructor
 public class SessionRedisRepository {
 
-    private final RedisUtil redisUtil;
-    private final ObjectMapper objectMapper;
+    @Autowired
+    private RedisUtil redisUtil;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private static final String SESSION_PREFIX = "auth:session:";
     private static final long SESSION_TTL = 86400; // 24小时

@@ -1,7 +1,6 @@
 package org.joker.comfypilot.cfsvr.application.tool;
 
 import dev.langchain4j.agent.tool.Tool;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.cfsvr.infrastructure.client.ComfyUIClientFactory;
 import org.joker.comfypilot.cfsvr.infrastructure.client.ComfyUIRestClient;
@@ -10,6 +9,7 @@ import org.joker.comfypilot.cfsvr.infrastructure.client.dto.PromptResponse;
 import org.joker.comfypilot.cfsvr.infrastructure.client.dto.QueueStatusResponse;
 import org.joker.comfypilot.cfsvr.infrastructure.client.dto.SystemStatsResponse;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Map;
@@ -21,10 +21,10 @@ import java.util.Map;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class ComfyUIServerTool {
 
-    private final ComfyUIClientFactory clientFactory;
+    @Autowired
+    private ComfyUIClientFactory clientFactory;
 
     /**
      * 获取 ComfyUI 服务器系统状态

@@ -3,13 +3,13 @@ package org.joker.comfypilot.model.interfaces.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.joker.comfypilot.common.interfaces.response.Result;
 import org.joker.comfypilot.model.application.dto.AiModelDTO;
 import org.joker.comfypilot.model.application.dto.CreateModelRequest;
 import org.joker.comfypilot.model.application.dto.UpdateModelRequest;
 import org.joker.comfypilot.model.application.service.AiModelService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import jakarta.validation.Valid;
 import java.util.List;
@@ -23,10 +23,10 @@ import java.util.List;
 @Tag(name = "AI模型管理", description = "AI模型的创建、查询、更新、删除等管理接口")
 @RestController
 @RequestMapping("/api/v1/models")
-@RequiredArgsConstructor
 public class AiModelController {
 
-    private final AiModelService modelService;
+    @Autowired
+    private AiModelService modelService;
 
     @Operation(summary = "创建AI模型", description = "创建新的AI模型（通过API创建的模型标记为远程API来源，可完全管理）")
     @PostMapping

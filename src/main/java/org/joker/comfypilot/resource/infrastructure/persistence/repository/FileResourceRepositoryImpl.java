@@ -1,13 +1,13 @@
 package org.joker.comfypilot.resource.infrastructure.persistence.repository;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import lombok.RequiredArgsConstructor;
 import org.joker.comfypilot.resource.domain.entity.FileResource;
 import org.joker.comfypilot.resource.domain.repository.FileResourceRepository;
 import org.joker.comfypilot.resource.infrastructure.persistence.converter.FileResourceConverter;
 import org.joker.comfypilot.resource.infrastructure.persistence.mapper.FileResourceMapper;
 import org.joker.comfypilot.resource.infrastructure.persistence.po.FileResourcePO;
 import org.springframework.stereotype.Repository;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,11 +17,12 @@ import java.util.stream.Collectors;
  * 文件资源仓储实现
  */
 @Repository
-@RequiredArgsConstructor
 public class FileResourceRepositoryImpl implements FileResourceRepository {
 
-    private final FileResourceMapper fileResourceMapper;
-    private final FileResourceConverter fileResourceConverter;
+    @Autowired
+    private FileResourceMapper fileResourceMapper;
+    @Autowired
+    private FileResourceConverter fileResourceConverter;
 
     @Override
     public Optional<FileResource> findById(Long id) {

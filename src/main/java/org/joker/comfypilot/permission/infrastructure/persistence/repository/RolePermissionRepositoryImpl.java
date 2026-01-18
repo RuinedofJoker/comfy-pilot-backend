@@ -1,7 +1,6 @@
 package org.joker.comfypilot.permission.infrastructure.persistence.repository;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import lombok.RequiredArgsConstructor;
 import org.joker.comfypilot.permission.domain.entity.Permission;
 import org.joker.comfypilot.permission.domain.entity.RolePermission;
 import org.joker.comfypilot.permission.domain.repository.RolePermissionRepository;
@@ -11,6 +10,7 @@ import org.joker.comfypilot.permission.infrastructure.persistence.mapper.RolePer
 import org.joker.comfypilot.permission.infrastructure.persistence.po.PermissionPO;
 import org.joker.comfypilot.permission.infrastructure.persistence.po.RolePermissionPO;
 import org.springframework.stereotype.Repository;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,12 +19,14 @@ import java.util.stream.Collectors;
  * 角色权限仓储实现
  */
 @Repository
-@RequiredArgsConstructor
 public class RolePermissionRepositoryImpl implements RolePermissionRepository {
 
-    private final RolePermissionMapper rolePermissionMapper;
-    private final RolePermissionConverter rolePermissionConverter;
-    private final PermissionConverter permissionConverter;
+    @Autowired
+    private RolePermissionMapper rolePermissionMapper;
+    @Autowired
+    private RolePermissionConverter rolePermissionConverter;
+    @Autowired
+    private PermissionConverter permissionConverter;
 
     @Override
     public List<RolePermission> findByRoleId(Long roleId) {

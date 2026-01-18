@@ -3,13 +3,13 @@ package org.joker.comfypilot.model.interfaces.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.joker.comfypilot.common.interfaces.response.Result;
 import org.joker.comfypilot.model.application.dto.CreateProviderRequest;
 import org.joker.comfypilot.model.application.dto.ModelProviderDTO;
 import org.joker.comfypilot.model.application.dto.UpdateProviderRequest;
 import org.joker.comfypilot.model.application.service.ModelProviderService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import jakarta.validation.Valid;
 import java.util.List;
@@ -20,10 +20,10 @@ import java.util.List;
 @Tag(name = "模型提供商管理", description = "模型提供商的创建、查询、更新、删除等管理接口")
 @RestController
 @RequestMapping("/api/v1/model-providers")
-@RequiredArgsConstructor
 public class ModelProviderController {
 
-    private final ModelProviderService providerService;
+    @Autowired
+    private ModelProviderService providerService;
 
     @Operation(summary = "创建模型提供商", description = "创建新的模型提供商")
     @PostMapping

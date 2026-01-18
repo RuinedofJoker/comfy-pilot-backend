@@ -3,7 +3,6 @@ package org.joker.comfypilot.cfsvr.interfaces.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerDTO;
 import org.joker.comfypilot.cfsvr.application.dto.CreateServerRequest;
 import org.joker.comfypilot.cfsvr.application.dto.UpdateServerRequest;
@@ -11,6 +10,7 @@ import org.joker.comfypilot.cfsvr.application.service.ComfyuiServerService;
 import org.joker.comfypilot.common.interfaces.response.Result;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
@@ -20,10 +20,10 @@ import java.util.List;
 @Tag(name = "ComfyUI服务管理", description = "ComfyUI服务配置、查询、管理相关接口")
 @RestController
 @RequestMapping("/api/v1/comfyui-servers")
-@RequiredArgsConstructor
 public class ComfyuiServerController {
 
-    private final ComfyuiServerService comfyuiServerService;
+    @Autowired
+    private ComfyuiServerService comfyuiServerService;
 
     /**
      * 创建ComfyUI服务（手动）

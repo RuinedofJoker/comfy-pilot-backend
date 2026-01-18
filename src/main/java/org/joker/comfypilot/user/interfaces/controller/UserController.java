@@ -2,7 +2,6 @@ package org.joker.comfypilot.user.interfaces.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.joker.comfypilot.auth.infrastructure.context.UserContextHolder;
 import org.joker.comfypilot.common.interfaces.response.Result;
 import org.joker.comfypilot.user.application.dto.UpdateUserRequest;
@@ -10,6 +9,7 @@ import org.joker.comfypilot.user.application.dto.UserDTO;
 import org.joker.comfypilot.user.application.service.UserService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * 用户接口控制器
@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "用户管理", description = "用户信息管理接口")
 @RestController
 @RequestMapping("/api/v1/users")
-@RequiredArgsConstructor
 public class UserController {
 
-    private final UserService userService;
+    @Autowired
+    private UserService userService;
 
     @Operation(summary = "获取当前用户信息", description = "获取当前登录用户的详细信息")
     @GetMapping("/me")

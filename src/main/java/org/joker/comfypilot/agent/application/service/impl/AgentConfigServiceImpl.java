@@ -1,6 +1,5 @@
 package org.joker.comfypilot.agent.application.service.impl;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.agent.application.converter.AgentConfigDTOConverter;
 import org.joker.comfypilot.agent.application.dto.AgentConfigDTO;
@@ -10,6 +9,7 @@ import org.joker.comfypilot.agent.domain.repository.AgentConfigRepository;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,11 +19,12 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class AgentConfigServiceImpl implements AgentConfigService {
 
-    private final AgentConfigRepository agentConfigRepository;
-    private final AgentConfigDTOConverter dtoConverter;
+    @Autowired
+    private AgentConfigRepository agentConfigRepository;
+    @Autowired
+    private AgentConfigDTOConverter dtoConverter;
 
     @Override
     public List<AgentConfigDTO> getAllAgents() {

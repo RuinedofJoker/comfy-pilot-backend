@@ -1,19 +1,19 @@
 package org.joker.comfypilot.auth.config;
 
-import lombok.RequiredArgsConstructor;
 import org.joker.comfypilot.auth.infrastructure.interceptor.AuthInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * 认证拦截器配置
  */
 @Configuration
-@RequiredArgsConstructor
 public class AuthInterceptorConfig implements WebMvcConfigurer {
 
-    private final AuthInterceptor authInterceptor;
+    @Autowired
+    private AuthInterceptor authInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {

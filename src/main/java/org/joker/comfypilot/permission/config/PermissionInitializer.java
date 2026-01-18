@@ -1,6 +1,5 @@
 package org.joker.comfypilot.permission.config;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.permission.domain.entity.Permission;
 import org.joker.comfypilot.permission.domain.entity.Role;
@@ -10,6 +9,7 @@ import org.joker.comfypilot.permission.domain.repository.RolePermissionRepositor
 import org.joker.comfypilot.permission.domain.repository.RoleRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -21,12 +21,14 @@ import java.util.List;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class PermissionInitializer implements CommandLineRunner {
 
-    private final RoleRepository roleRepository;
-    private final PermissionRepository permissionRepository;
-    private final RolePermissionRepository rolePermissionRepository;
+    @Autowired
+    private RoleRepository roleRepository;
+    @Autowired
+    private PermissionRepository permissionRepository;
+    @Autowired
+    private RolePermissionRepository rolePermissionRepository;
 
     @Override
     public void run(String... args) {

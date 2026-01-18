@@ -2,12 +2,12 @@ package org.joker.comfypilot.auth.infrastructure.redis.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.auth.domain.enums.TokenType;
 import org.joker.comfypilot.auth.infrastructure.redis.model.UserTokenRedis;
 import org.joker.comfypilot.common.util.RedisUtil;
 import org.springframework.stereotype.Repository;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
@@ -17,11 +17,12 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @Repository
-@RequiredArgsConstructor
 public class TokenRedisRepository {
 
-    private final RedisUtil redisUtil;
-    private final ObjectMapper objectMapper;
+    @Autowired
+    private RedisUtil redisUtil;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private static final String ACCESS_TOKEN_PREFIX = "auth:access_token:";
     private static final String REFRESH_TOKEN_PREFIX = "auth:refresh_token:";

@@ -1,7 +1,6 @@
 package org.joker.comfypilot.model.infrastructure.persistence.repository;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import lombok.RequiredArgsConstructor;
 import org.joker.comfypilot.model.domain.entity.ModelProvider;
 import org.joker.comfypilot.model.domain.enums.ProviderType;
 import org.joker.comfypilot.model.domain.repository.ModelProviderRepository;
@@ -11,6 +10,7 @@ import org.joker.comfypilot.model.infrastructure.persistence.mapper.ModelProvide
 import org.joker.comfypilot.model.infrastructure.persistence.po.AiModelPO;
 import org.joker.comfypilot.model.infrastructure.persistence.po.ModelProviderPO;
 import org.springframework.stereotype.Repository;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,12 +20,14 @@ import java.util.stream.Collectors;
  * 模型提供商仓储实现
  */
 @Repository
-@RequiredArgsConstructor
 public class ModelProviderRepositoryImpl implements ModelProviderRepository {
 
-    private final ModelProviderMapper mapper;
-    private final AiModelMapper aiModelMapper;
-    private final ModelProviderConverter converter;
+    @Autowired
+    private ModelProviderMapper mapper;
+    @Autowired
+    private AiModelMapper aiModelMapper;
+    @Autowired
+    private ModelProviderConverter converter;
 
     @Override
     public ModelProvider save(ModelProvider provider) {

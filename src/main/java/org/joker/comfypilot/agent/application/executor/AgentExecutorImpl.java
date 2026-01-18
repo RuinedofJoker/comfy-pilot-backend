@@ -1,6 +1,5 @@
 package org.joker.comfypilot.agent.application.executor;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionResponse;
@@ -15,6 +14,7 @@ import org.joker.comfypilot.agent.domain.service.AgentRegistry;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.util.TraceIdUtil;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -25,12 +25,14 @@ import java.util.Optional;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class AgentExecutorImpl implements AgentExecutor {
 
-    private final AgentRegistry agentRegistry;
-    private final AgentExecutionLogRepository executionLogRepository;
-    private final AgentConfigRepository agentConfigRepository;
+    @Autowired
+    private AgentRegistry agentRegistry;
+    @Autowired
+    private AgentExecutionLogRepository executionLogRepository;
+    @Autowired
+    private AgentConfigRepository agentConfigRepository;
 
     @Override
     public AgentExecutionContext getExecutionContext(String agentCode, AgentExecutionRequest request) {

@@ -1,6 +1,5 @@
 package org.joker.comfypilot.session.infrastructure.websocket;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.auth.application.service.TokenAuthService;
 import org.joker.comfypilot.auth.infrastructure.redis.model.UserSessionRedis;
@@ -10,6 +9,7 @@ import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Map;
@@ -20,10 +20,10 @@ import java.util.Map;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class WebSocketAuthInterceptor implements HandshakeInterceptor {
 
-    private final TokenAuthService tokenAuthService;
+    @Autowired
+    private TokenAuthService tokenAuthService;
 
     @Override
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,

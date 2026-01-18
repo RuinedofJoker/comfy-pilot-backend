@@ -2,7 +2,6 @@ package org.joker.comfypilot.agent.infrastructure.registry;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.agent.domain.entity.AgentConfig;
 import org.joker.comfypilot.agent.domain.enums.AgentStatus;
@@ -13,6 +12,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -24,13 +24,14 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class AgentRegistryImpl implements AgentRegistry, ApplicationContextAware {
 
     private ApplicationContext applicationContext;
 
-    private final AgentConfigRepository agentConfigRepository;
-    private final ObjectMapper objectMapper;
+    @Autowired
+    private AgentConfigRepository agentConfigRepository;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     /**
      * Agent注册表，key为agentCode，value为Agent实例

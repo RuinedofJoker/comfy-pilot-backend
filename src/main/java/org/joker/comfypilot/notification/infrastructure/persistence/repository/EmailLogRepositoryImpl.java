@@ -1,13 +1,13 @@
 package org.joker.comfypilot.notification.infrastructure.persistence.repository;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import lombok.RequiredArgsConstructor;
 import org.joker.comfypilot.notification.domain.entity.EmailLog;
 import org.joker.comfypilot.notification.domain.repository.EmailLogRepository;
 import org.joker.comfypilot.notification.infrastructure.persistence.converter.EmailLogConverter;
 import org.joker.comfypilot.notification.infrastructure.persistence.mapper.EmailLogMapper;
 import org.joker.comfypilot.notification.infrastructure.persistence.po.EmailLogPO;
 import org.springframework.stereotype.Repository;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,11 +17,12 @@ import java.util.stream.Collectors;
  * 邮件日志仓储实现
  */
 @Repository
-@RequiredArgsConstructor
 public class EmailLogRepositoryImpl implements EmailLogRepository {
 
-    private final EmailLogMapper emailLogMapper;
-    private final EmailLogConverter emailLogConverter;
+    @Autowired
+    private EmailLogMapper emailLogMapper;
+    @Autowired
+    private EmailLogConverter emailLogConverter;
 
     @Override
     public Optional<EmailLog> findById(Long id) {

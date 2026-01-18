@@ -3,7 +3,6 @@ package org.joker.comfypilot.resource.interfaces.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.joker.comfypilot.common.interfaces.response.Result;
 import org.joker.comfypilot.resource.application.converter.FileResourceDTOConverter;
 import org.joker.comfypilot.resource.application.service.FileDownloadService;
@@ -17,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.InputStream;
 import java.util.List;
@@ -28,13 +28,16 @@ import java.util.stream.Collectors;
 @Tag(name = "文件资源", description = "文件上传、下载、管理相关接口")
 @RestController
 @RequestMapping("/api/v1/files")
-@RequiredArgsConstructor
 public class FileResourceController {
 
-    private final FileUploadService fileUploadService;
-    private final FileDownloadService fileDownloadService;
-    private final FileManagementService fileManagementService;
-    private final FileResourceDTOConverter dtoConverter;
+    @Autowired
+    private FileUploadService fileUploadService;
+    @Autowired
+    private FileDownloadService fileDownloadService;
+    @Autowired
+    private FileManagementService fileManagementService;
+    @Autowired
+    private FileResourceDTOConverter dtoConverter;
 
     /**
      * 上传单个文件

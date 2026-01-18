@@ -3,13 +3,13 @@ package org.joker.comfypilot.workflow.interfaces.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.joker.comfypilot.auth.infrastructure.context.UserContextHolder;
 import org.joker.comfypilot.common.interfaces.response.Result;
 import org.joker.comfypilot.workflow.application.dto.*;
 import org.joker.comfypilot.workflow.application.service.WorkflowService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
@@ -19,10 +19,10 @@ import java.util.List;
 @Tag(name = "工作流管理", description = "工作流创建、查询、编辑、锁定相关接口")
 @RestController
 @RequestMapping("/api/v1/workflows")
-@RequiredArgsConstructor
 public class WorkflowController {
 
-    private final WorkflowService workflowService;
+    @Autowired
+    private WorkflowService workflowService;
 
     /**
      * 创建工作流

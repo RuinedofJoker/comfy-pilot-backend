@@ -1,6 +1,5 @@
 package org.joker.comfypilot.auth.application.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.auth.infrastructure.redis.model.UserSessionRedis;
 import org.joker.comfypilot.auth.infrastructure.redis.model.UserTokenRedis;
@@ -9,6 +8,7 @@ import org.joker.comfypilot.auth.infrastructure.redis.repository.TokenRedisRepos
 import org.joker.comfypilot.auth.infrastructure.util.JwtUtil;
 import org.joker.comfypilot.common.constant.AuthConstants;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Token认证服务
@@ -16,12 +16,14 @@ import org.springframework.stereotype.Service;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class TokenAuthService {
 
-    private final JwtUtil jwtUtil;
-    private final TokenRedisRepository tokenRedisRepository;
-    private final SessionRedisRepository sessionRedisRepository;
+    @Autowired
+    private JwtUtil jwtUtil;
+    @Autowired
+    private TokenRedisRepository tokenRedisRepository;
+    @Autowired
+    private SessionRedisRepository sessionRedisRepository;
 
     /**
      * 验证Token并返回用户会话

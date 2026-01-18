@@ -1,7 +1,6 @@
 package org.joker.comfypilot.model.infrastructure.persistence.repository;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import lombok.RequiredArgsConstructor;
 import org.joker.comfypilot.model.domain.entity.AiModel;
 import org.joker.comfypilot.model.domain.enums.ModelAccessType;
 import org.joker.comfypilot.model.domain.repository.AiModelRepository;
@@ -9,6 +8,7 @@ import org.joker.comfypilot.model.infrastructure.persistence.converter.AiModelCo
 import org.joker.comfypilot.model.infrastructure.persistence.mapper.AiModelMapper;
 import org.joker.comfypilot.model.infrastructure.persistence.po.AiModelPO;
 import org.springframework.stereotype.Repository;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,11 +18,12 @@ import java.util.stream.Collectors;
  * AI模型仓储实现
  */
 @Repository
-@RequiredArgsConstructor
 public class AiModelRepositoryImpl implements AiModelRepository {
 
-    private final AiModelMapper mapper;
-    private final AiModelConverter converter;
+    @Autowired
+    private AiModelMapper mapper;
+    @Autowired
+    private AiModelConverter converter;
 
     @Override
     public AiModel save(AiModel model) {

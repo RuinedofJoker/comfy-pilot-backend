@@ -1,21 +1,22 @@
 package org.joker.comfypilot.session.infrastructure.websocket;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * WebSocket配置
  */
 @Configuration
 @EnableWebSocket
-@RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketConfigurer {
 
-    private final ChatWebSocketHandler chatWebSocketHandler;
-    private final WebSocketAuthInterceptor webSocketAuthInterceptor;
+    @Autowired
+    private ChatWebSocketHandler chatWebSocketHandler;
+    @Autowired
+    private WebSocketAuthInterceptor webSocketAuthInterceptor;
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {

@@ -1,13 +1,13 @@
 package org.joker.comfypilot.agent.infrastructure.persistence.repository;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import lombok.RequiredArgsConstructor;
 import org.joker.comfypilot.agent.domain.entity.AgentConfig;
 import org.joker.comfypilot.agent.domain.repository.AgentConfigRepository;
 import org.joker.comfypilot.agent.infrastructure.persistence.converter.AgentConfigConverter;
 import org.joker.comfypilot.agent.infrastructure.persistence.mapper.AgentConfigMapper;
 import org.joker.comfypilot.agent.infrastructure.persistence.po.AgentConfigPO;
 import org.springframework.stereotype.Repository;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,11 +17,12 @@ import java.util.stream.Collectors;
  * Agent配置仓储实现
  */
 @Repository
-@RequiredArgsConstructor
 public class AgentConfigRepositoryImpl implements AgentConfigRepository {
 
-    private final AgentConfigMapper agentConfigMapper;
-    private final AgentConfigConverter agentConfigConverter;
+    @Autowired
+    private AgentConfigMapper agentConfigMapper;
+    @Autowired
+    private AgentConfigConverter agentConfigConverter;
 
     @Override
     public AgentConfig save(AgentConfig agentConfig) {

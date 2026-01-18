@@ -3,7 +3,6 @@ package org.joker.comfypilot.session.interfaces.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.joker.comfypilot.auth.infrastructure.context.UserContextHolder;
 import org.joker.comfypilot.common.interfaces.response.Result;
 import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
@@ -11,6 +10,7 @@ import org.joker.comfypilot.session.application.dto.ChatSessionDTO;
 import org.joker.comfypilot.session.application.dto.CreateSessionRequest;
 import org.joker.comfypilot.session.application.service.ChatSessionService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
@@ -20,10 +20,10 @@ import java.util.List;
 @Tag(name = "会话管理", description = "会话创建、消息发送、历史查询相关接口")
 @RestController
 @RequestMapping("/api/v1/sessions")
-@RequiredArgsConstructor
 public class ChatSessionController {
 
-    private final ChatSessionService chatSessionService;
+    @Autowired
+    private ChatSessionService chatSessionService;
 
     @Operation(summary = "创建会话", description = "创建一个新的对话会话（返回会话编码）")
     @PostMapping

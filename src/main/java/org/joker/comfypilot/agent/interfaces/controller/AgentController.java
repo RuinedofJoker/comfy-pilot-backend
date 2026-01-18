@@ -3,7 +3,6 @@ package org.joker.comfypilot.agent.interfaces.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.joker.comfypilot.agent.application.dto.AgentConfigDTO;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionResponse;
@@ -12,6 +11,7 @@ import org.joker.comfypilot.agent.application.service.AgentConfigService;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.joker.comfypilot.common.interfaces.response.Result;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
@@ -21,11 +21,12 @@ import java.util.List;
 @Tag(name = "Agent管理", description = "Agent配置和执行相关接口")
 @RestController
 @RequestMapping("/api/v1/agents")
-@RequiredArgsConstructor
 public class AgentController {
 
-    private final AgentConfigService agentConfigService;
-    private final AgentExecutor agentExecutor;
+    @Autowired
+    private AgentConfigService agentConfigService;
+    @Autowired
+    private AgentExecutor agentExecutor;
 
     @Operation(summary = "获取所有Agent", description = "获取系统中所有Agent配置列表")
     @GetMapping
