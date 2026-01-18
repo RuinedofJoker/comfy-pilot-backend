@@ -14,6 +14,7 @@ import org.joker.comfypilot.model.domain.repository.ModelProviderRepository;
 import org.joker.comfypilot.model.domain.service.StreamingChatModelFactory;
 import org.joker.comfypilot.tool.domain.service.ToolRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -26,6 +27,7 @@ import java.util.*;
 @Component
 public class WorkflowAgent extends AbstractAgent implements Agent {
 
+    @Lazy
     @Autowired
     private ToolRegistry toolRegistry;
     @Autowired

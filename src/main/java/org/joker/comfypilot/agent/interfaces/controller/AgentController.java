@@ -10,8 +10,9 @@ import org.joker.comfypilot.agent.application.executor.AgentExecutor;
 import org.joker.comfypilot.agent.application.service.AgentConfigService;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.joker.comfypilot.common.interfaces.response.Result;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -25,6 +26,7 @@ public class AgentController {
 
     @Autowired
     private AgentConfigService agentConfigService;
+    @Lazy
     @Autowired
     private AgentExecutor agentExecutor;
 

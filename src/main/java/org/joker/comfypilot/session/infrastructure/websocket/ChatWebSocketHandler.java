@@ -7,12 +7,13 @@ import org.joker.comfypilot.session.application.dto.WebSocketMessage;
 import org.joker.comfypilot.session.application.service.ChatSessionService;
 import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
 import org.joker.comfypilot.session.domain.enums.WebSocketMessageType;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * 聊天WebSocket处理器
@@ -23,6 +24,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
     @Autowired
     private WebSocketSessionManager sessionManager;
+    @Lazy
     @Autowired
     private ChatSessionService chatSessionService;
     @Autowired

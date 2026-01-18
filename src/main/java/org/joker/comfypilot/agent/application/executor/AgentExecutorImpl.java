@@ -13,8 +13,9 @@ import org.joker.comfypilot.agent.domain.service.Agent;
 import org.joker.comfypilot.agent.domain.service.AgentRegistry;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.util.TraceIdUtil;
-import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -27,6 +28,7 @@ import java.util.Optional;
 @Service
 public class AgentExecutorImpl implements AgentExecutor {
 
+    @Lazy
     @Autowired
     private AgentRegistry agentRegistry;
     @Autowired

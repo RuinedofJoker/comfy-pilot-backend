@@ -9,8 +9,9 @@ import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
 import org.joker.comfypilot.session.application.dto.ChatSessionDTO;
 import org.joker.comfypilot.session.application.dto.CreateSessionRequest;
 import org.joker.comfypilot.session.application.service.ChatSessionService;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -22,6 +23,7 @@ import java.util.List;
 @RequestMapping("/api/v1/sessions")
 public class ChatSessionController {
 
+    @Lazy
     @Autowired
     private ChatSessionService chatSessionService;
 

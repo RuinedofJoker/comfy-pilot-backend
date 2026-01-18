@@ -18,6 +18,7 @@ import org.joker.comfypilot.session.domain.repository.ChatMessageRepository;
 import org.joker.comfypilot.session.domain.repository.ChatSessionRepository;
 import org.joker.comfypilot.session.infrastructure.websocket.WebSocketStreamCallback;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +42,7 @@ public class ChatSessionServiceImpl implements ChatSessionService {
     private ChatMessageRepository chatMessageRepository;
     @Autowired
     private ChatSessionDTOConverter dtoConverter;
+    @Lazy
     @Autowired
     private AgentExecutor agentExecutor;
     @Autowired

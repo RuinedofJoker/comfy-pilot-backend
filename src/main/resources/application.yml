@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: comfy-pilot-backend
+  main:
+    allow-circular-references: true
 
   # PostgreSQL 数据源配置
   datasource:
