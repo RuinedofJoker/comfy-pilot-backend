@@ -1,6 +1,5 @@
 package org.joker.comfypilot.user.application.service.impl;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.common.exception.ResourceNotFoundException;
 import org.joker.comfypilot.user.application.converter.UserDTOConverter;
@@ -9,6 +8,7 @@ import org.joker.comfypilot.user.application.dto.UserDTO;
 import org.joker.comfypilot.user.application.service.UserService;
 import org.joker.comfypilot.user.domain.entity.User;
 import org.joker.comfypilot.user.domain.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,11 +17,12 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private final UserRepository userRepository;
-    private final UserDTOConverter dtoConverter;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private UserDTOConverter dtoConverter;
 
     @Override
     public UserDTO getCurrentUser(Long userId) {

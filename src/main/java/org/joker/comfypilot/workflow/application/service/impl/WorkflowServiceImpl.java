@@ -1,6 +1,5 @@
 package org.joker.comfypilot.workflow.application.service.impl;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.cfsvr.domain.repository.ComfyuiServerRepository;
 import org.joker.comfypilot.common.exception.BusinessException;
@@ -10,6 +9,7 @@ import org.joker.comfypilot.workflow.application.dto.*;
 import org.joker.comfypilot.workflow.application.service.WorkflowService;
 import org.joker.comfypilot.workflow.domain.entity.Workflow;
 import org.joker.comfypilot.workflow.domain.repository.WorkflowRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,12 +21,14 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class WorkflowServiceImpl implements WorkflowService {
 
-    private final WorkflowRepository workflowRepository;
-    private final ComfyuiServerRepository comfyuiServerRepository;
-    private final WorkflowDTOConverter dtoConverter;
+    @Autowired
+    private WorkflowRepository workflowRepository;
+    @Autowired
+    private ComfyuiServerRepository comfyuiServerRepository;
+    @Autowired
+    private WorkflowDTOConverter dtoConverter;
 
     @Override
     @Transactional(rollbackFor = Exception.class)

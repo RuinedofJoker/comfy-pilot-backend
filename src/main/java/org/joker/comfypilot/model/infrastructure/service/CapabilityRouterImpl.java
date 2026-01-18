@@ -2,7 +2,6 @@ package org.joker.comfypilot.model.infrastructure.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.model.domain.entity.AiModel;
@@ -11,6 +10,7 @@ import org.joker.comfypilot.model.domain.repository.AiModelRepository;
 import org.joker.comfypilot.model.domain.service.CapabilityRouter;
 import org.joker.comfypilot.model.domain.valueobject.CapabilityConstraints;
 import org.joker.comfypilot.model.domain.valueobject.ModelConfig;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -25,11 +25,12 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class CapabilityRouterImpl implements CapabilityRouter {
 
-    private final AiModelRepository modelRepository;
-    private final ObjectMapper objectMapper;
+    @Autowired
+    private AiModelRepository modelRepository;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Override
     public AiModel selectModel(ModelCapability capability, CapabilityConstraints constraints) {

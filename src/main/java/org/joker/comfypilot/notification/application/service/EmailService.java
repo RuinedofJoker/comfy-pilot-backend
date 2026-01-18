@@ -1,11 +1,11 @@
 package org.joker.comfypilot.notification.application.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.notification.domain.entity.EmailLog;
 import org.joker.comfypilot.notification.domain.enums.EmailSendStatus;
 import org.joker.comfypilot.notification.domain.repository.EmailLogRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -20,11 +20,12 @@ import java.time.LocalDateTime;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class EmailService {
 
-    private final JavaMailSender mailSender;
-    private final EmailLogRepository emailLogRepository;
+    @Autowired
+    private JavaMailSender mailSender;
+    @Autowired
+    private EmailLogRepository emailLogRepository;
 
     /**
      * 发送普通邮件

@@ -1,6 +1,5 @@
 package org.joker.comfypilot.model.application.service.impl;
 
-import lombok.RequiredArgsConstructor;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.exception.ResourceNotFoundException;
 import org.joker.comfypilot.model.application.converter.ModelProviderDTOConverter;
@@ -11,6 +10,7 @@ import org.joker.comfypilot.model.application.service.ModelProviderService;
 import org.joker.comfypilot.model.domain.entity.ModelProvider;
 import org.joker.comfypilot.model.domain.enums.ProviderType;
 import org.joker.comfypilot.model.domain.repository.ModelProviderRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,11 +21,12 @@ import java.util.stream.Collectors;
  * 模型提供商服务实现
  */
 @Service
-@RequiredArgsConstructor
 public class ModelProviderServiceImpl implements ModelProviderService {
 
-    private final ModelProviderRepository providerRepository;
-    private final ModelProviderDTOConverter dtoConverter;
+    @Autowired
+    private ModelProviderRepository providerRepository;
+    @Autowired
+    private ModelProviderDTOConverter dtoConverter;
 
     @Override
     @Transactional(rollbackFor = Exception.class)

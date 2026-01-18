@@ -1,6 +1,5 @@
 package org.joker.comfypilot.cfsvr.application.service.impl;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.cfsvr.application.converter.ComfyuiServerDTOConverter;
 import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerDTO;
@@ -13,6 +12,7 @@ import org.joker.comfypilot.cfsvr.domain.enums.HealthStatus;
 import org.joker.comfypilot.cfsvr.domain.repository.ComfyuiServerRepository;
 import org.joker.comfypilot.cfsvr.infrastructure.client.ComfyUIClientFactory;
 import org.joker.comfypilot.common.exception.BusinessException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,12 +25,14 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ComfyuiServerServiceImpl implements ComfyuiServerService {
 
-    private final ComfyuiServerRepository repository;
-    private final ComfyuiServerDTOConverter dtoConverter;
-    private final ComfyUIClientFactory clientFactory;
+    @Autowired
+    private ComfyuiServerRepository repository;
+    @Autowired
+    private ComfyuiServerDTOConverter dtoConverter;
+    @Autowired
+    private ComfyUIClientFactory clientFactory;
 
     @Override
     @Transactional(rollbackFor = Exception.class)

@@ -1,6 +1,5 @@
 package org.joker.comfypilot.permission.application.service.impl;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.auth.infrastructure.context.UserContextHolder;
 import org.joker.comfypilot.common.exception.BusinessException;
@@ -12,6 +11,7 @@ import org.joker.comfypilot.permission.domain.entity.UserRole;
 import org.joker.comfypilot.permission.domain.repository.RolePermissionRepository;
 import org.joker.comfypilot.permission.domain.repository.RoleRepository;
 import org.joker.comfypilot.permission.domain.repository.UserRoleRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -23,12 +23,14 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class PermissionServiceImpl implements PermissionService {
 
-    private final UserRoleRepository userRoleRepository;
-    private final RolePermissionRepository rolePermissionRepository;
-    private final RoleRepository roleRepository;
+    @Autowired
+    private UserRoleRepository userRoleRepository;
+    @Autowired
+    private RolePermissionRepository rolePermissionRepository;
+    @Autowired
+    private RoleRepository roleRepository;
 
     @Override
     public List<RoleDTO> getCurrentUserRoles() {

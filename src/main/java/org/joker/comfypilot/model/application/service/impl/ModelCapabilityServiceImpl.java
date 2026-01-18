@@ -1,6 +1,5 @@
 package org.joker.comfypilot.model.application.service.impl;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.model.application.dto.ModelCapabilityRequest;
@@ -12,6 +11,7 @@ import org.joker.comfypilot.model.domain.service.CapabilityRouter;
 import org.joker.comfypilot.model.domain.service.ModelExecutor;
 import org.joker.comfypilot.model.domain.valueobject.CapabilityConstraints;
 import org.joker.comfypilot.model.domain.valueobject.ModelExecutionMetadata;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -23,11 +23,12 @@ import java.util.Map;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ModelCapabilityServiceImpl implements ModelCapabilityService {
 
-    private final CapabilityRouter capabilityRouter;
-    private final List<ModelExecutor> modelExecutors;
+    @Autowired
+    private CapabilityRouter capabilityRouter;
+    @Autowired
+    private List<ModelExecutor> modelExecutors;
 
     @Override
     public ModelCapabilityResponse invoke(ModelCapabilityRequest request) {

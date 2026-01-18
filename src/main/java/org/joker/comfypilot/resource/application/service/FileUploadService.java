@@ -1,10 +1,10 @@
 package org.joker.comfypilot.resource.application.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.resource.domain.entity.FileResource;
 import org.joker.comfypilot.resource.domain.repository.FileResourceRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,10 +25,10 @@ import java.util.UUID;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class FileUploadService {
 
-    private final FileResourceRepository fileResourceRepository;
+    @Autowired
+    private FileResourceRepository fileResourceRepository;
 
     @Value("${file.storage.root-path}")
     private String rootPath;

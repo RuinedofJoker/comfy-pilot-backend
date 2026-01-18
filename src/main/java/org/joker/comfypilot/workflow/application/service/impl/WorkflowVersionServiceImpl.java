@@ -1,6 +1,5 @@
 package org.joker.comfypilot.workflow.application.service.impl;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.common.exception.ResourceNotFoundException;
 import org.joker.comfypilot.workflow.application.converter.WorkflowVersionDTOConverter;
@@ -11,6 +10,7 @@ import org.joker.comfypilot.workflow.domain.entity.Workflow;
 import org.joker.comfypilot.workflow.domain.entity.WorkflowVersion;
 import org.joker.comfypilot.workflow.domain.repository.WorkflowRepository;
 import org.joker.comfypilot.workflow.domain.repository.WorkflowVersionRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,12 +23,14 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class WorkflowVersionServiceImpl implements WorkflowVersionService {
 
-    private final WorkflowVersionRepository versionRepository;
-    private final WorkflowRepository workflowRepository;
-    private final WorkflowVersionDTOConverter dtoConverter;
+    @Autowired
+    private WorkflowVersionRepository versionRepository;
+    @Autowired
+    private WorkflowRepository workflowRepository;
+    @Autowired
+    private WorkflowVersionDTOConverter dtoConverter;
 
     @Override
     @Transactional(rollbackFor = Exception.class)

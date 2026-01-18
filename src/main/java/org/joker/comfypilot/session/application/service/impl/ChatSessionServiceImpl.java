@@ -1,7 +1,6 @@
 package org.joker.comfypilot.session.application.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
 import org.joker.comfypilot.agent.application.executor.AgentExecutor;
@@ -18,6 +17,7 @@ import org.joker.comfypilot.session.domain.enums.SessionStatus;
 import org.joker.comfypilot.session.domain.repository.ChatMessageRepository;
 import org.joker.comfypilot.session.domain.repository.ChatSessionRepository;
 import org.joker.comfypilot.session.infrastructure.websocket.WebSocketStreamCallback;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,14 +33,18 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ChatSessionServiceImpl implements ChatSessionService {
 
-    private final ChatSessionRepository chatSessionRepository;
-    private final ChatMessageRepository chatMessageRepository;
-    private final ChatSessionDTOConverter dtoConverter;
-    private final AgentExecutor agentExecutor;
-    private final ObjectMapper objectMapper;
+    @Autowired
+    private ChatSessionRepository chatSessionRepository;
+    @Autowired
+    private ChatMessageRepository chatMessageRepository;
+    @Autowired
+    private ChatSessionDTOConverter dtoConverter;
+    @Autowired
+    private AgentExecutor agentExecutor;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Override
     @Transactional

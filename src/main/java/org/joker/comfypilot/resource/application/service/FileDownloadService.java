@@ -1,10 +1,10 @@
 package org.joker.comfypilot.resource.application.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.resource.domain.entity.FileResource;
 import org.joker.comfypilot.resource.domain.repository.FileResourceRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.FileInputStream;
@@ -18,10 +18,10 @@ import java.nio.file.Paths;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class FileDownloadService {
 
-    private final FileResourceRepository fileResourceRepository;
+    @Autowired
+    private FileResourceRepository fileResourceRepository;
 
     /**
      * 根据ID下载文件

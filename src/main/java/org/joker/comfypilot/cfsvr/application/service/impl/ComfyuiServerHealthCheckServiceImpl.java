@@ -1,6 +1,5 @@
 package org.joker.comfypilot.cfsvr.application.service.impl;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.cfsvr.application.service.ComfyuiServerHealthCheckService;
 import org.joker.comfypilot.cfsvr.domain.entity.ComfyuiServer;
@@ -9,6 +8,7 @@ import org.joker.comfypilot.cfsvr.domain.repository.ComfyuiServerRepository;
 import org.joker.comfypilot.cfsvr.infrastructure.client.ComfyUIClientFactory;
 import org.joker.comfypilot.cfsvr.infrastructure.client.ComfyUIRestClient;
 import org.joker.comfypilot.cfsvr.infrastructure.client.dto.SystemStatsResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -20,11 +20,12 @@ import java.util.List;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ComfyuiServerHealthCheckServiceImpl implements ComfyuiServerHealthCheckService {
 
-    private final ComfyuiServerRepository repository;
-    private final ComfyUIClientFactory clientFactory;
+    @Autowired
+    private ComfyuiServerRepository repository;
+    @Autowired
+    private ComfyUIClientFactory clientFactory;
 
     /**
      * 定时检查所有启用的服务器（每5分钟执行一次）

@@ -1,6 +1,5 @@
 package org.joker.comfypilot.auth.application.service.impl;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.auth.application.dto.*;
 import org.joker.comfypilot.auth.application.service.AuthService;
@@ -16,6 +15,7 @@ import org.joker.comfypilot.user.application.dto.UserDTO;
 import org.joker.comfypilot.user.domain.entity.User;
 import org.joker.comfypilot.user.domain.enums.UserStatus;
 import org.joker.comfypilot.user.domain.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,17 +32,24 @@ import java.util.UUID;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-    private final UserRepository userRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
-    private final JwtUtil jwtUtil;
-    private final TokenRedisRepository tokenRedisRepository;
-    private final SessionRedisRepository sessionRedisRepository;
-    private final org.joker.comfypilot.permission.application.service.PermissionService permissionService;
-    private final org.joker.comfypilot.auth.infrastructure.redis.repository.PasswordResetTokenRedisRepository passwordResetTokenRedisRepository;
-    private final org.joker.comfypilot.notification.application.service.EmailService emailService;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+    @Autowired
+    private JwtUtil jwtUtil;
+    @Autowired
+    private TokenRedisRepository tokenRedisRepository;
+    @Autowired
+    private SessionRedisRepository sessionRedisRepository;
+    @Autowired
+    private org.joker.comfypilot.permission.application.service.PermissionService permissionService;
+    @Autowired
+    private org.joker.comfypilot.auth.infrastructure.redis.repository.PasswordResetTokenRedisRepository passwordResetTokenRedisRepository;
+    @Autowired
+    private org.joker.comfypilot.notification.application.service.EmailService emailService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)

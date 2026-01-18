@@ -3,7 +3,6 @@ package org.joker.comfypilot.model.infrastructure.service;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import jakarta.annotation.Nullable;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.model.domain.entity.AiModel;
@@ -14,6 +13,7 @@ import org.joker.comfypilot.model.domain.enums.ProviderType;
 import org.joker.comfypilot.model.domain.repository.AiModelRepository;
 import org.joker.comfypilot.model.domain.repository.ModelProviderRepository;
 import org.joker.comfypilot.model.domain.service.StreamingChatModelFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -28,12 +28,12 @@ import java.util.Optional;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class StreamingChatModelFactoryImpl extends AbstractChatModelFactory implements StreamingChatModelFactory {
 
-    private final AiModelRepository aiModelRepository;
-
-    private final ModelProviderRepository modelProviderRepository;
+    @Autowired
+    private AiModelRepository aiModelRepository;
+    @Autowired
+    private ModelProviderRepository modelProviderRepository;
 
     @Override
     public StreamingChatModel createStreamingChatModel(String modelIdentifier, Map<String, Object> agentConfig) {
