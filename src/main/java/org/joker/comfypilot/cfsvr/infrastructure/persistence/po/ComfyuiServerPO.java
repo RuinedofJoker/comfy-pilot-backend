@@ -1,5 +1,6 @@
 package org.joker.comfypilot.cfsvr.infrastructure.persistence.po;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,6 +8,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.joker.comfypilot.common.infrastructure.persistence.po.BasePO;
+import org.joker.comfypilot.common.infrastructure.persistence.typehandler.PostgresJsonbTypeHandler;
 
 import java.time.LocalDateTime;
 
@@ -18,7 +20,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@TableName("comfyui_server")
+@TableName(value = "comfyui_server", autoResultMap = true)
 public class ComfyuiServerPO extends BasePO {
 
     private static final long serialVersionUID = 1L;
@@ -84,7 +86,8 @@ public class ComfyuiServerPO extends BasePO {
     private Boolean advancedFeaturesEnabled;
 
     /**
-     * 高级功能配置（JSON格式存储）
+     * 高级功能配置（JSONB类型）
      */
+    @TableField(typeHandler = PostgresJsonbTypeHandler.class)
     private String advancedFeatures;
 }
