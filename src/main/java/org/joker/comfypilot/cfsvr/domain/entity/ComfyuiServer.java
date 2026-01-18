@@ -82,6 +82,16 @@ public class ComfyuiServer extends BaseEntity<Long> {
     private HealthStatus healthStatus;
 
     /**
+     * 是否启用高级功能
+     */
+    private Boolean advancedFeaturesEnabled;
+
+    /**
+     * 高级功能配置
+     */
+    private ComfyuiServerAdvancedFeatures advancedFeatures;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createTime;
@@ -158,5 +168,33 @@ public class ComfyuiServer extends BaseEntity<Long> {
      */
     public boolean isHealthy() {
         return HealthStatus.HEALTHY.equals(this.healthStatus);
+    }
+
+    /**
+     * 启用/禁用高级功能
+     *
+     * @param enabled 是否启用高级功能
+     */
+    public void setAdvancedFeaturesEnabled(Boolean enabled) {
+        this.advancedFeaturesEnabled = enabled;
+    }
+
+    /**
+     * 更新高级功能配置
+     *
+     * @param advancedFeatures 高级功能配置
+     */
+    public void updateAdvancedFeatures(ComfyuiServerAdvancedFeatures advancedFeatures) {
+        this.advancedFeatures = advancedFeatures;
+    }
+
+    /**
+     * 判断是否支持高级功能
+     *
+     * @return true-支持高级功能，false-不支持
+     */
+    public boolean hasAdvancedFeatures() {
+        return Boolean.TRUE.equals(this.advancedFeaturesEnabled)
+                && this.advancedFeatures != null;
     }
 }

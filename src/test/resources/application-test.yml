@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8081
 
 spring:
   application:
@@ -68,13 +68,6 @@ mybatis-plus:
       logic-delete-value: 1
       logic-not-delete-value: 0
 
-# 日志配置
-logging:
-  level:
-    root: INFO
-    org.joker.comfypilot: DEBUG
-    com.baomidou.mybatisplus: DEBUG
-
 # 文件存储配置
 file:
   storage:
@@ -82,40 +75,16 @@ file:
     max-file-size: 10485760
     allowed-extensions: jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx,txt,json,zip
 
-# SpringDoc OpenAPI 配置
+# 日志配置（测试环境减少日志输出）
+logging:
+  level:
+    root: WARN
+    org.joker.comfypilot: INFO
+    com.baomidou.mybatisplus: WARN
+
+# 禁用 SpringDoc（测试环境不需要）
 springdoc:
   api-docs:
-    enabled: true
-    path: /v3/api-docs
+    enabled: false
   swagger-ui:
-    enabled: true
-    path: /swagger-ui.html
-    tags-sorter: alpha
-    operations-sorter: alpha
-  group-configs:
-    # 业务核心模块
-    - group: 01-用户模块
-      paths-to-match: /api/v1/users/**
-    - group: 02-认证模块
-      paths-to-match: /api/v1/auth/**
-    - group: 03-权限模块
-      paths-to-match: /api/v1/roles/**, /api/v1/permissions/**
-    - group: 04-ComfyUI服务模块
-      paths-to-match: /api/v1/comfyui-servers/**
-    - group: 05-工作流模块
-      paths-to-match: /api/v1/workflows/**
-    - group: 06-会话模块
-      paths-to-match: /api/v1/sessions/**
-    - group: 07-Agent模块
-      paths-to-match: /api/v1/agents/**
-    - group: 08-AI模型模块
-      paths-to-match: /api/v1/models/**, /api/v1/model-providers/**
-    - group: 09-资源模块
-      paths-to-match: /api/v1/files/**, /api/v1/resources/**
-    # 支撑服务模块
-    - group: 10-通知模块
-      paths-to-match: /api/v1/notifications/**, /api/v1/email/**
-    - group: 11-监控模块
-      paths-to-match: /api/v1/monitor/**, /api/v1/health/**
-    - group: 12-审计日志模块
-      paths-to-match: /api/v1/audit-logs/**
+    enabled: false
