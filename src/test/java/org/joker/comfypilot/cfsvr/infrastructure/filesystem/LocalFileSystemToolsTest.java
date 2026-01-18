@@ -1,8 +1,8 @@
 package org.joker.comfypilot.cfsvr.infrastructure.filesystem;
 
 import org.joker.comfypilot.BaseTest;
-import org.joker.comfypilot.cfsvr.infrastructure.tool.filesystem.FileInfo;
-import org.joker.comfypilot.cfsvr.infrastructure.tool.filesystem.LocalFileSystemTools;
+import org.joker.comfypilot.common.tool.filesystem.FileInfo;
+import org.joker.comfypilot.common.tool.filesystem.LocalFileSystemTools;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
