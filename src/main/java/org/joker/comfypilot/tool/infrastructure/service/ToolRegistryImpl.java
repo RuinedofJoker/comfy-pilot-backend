@@ -169,11 +169,6 @@ public class ToolRegistryImpl implements ToolRegistry, ApplicationContextAware {
     }
 
     @Override
-    public List<ToolSpecification> getAllToolSpecifications() {
-        return toolMap.values().stream().map(Tool::toolSpecification).toList();
-    }
-
-    @Override
     public Tool getToolByName(String toolName) {
         return toolMap.get(toolName);
     }

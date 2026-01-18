@@ -1,7 +1,5 @@
 package org.joker.comfypilot.tool.domain.service;
 
-import dev.langchain4j.agent.tool.ToolSpecification;
-
 import java.util.List;
 
 /**
@@ -17,14 +15,6 @@ public interface ToolRegistry {
      * @return true-存在，false-不存在
      */
     boolean exists(String className);
-
-    /**
-     * 获取所有工具的 ToolSpecification 列表
-     * 用于 Agent 需要工具规范而非实例的场景
-     *
-     * @return 所有工具的 ToolSpecification 列表
-     */
-    List<ToolSpecification> getAllToolSpecifications();
 
     /**
      * 根据工具名获取工具
