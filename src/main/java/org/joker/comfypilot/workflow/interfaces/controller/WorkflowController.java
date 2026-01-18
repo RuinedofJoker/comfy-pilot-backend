@@ -67,8 +67,7 @@ public class WorkflowController {
     public Result<WorkflowDTO> updateWorkflow(
             @Parameter(description = "工作流ID", required = true) @PathVariable Long id,
             @Validated @RequestBody UpdateWorkflowRequest request) {
-        Long userId = UserContextHolder.getCurrentUserId();
-        WorkflowDTO dto = workflowService.updateWorkflow(id, request, userId);
+        WorkflowDTO dto = workflowService.updateWorkflow(id, request);
         return Result.success(dto);
     }
 
@@ -78,9 +77,9 @@ public class WorkflowController {
     @Operation(summary = "删除工作流", description = "删除指定的工作流")
     @DeleteMapping("/{id}")
     public Result<Void> deleteWorkflow(
-            @Parameter(description = "工作流ID", required = true) @PathVariable Long id) {
-        Long userId = UserContextHolder.getCurrentUserId();
-        workflowService.deleteWorkflow(id, userId);
+            @Parameter(description = "工作流ID", required = true) @PathVariable Long id,
+            @Parameter(description = "消息ID", required = true) @RequestParam Long messageId) {
+        workflowService.deleteWorkflow(id, messageId);
         return Result.success();
     }
 
@@ -91,9 +90,9 @@ public class WorkflowController {
     @PostMapping("/{id}/content")
     public Result<WorkflowDTO> saveContent(
             @Parameter(description = "工作流ID", required = true) @PathVariable Long id,
+            @Parameter(description = "消息ID", required = true) @RequestParam Long messageId,
             @Validated @RequestBody SaveWorkflowContentRequest request) {
-        Long userId = UserContextHolder.getCurrentUserId();
-        WorkflowDTO dto = workflowService.saveContent(id, request, userId);
+        WorkflowDTO dto = workflowService.saveContent(id, request, messageId);
         return Result.success(dto);
     }
 
@@ -111,24 +110,24 @@ public class WorkflowController {
     /**
      * 锁定工作流
      */
-    @Operation(summary = "锁定工作流", description = "锁定工作流，防止其他用户编辑")
+    @Operation(summary = "锁定工作流", description = "锁定工作流，防止其他消息编辑")
     @PostMapping("/{id}/lock")
     public Result<WorkflowDTO> lockWorkflow(
-            @Parameter(description = "工作流ID", required = true) @PathVariable Long id) {
-        Long userId = UserContextHolder.getCurrentUserId();
-        WorkflowDTO dto = workflowService.lockWorkflow(id, userId);
+            @Parameter(description = "工作流ID", required = true) @PathVariable Long id,
+            @Parameter(description = "消息ID", required = true) @RequestParam Long messageId) {
+        WorkflowDTO dto = workflowService.lockWorkflow(id, messageId);
         return Result.success(dto);
     }
 
     /**
      * 解锁工作流
      */
-    @Operation(summary = "解锁工作流", description = "解锁工作流，允许其他用户编辑")
+    @Operation(summary = "解锁工作流", description = "解锁工作流，允许其他消息编辑")
     @PostMapping("/{id}/unlock")
     public Result<WorkflowDTO> unlockWorkflow(
-            @Parameter(description = "工作流ID", required = true) @PathVariable Long id) {
-        Long userId = UserContextHolder.getCurrentUserId();
-        WorkflowDTO dto = workflowService.unlockWorkflow(id, userId);
+            @Parameter(description = "工作流ID", required = true) @PathVariable Long id,
+            @Parameter(description = "消息ID", required = true) @RequestParam Long messageId) {
+        WorkflowDTO dto = workflowService.unlockWorkflow(id, messageId);
         return Result.success(dto);
     }
 }

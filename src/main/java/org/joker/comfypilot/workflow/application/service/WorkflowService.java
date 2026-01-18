@@ -40,30 +40,29 @@ public interface WorkflowService {
     /**
      * 更新工作流信息
      *
-     * @param id      工作流ID
-     * @param request 更新请求
-     * @param userId  更新人ID
+     * @param id        工作流ID
+     * @param request   更新请求
      * @return 工作流DTO
      */
-    WorkflowDTO updateWorkflow(Long id, UpdateWorkflowRequest request, Long userId);
+    WorkflowDTO updateWorkflow(Long id, UpdateWorkflowRequest request);
 
     /**
      * 删除工作流
      *
-     * @param id     工作流ID
-     * @param userId 删除人ID
+     * @param id        工作流ID
+     * @param messageId 消息ID
      */
-    void deleteWorkflow(Long id, Long userId);
+    void deleteWorkflow(Long id, Long messageId);
 
     /**
      * 保存工作流内容
      *
-     * @param id      工作流ID
-     * @param request 保存内容请求
-     * @param userId  操作人ID
+     * @param id        工作流ID
+     * @param request   保存内容请求
+     * @param messageId 消息ID
      * @return 工作流DTO
      */
-    WorkflowDTO saveContent(Long id, SaveWorkflowContentRequest request, Long userId);
+    WorkflowDTO saveContent(Long id, SaveWorkflowContentRequest request, Long messageId);
 
     /**
      * 获取工作流内容
@@ -76,18 +75,18 @@ public interface WorkflowService {
     /**
      * 锁定工作流
      *
-     * @param id     工作流ID
-     * @param userId 锁定人ID
+     * @param id        工作流ID
+     * @param messageId 消息ID
      * @return 工作流DTO
      */
-    WorkflowDTO lockWorkflow(Long id, Long userId);
+    WorkflowDTO lockWorkflow(Long id, Long messageId);
 
     /**
      * 解锁工作流
      *
-     * @param id     工作流ID
-     * @param userId 解锁人ID
+     * @param id        工作流ID
+     * @param messageId 消息ID
      * @return 工作流DTO
      */
-    WorkflowDTO unlockWorkflow(Long id, Long userId);
+    WorkflowDTO unlockWorkflow(Long id, Long messageId);
 }

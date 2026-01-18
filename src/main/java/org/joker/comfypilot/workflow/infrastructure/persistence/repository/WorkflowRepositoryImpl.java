@@ -49,16 +49,6 @@ public class WorkflowRepositoryImpl implements WorkflowRepository {
     }
 
     @Override
-    public List<Workflow> findByIsLocked(Boolean isLocked) {
-        LambdaQueryWrapper<WorkflowPO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(WorkflowPO::getIsLocked, isLocked);
-        List<WorkflowPO> poList = workflowMapper.selectList(wrapper);
-        return poList.stream()
-                .map(workflowConverter::toDomain)
-                .collect(Collectors.toList());
-    }
-
-    @Override
     public List<Workflow> findByCreateBy(Long createBy) {
         LambdaQueryWrapper<WorkflowPO> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(WorkflowPO::getCreateBy, createBy);

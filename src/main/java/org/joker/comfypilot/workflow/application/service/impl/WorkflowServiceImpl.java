@@ -6,6 +6,7 @@ import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.exception.ResourceNotFoundException;
 import org.joker.comfypilot.workflow.application.converter.WorkflowDTOConverter;
 import org.joker.comfypilot.workflow.application.dto.*;
+import org.joker.comfypilot.workflow.application.service.WorkflowLockService;
 import org.joker.comfypilot.workflow.application.service.WorkflowService;
 import org.joker.comfypilot.workflow.domain.entity.Workflow;
 import org.joker.comfypilot.workflow.domain.repository.WorkflowRepository;
@@ -29,6 +30,8 @@ public class WorkflowServiceImpl implements WorkflowService {
     private ComfyuiServerRepository comfyuiServerRepository;
     @Autowired
     private WorkflowDTOConverter dtoConverter;
+    @Autowired
+    private WorkflowLockService workflowLockService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -46,7 +49,6 @@ public class WorkflowServiceImpl implements WorkflowService {
                 .description(request.getDescription())
                 .comfyuiServerId(request.getComfyuiServerId())
                 .comfyuiServerKey(request.getComfyuiServerKey())
-                .isLocked(false)
                 .build();
 
         // 保存到数据库
@@ -76,8 +78,6 @@ public class WorkflowServiceImpl implements WorkflowService {
         // 根据过滤条件查询
         if (comfyuiServerId != null) {
             workflows = workflowRepository.findByComfyuiServerId(comfyuiServerId);
-        } else if (isLocked != null) {
-            workflows = workflowRepository.findByIsLocked(isLocked);
         } else if (createBy != null) {
             workflows = workflowRepository.findByCreateBy(createBy);
         } else {
@@ -85,34 +85,50 @@ public class WorkflowServiceImpl implements WorkflowService {
         }
 
         // 应用额外的过滤条件
-        if (comfyuiServerId == null && isLocked != null) {
-            workflows = workflows.stream()
-                    .filter(w -> w.getIsLocked().equals(isLocked))
-                    .collect(Collectors.toList());
-        }
-        if (comfyuiServerId == null && createBy != null) {
+        if (createBy != null && comfyuiServerId == null) {
             workflows = workflows.stream()
                     .filter(w -> w.getCreateBy().equals(createBy))
                     .collect(Collectors.toList());
         }
 
-        return workflows.stream()
-                .map(dtoConverter::toDTO)
+        // 从Redis加载锁定状态并过滤
+        List<WorkflowDTO> dtoList = workflows.stream()
+                .map(w -> {
+                    WorkflowDTO dto = dtoConverter.toDTO(w);
+                    // 从Redis加载锁定信息
+                    workflowLockService.getLockInfo(w.getId()).ifPresent(lockInfo -> {
+                        dto.setLockedByMessageId(lockInfo.getMessageId());
+                        dto.setLockedAt(lockInfo.getLockedAt());
+                    });
+                    return dto;
+                })
                 .collect(Collectors.toList());
+
+        // 如果需要按锁定状态过滤
+        if (isLocked != null) {
+            dtoList = dtoList.stream()
+                    .filter(dto -> {
+                        boolean locked = dto.getLockedByMessageId() != null;
+                        return locked == isLocked;
+                    })
+                    .collect(Collectors.toList());
+        }
+
+        return dtoList;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public WorkflowDTO updateWorkflow(Long id, UpdateWorkflowRequest request, Long userId) {
-        log.info("更新工作流, id: {}, userId: {}", id, userId);
+    public WorkflowDTO updateWorkflow(Long id, UpdateWorkflowRequest request) {
+        log.info("更新工作流, id: {}", id);
 
         // 查询工作流
         Workflow workflow = workflowRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("工作流不存在"));
 
-        // 检查是否可以编辑
-        if (!workflow.canEdit(userId)) {
-            throw new BusinessException("工作流已被其他用户锁定，无法编辑");
+        // 从Redis检查锁定状态
+        if (workflowLockService.isLocked(id)) {
+            throw new BusinessException("工作流已被其他消息锁定，无法编辑");
         }
 
         // 更新基本信息
@@ -135,16 +151,16 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void deleteWorkflow(Long id, Long userId) {
-        log.info("删除工作流, id: {}, userId: {}", id, userId);
+    public void deleteWorkflow(Long id, Long messageId) {
+        log.info("删除工作流, id: {}, messageId: {}", id, messageId);
 
         // 查询工作流
         Workflow workflow = workflowRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("工作流不存在"));
 
-        // 检查是否可以编辑
-        if (!workflow.canEdit(userId)) {
-            throw new BusinessException("工作流已被其他用户锁定，无法删除");
+        // 从Redis检查锁定状态
+        if (workflowLockService.isLocked(id) && !workflowLockService.isLockedByMessage(id, messageId)) {
+            throw new BusinessException("工作流已被其他消息锁定，无法删除");
         }
 
         // 删除工作流
@@ -154,16 +170,16 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public WorkflowDTO saveContent(Long id, SaveWorkflowContentRequest request, Long userId) {
-        log.info("保存工作流内容, id: {}, userId: {}", id, userId);
+    public WorkflowDTO saveContent(Long id, SaveWorkflowContentRequest request, Long messageId) {
+        log.info("保存工作流内容, id: {}, messageId: {}", id, messageId);
 
         // 查询工作流
         Workflow workflow = workflowRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("工作流不存在"));
 
-        // 检查是否可以编辑
-        if (!workflow.canEdit(userId)) {
-            throw new BusinessException("工作流已被其他用户锁定，无法保存内容");
+        // 从Redis检查锁定状态
+        if (workflowLockService.isLocked(id) && !workflowLockService.isLockedByMessage(id, messageId)) {
+            throw new BusinessException("工作流已被其他消息锁定，无法保存内容");
         }
 
         // 保存内容（领域实体会自动计算哈希值）
@@ -188,44 +204,48 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public WorkflowDTO lockWorkflow(Long id, Long userId) {
-        log.info("锁定工作流, id: {}, userId: {}", id, userId);
+    public WorkflowDTO lockWorkflow(Long id, Long messageId) {
+        log.info("锁定工作流, id: {}, messageId: {}", id, messageId);
 
         // 查询工作流
         Workflow workflow = workflowRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("工作流不存在"));
 
-        // 锁定工作流（领域实体会检查是否已被锁定）
-        workflow.lock(userId);
+        // 使用Redis锁定服务锁定工作流
+        boolean locked = workflowLockService.lockWorkflow(id, messageId);
+        if (!locked) {
+            throw new BusinessException("工作流已被锁定");
+        }
 
-        // 保存到数据库
-        Workflow lockedWorkflow = workflowRepository.save(workflow);
-        log.info("锁定工作流成功, id: {}, lockedBy: {}", id, userId);
+        log.info("锁定工作流成功, id: {}, messageId: {}", id, messageId);
 
-        return dtoConverter.toDTO(lockedWorkflow);
+        // 返回DTO，包含锁定信息
+        WorkflowDTO dto = dtoConverter.toDTO(workflow);
+        workflowLockService.getLockInfo(id).ifPresent(lockInfo -> {
+            dto.setLockedByMessageId(lockInfo.getMessageId());
+            dto.setLockedAt(lockInfo.getLockedAt());
+        });
+
+        return dto;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public WorkflowDTO unlockWorkflow(Long id, Long userId) {
-        log.info("解锁工作流, id: {}, userId: {}", id, userId);
+    public WorkflowDTO unlockWorkflow(Long id, Long messageId) {
+        log.info("解锁工作流, id: {}, messageId: {}", id, messageId);
 
         // 查询工作流
         Workflow workflow = workflowRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("工作流不存在"));
 
-        // 检查权限：只有锁定人可以解锁
-        if (!workflow.isLockedBy(userId)) {
-            throw new BusinessException("只有锁定人可以解锁工作流");
+        // 使用Redis锁定服务解锁工作流
+        boolean unlocked = workflowLockService.unlockWorkflow(id, messageId);
+        if (!unlocked) {
+            throw new BusinessException("解锁失败，只有锁定该工作流的消息才能解锁");
         }
 
-        // 解锁工作流
-        workflow.unlock();
+        log.info("解锁工作流成功, id: {}, messageId: {}", id, messageId);
 
-        // 保存到数据库
-        Workflow unlockedWorkflow = workflowRepository.save(workflow);
-        log.info("解锁工作流成功, id: {}", id);
-
-        return dtoConverter.toDTO(unlockedWorkflow);
+        return dtoConverter.toDTO(workflow);
     }
 }

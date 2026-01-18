@@ -57,19 +57,4 @@ public class WorkflowPO extends BasePO {
      * 工作流缩略图URL
      */
     private String thumbnailUrl;
-
-    /**
-     * 是否锁定
-     */
-    private Boolean isLocked;
-
-    /**
-     * 锁定人ID
-     */
-    private Long lockedBy;
-
-    /**
-     * 锁定时间
-     */
-    private LocalDateTime lockedAt;
 }

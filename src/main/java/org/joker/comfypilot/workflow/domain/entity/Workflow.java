@@ -64,19 +64,10 @@ public class Workflow extends BaseEntity<Long> {
     private String thumbnailUrl;
 
     /**
-     * 是否锁定
+     * 锁定消息ID（在哪个消息里被锁定）
+     * 此字段不存储到数据库，仅在内存中使用，实际存储在Redis中
      */
-    private Boolean isLocked;
-
-    /**
-     * 锁定人ID
-     */
-    private Long lockedBy;
-
-    /**
-     * 锁定时间
-     */
-    private LocalDateTime lockedAt;
+    private Long lockedByMessageId;
 
     /**
      * 创建时间
@@ -106,7 +97,7 @@ public class Workflow extends BaseEntity<Long> {
      * @param content 工作流内容（JSON格式）
      */
     public void saveContent(String content) {
-        if (this.isLocked != null && this.isLocked) {
+        if (this.lockedByMessageId != null) {
             throw new BusinessException("工作流已锁定，无法保存内容");
         }
         this.activeContent = content;
@@ -150,47 +141,52 @@ public class Workflow extends BaseEntity<Long> {
     }
 
     /**
-     * 锁定工作流
+     * 设置锁定消息ID
      *
-     * @param userId 锁定人ID
+     * @param messageId 消息ID
      */
-    public void lock(Long userId) {
-        if (this.isLocked != null && this.isLocked) {
+    public void setLock(Long messageId) {
+        if (this.lockedByMessageId != null) {
             throw new BusinessException("工作流已被锁定");
         }
-        this.isLocked = true;
-        this.lockedBy = userId;
-        this.lockedAt = LocalDateTime.now();
+        this.lockedByMessageId = messageId;
     }
 
     /**
      * 解锁工作流
      */
     public void unlock() {
-        this.isLocked = false;
-        this.lockedBy = null;
-        this.lockedAt = null;
+        this.lockedByMessageId = null;
     }
 
     /**
-     * 判断是否被指定用户锁定
+     * 判断是否被指定消息锁定
      *
-     * @param userId 用户ID
-     * @return 是否被指定用户锁定
+     * @param messageId 消息ID
+     * @return 是否被指定消息锁定
      */
-    public boolean isLockedBy(Long userId) {
-        return this.isLocked != null && this.isLocked
-            && this.lockedBy != null && this.lockedBy.equals(userId);
+    public boolean isLockedByMessage(Long messageId) {
+        return this.lockedByMessageId != null
+            && this.lockedByMessageId.equals(messageId);
     }
 
     /**
-     * 判断用户是否可以编辑
+     * 判断是否已锁定
      *
-     * @param userId 用户ID
+     * @return 是否已锁定
+     */
+    public boolean isLocked() {
+        return this.lockedByMessageId != null;
+    }
+
+    /**
+     * 判断消息是否可以编辑工作流
+     *
+     * @param messageId 消息ID
      * @return 是否可以编辑
      */
-    public boolean canEdit(Long userId) {
-        // 未锁定或被当前用户锁定时可以编辑
-        return (this.isLocked == null || !this.isLocked) || isLockedBy(userId);
+    public boolean canEdit(Long messageId) {
+        // 未锁定或被当前消息锁定时可以编辑
+        return !isLocked() || isLockedByMessage(messageId);
     }
 }

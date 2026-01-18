@@ -34,14 +34,6 @@ public interface WorkflowRepository {
     List<Workflow> findByComfyuiServerId(Long comfyuiServerId);
 
     /**
-     * 根据锁定状态查询
-     *
-     * @param isLocked 是否锁定
-     * @return 工作流列表
-     */
-    List<Workflow> findByIsLocked(Boolean isLocked);
-
-    /**
      * 根据创建人查询
      *
      * @param createBy 创建人ID

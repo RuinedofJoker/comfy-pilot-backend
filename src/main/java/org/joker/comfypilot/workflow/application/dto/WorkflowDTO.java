@@ -44,11 +44,8 @@ public class WorkflowDTO extends BaseDTO {
     @Schema(description = "工作流缩略图URL")
     private String thumbnailUrl;
 
-    @Schema(description = "是否锁定")
-    private Boolean isLocked;
-
-    @Schema(description = "锁定人ID")
-    private Long lockedBy;
+    @Schema(description = "锁定消息ID（在哪个消息里被锁定）")
+    private Long lockedByMessageId;
 
     @Schema(description = "锁定时间")
     private LocalDateTime lockedAt;

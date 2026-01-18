@@ -18,9 +18,6 @@ CREATE TABLE workflow (
     active_content TEXT,
     active_content_hash VARCHAR(64),
     thumbnail_url VARCHAR(500),
-    is_locked BOOLEAN NOT NULL DEFAULT FALSE,
-    locked_by BIGINT,
-    locked_at TIMESTAMP,
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by BIGINT NOT NULL,
     update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -38,9 +35,6 @@ COMMENT ON COLUMN workflow.comfyui_server_key IS '所属ComfyUI服务唯一标�
 COMMENT ON COLUMN workflow.active_content IS '当前激活版本的内容（JSON格式）';
 COMMENT ON COLUMN workflow.active_content_hash IS '激活内容的SHA-256哈希值';
 COMMENT ON COLUMN workflow.thumbnail_url IS '工作流缩略图URL';
-COMMENT ON COLUMN workflow.is_locked IS '是否锁定';
-COMMENT ON COLUMN workflow.locked_by IS '锁定人ID';
-COMMENT ON COLUMN workflow.locked_at IS '锁定时间';
 COMMENT ON COLUMN workflow.create_time IS '创建时间';
 COMMENT ON COLUMN workflow.create_by IS '创建人ID';
 COMMENT ON COLUMN workflow.update_time IS '更新时间';
@@ -53,7 +47,6 @@ COMMENT ON COLUMN workflow.is_deleted IS '逻辑删除标记（0-未删除，非
 CREATE INDEX idx_workflow_server_id ON workflow(comfyui_server_id);
 CREATE INDEX idx_workflow_server_key ON workflow(comfyui_server_key);
 CREATE INDEX idx_workflow_create_by ON workflow(create_by);
-CREATE INDEX idx_workflow_is_locked ON workflow(is_locked);
 
 -- =====================================================
 -- 3. 创建workflow_version表（工作流版本表）
