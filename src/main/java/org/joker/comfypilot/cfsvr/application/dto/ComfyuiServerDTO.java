@@ -60,5 +60,5 @@ public class ComfyuiServerDTO extends BaseDTO {
     private Boolean advancedFeaturesEnabled;
 
     @Schema(description = "高级功能配置")
-    private Object advancedFeatures;
+    private ComfyuiServerAdvancedFeaturesDTO advancedFeatures;
 }

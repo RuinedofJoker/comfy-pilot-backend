@@ -11,7 +11,7 @@ import org.mapstruct.Named;
 /**
  * ComfyUI服务DTO转换器（Entity ↔ DTO）
  */
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {ComfyuiServerAdvancedFeaturesConverter.class})
 public interface ComfyuiServerDTOConverter {
 
     /**

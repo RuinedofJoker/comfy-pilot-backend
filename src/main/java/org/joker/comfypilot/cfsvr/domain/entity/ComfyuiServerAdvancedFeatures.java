@@ -4,12 +4,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.joker.comfypilot.cfsvr.domain.enums.ConnectionStatus;
 import org.joker.comfypilot.cfsvr.domain.enums.ConnectionType;
 import org.joker.comfypilot.cfsvr.domain.enums.OsType;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 /**
  * ComfyUI服务器高级功能配置
@@ -64,14 +62,4 @@ public class ComfyuiServerAdvancedFeatures implements Serializable {
      * 包含所有ComfyUI相关的目录路径配置
      */
     private ComfyuiDirectoryConfig directoryConfig;
-
-    /**
-     * 最后连接测试时间
-     */
-    private LocalDateTime lastConnectionTestTime;
-
-    /**
-     * 连接状态
-     */
-    private ConnectionStatus connectionStatus;
 }

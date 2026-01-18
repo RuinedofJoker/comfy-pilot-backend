@@ -1,6 +1,7 @@
 package org.joker.comfypilot.cfsvr.application.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import org.joker.comfypilot.cfsvr.application.converter.ComfyuiServerAdvancedFeaturesConverter;
 import org.joker.comfypilot.cfsvr.application.converter.ComfyuiServerDTOConverter;
 import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerDTO;
 import org.joker.comfypilot.cfsvr.application.dto.CreateServerRequest;
@@ -31,6 +32,8 @@ public class ComfyuiServerServiceImpl implements ComfyuiServerService {
     private ComfyuiServerRepository repository;
     @Autowired
     private ComfyuiServerDTOConverter dtoConverter;
+    @Autowired
+    private ComfyuiServerAdvancedFeaturesConverter advancedFeaturesConverter;
     @Autowired
     private ComfyUIClientFactory clientFactory;
 
@@ -66,6 +69,9 @@ public class ComfyuiServerServiceImpl implements ComfyuiServerService {
                 .maxRetries(request.getMaxRetries() != null ? request.getMaxRetries() : 3)
                 .isEnabled(true)
                 .healthStatus(HealthStatus.UNKNOWN)
+                .advancedFeaturesEnabled(request.getAdvancedFeaturesEnabled() != null ? request.getAdvancedFeaturesEnabled() : false)
+                .advancedFeatures(request.getAdvancedFeatures() != null ?
+                        advancedFeaturesConverter.toEntity(request.getAdvancedFeatures()) : null)
                 .build();
 
         // 保存到数据库
@@ -104,6 +110,19 @@ public class ComfyuiServerServiceImpl implements ComfyuiServerService {
         // 更新启用状态
         if (request.getIsEnabled() != null) {
             server.setEnabled(request.getIsEnabled());
+        }
+
+        // 更新高级功能配置
+        if (request.hasAdvancedFeaturesChanges()) {
+            if (request.getAdvancedFeaturesEnabled() != null) {
+                server.setAdvancedFeaturesEnabled(request.getAdvancedFeaturesEnabled());
+                log.info("更新高级功能启用状态, id: {}, enabled: {}", id, request.getAdvancedFeaturesEnabled());
+            }
+            if (request.getAdvancedFeatures() != null) {
+                // 使用转换器将DTO转换为Entity
+                server.updateAdvancedFeatures(advancedFeaturesConverter.toEntity(request.getAdvancedFeatures()));
+                log.info("更新高级功能配置, id: {}", id);
+            }
         }
 
         // 保存更新

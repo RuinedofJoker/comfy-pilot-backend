@@ -53,4 +53,10 @@ public class CreateServerRequest implements Serializable {
 
     @Schema(description = "最大重试次数", example = "3")
     private Integer maxRetries;
+
+    @Schema(description = "是否启用高级功能")
+    private Boolean advancedFeaturesEnabled;
+
+    @Schema(description = "高级功能配置")
+    private ComfyuiServerAdvancedFeaturesDTO advancedFeatures;
 }

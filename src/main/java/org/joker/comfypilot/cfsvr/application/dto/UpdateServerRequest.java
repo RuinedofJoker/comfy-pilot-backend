@@ -50,11 +50,24 @@ public class UpdateServerRequest implements Serializable {
     @Schema(description = "是否启用")
     private Boolean isEnabled;
 
+    @Schema(description = "是否启用高级功能")
+    private Boolean advancedFeaturesEnabled;
+
+    @Schema(description = "高级功能配置")
+    private ComfyuiServerAdvancedFeaturesDTO advancedFeatures;
+
     /**
      * 判断是否有连接配置变更
      */
     public boolean hasConnectionConfigChanges() {
         return baseUrl != null || authMode != null || apiKey != null
                 || timeoutSeconds != null || maxRetries != null;
+    }
+
+    /**
+     * 判断是否有高级功能配置变更
+     */
+    public boolean hasAdvancedFeaturesChanges() {
+        return advancedFeaturesEnabled != null || advancedFeatures != null;
     }
 }
