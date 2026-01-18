@@ -9,19 +9,18 @@ import lombok.Getter;
 public enum ConnectionType {
 
     /**
-     * SSH连接方式
+     * 本地连接方式
+     * ComfyUI 与平台部署在同一机器上，通过本地文件系统直接访问
+     */
+    LOCAL("LOCAL", "本地直接访问"),
+
+    /**
+     * SSH 远程连接方式
+     * 通过 SSH 协议连接到远程服务器
      */
     SSH("SSH", "SSH远程连接"),
 
-    /**
-     * 预留：Docker连接方式
-     */
-    DOCKER("DOCKER", "Docker容器连接"),
-
-    /**
-     * 预留：Kubernetes连接方式
-     */
-    KUBERNETES("KUBERNETES", "Kubernetes集群连接");
+    ;
 
     /**
      * 连接方式代码

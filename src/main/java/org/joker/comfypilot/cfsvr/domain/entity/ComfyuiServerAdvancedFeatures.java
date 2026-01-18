@@ -23,7 +23,7 @@ public class ComfyuiServerAdvancedFeatures implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 连接方式类型（SSH/DOCKER/KUBERNETES）
+     * 连接方式类型（LOCAL/SSH）
      */
     private ConnectionType connectionType;
 
