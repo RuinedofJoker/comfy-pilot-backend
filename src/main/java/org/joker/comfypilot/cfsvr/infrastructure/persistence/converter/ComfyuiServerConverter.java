@@ -1,6 +1,9 @@
 package org.joker.comfypilot.cfsvr.infrastructure.persistence.converter;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.joker.comfypilot.cfsvr.domain.entity.ComfyuiServer;
+import org.joker.comfypilot.cfsvr.domain.entity.ComfyuiServerAdvancedFeatures;
 import org.joker.comfypilot.cfsvr.domain.enums.AuthMode;
 import org.joker.comfypilot.cfsvr.domain.enums.HealthStatus;
 import org.joker.comfypilot.cfsvr.infrastructure.persistence.po.ComfyuiServerPO;
@@ -19,6 +22,7 @@ public interface ComfyuiServerConverter {
      */
     @Mapping(target = "authMode", source = "authMode", qualifiedByName = "stringToAuthMode")
     @Mapping(target = "healthStatus", source = "healthStatus", qualifiedByName = "stringToHealthStatus")
+    @Mapping(target = "advancedFeatures", source = "advancedFeatures", qualifiedByName = "stringToAdvancedFeatures")
     ComfyuiServer toDomain(ComfyuiServerPO po);
 
     /**
@@ -26,6 +30,7 @@ public interface ComfyuiServerConverter {
      */
     @Mapping(target = "authMode", source = "authMode", qualifiedByName = "authModeToString")
     @Mapping(target = "healthStatus", source = "healthStatus", qualifiedByName = "healthStatusToString")
+    @Mapping(target = "advancedFeatures", source = "advancedFeatures", qualifiedByName = "advancedFeaturesToString")
     ComfyuiServerPO toPO(ComfyuiServer domain);
 
     @Named("stringToAuthMode")
@@ -46,5 +51,33 @@ public interface ComfyuiServerConverter {
     @Named("healthStatusToString")
     default String healthStatusToString(HealthStatus status) {
         return status != null ? status.name() : null;
+    }
+
+    @Named("stringToAdvancedFeatures")
+    default ComfyuiServerAdvancedFeatures stringToAdvancedFeatures(String json) {
+        if (json == null || json.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.findAndRegisterModules();
+            return objectMapper.readValue(json, ComfyuiServerAdvancedFeatures.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to deserialize advancedFeatures", e);
+        }
+    }
+
+    @Named("advancedFeaturesToString")
+    default String advancedFeaturesToString(ComfyuiServerAdvancedFeatures features) {
+        if (features == null) {
+            return null;
+        }
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.findAndRegisterModules();
+            return objectMapper.writeValueAsString(features);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize advancedFeatures", e);
+        }
     }
 }

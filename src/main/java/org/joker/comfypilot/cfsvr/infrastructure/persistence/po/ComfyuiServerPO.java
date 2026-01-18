@@ -77,4 +77,14 @@ public class ComfyuiServerPO extends BasePO {
      * 健康状态
      */
     private String healthStatus;
+
+    /**
+     * 是否启用高级功能
+     */
+    private Boolean advancedFeaturesEnabled;
+
+    /**
+     * 高级功能配置（JSON格式存储）
+     */
+    private String advancedFeatures;
 }

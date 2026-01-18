@@ -102,12 +102,12 @@ public class LocalFileSystemToolsTest extends BaseTest {
             System.out.println("✅ 测试文件创建成功");
 
             // 4. 列出目录内容
-            List<FileInfo> files = fileSystemService.listDirectory(testDirPath);
-            System.out.println("\n>>> 目录内容 (" + files.size() + " 项):");
-            for (FileInfo file : files) {
-                String type = file.getIsDirectory() ? "[目录]" : "[文件]";
-                System.out.println(type + " " + file.getName() + " (" + file.getSize() + " 字节)");
-            }
+            String files = fileSystemService.listDirectory(testDirPath);
+//            System.out.println("\n>>> 目录内容 (" + files.size() + " 项):");
+            /*for (FileInfo file : files) {
+                String type = file.isDirectory() ? "[目录]" : "[文件]";
+                System.out.println(type + " " + file.name() + " (" + file.size() + " 字节)");
+            }*/
 
         } finally {
             // 5. 清理测试目录

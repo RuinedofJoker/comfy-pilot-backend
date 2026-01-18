@@ -4,7 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.joker.comfypilot.cfsvr.domain.enums.ConnectionStatus;
 import org.joker.comfypilot.cfsvr.domain.enums.ConnectionType;
+import org.joker.comfypilot.cfsvr.domain.enums.OsType;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -33,44 +35,35 @@ public class ComfyuiServerAdvancedFeatures implements Serializable {
     private SshConnectionConfig sshConfig;
 
     /**
-     * ComfyUI安装目录路径
+     * 服务器操作系统类型
      */
-    private String comfyuiInstallPath;
+    private OsType osType;
 
     /**
-     * 服务器操作系统类型（WINDOWS/LINUX）
+     * 工作目录路径
+     * SSH连接后的默认工作目录，所有命令将在此目录下执行
      */
-    private String osType;
+    private String workingDirectory;
 
     /**
-     * 是否支持插件管理
+     * 环境初始化脚本
+     * 连接后执行的初始化脚本，用于激活 conda/pyenv 等虚拟环境
+     * 例如: "source ~/anaconda3/bin/activate comfyui" 或 "conda activate comfyui"
      */
-    private Boolean pluginManagementEnabled;
+    private String environmentInitScript;
 
     /**
-     * 插件目录路径
+     * Python 命令路径
+     * Python 解释器的完整路径或命令名称
+     * 例如: "/usr/bin/python3" 或 "python" 或 "python3"
      */
-    private String pluginDirectoryPath;
+    private String pythonCommand;
 
     /**
-     * 是否支持模型管理
+     * ComfyUI目录配置
+     * 包含所有ComfyUI相关的目录路径配置
      */
-    private Boolean modelManagementEnabled;
-
-    /**
-     * 模型目录路径
-     */
-    private String modelDirectoryPath;
-
-    /**
-     * 是否支持自定义节点管理
-     */
-    private Boolean customNodeManagementEnabled;
-
-    /**
-     * 自定义节点目录路径
-     */
-    private String customNodeDirectoryPath;
+    private ComfyuiDirectoryConfig directoryConfig;
 
     /**
      * 最后连接测试时间
@@ -78,78 +71,7 @@ public class ComfyuiServerAdvancedFeatures implements Serializable {
     private LocalDateTime lastConnectionTestTime;
 
     /**
-     * 连接状态（CONNECTED/DISCONNECTED/UNKNOWN）
+     * 连接状态
      */
-    private String connectionStatus;
-
-    // ==================== 业务方法 ====================
-
-    /**
-     * 更新SSH连接配置
-     *
-     * @param sshConfig SSH连接配置对象
-     */
-    public void updateSshConfig(SshConnectionConfig sshConfig) {
-        this.sshConfig = sshConfig;
-    }
-
-    /**
-     * 更新ComfyUI路径配置
-     *
-     * @param comfyuiInstallPath      ComfyUI安装目录
-     * @param pluginDirectoryPath     插件目录
-     * @param modelDirectoryPath      模型目录
-     * @param customNodeDirectoryPath 自定义节点目录
-     */
-    public void updatePathConfig(String comfyuiInstallPath, String pluginDirectoryPath,
-                                 String modelDirectoryPath, String customNodeDirectoryPath) {
-        this.comfyuiInstallPath = comfyuiInstallPath;
-        this.pluginDirectoryPath = pluginDirectoryPath;
-        this.modelDirectoryPath = modelDirectoryPath;
-        this.customNodeDirectoryPath = customNodeDirectoryPath;
-    }
-
-    /**
-     * 启用/禁用功能模块
-     *
-     * @param pluginManagement     是否启用插件管理
-     * @param modelManagement      是否启用模型管理
-     * @param customNodeManagement 是否启用自定义节点管理
-     */
-    public void updateFeatureFlags(Boolean pluginManagement, Boolean modelManagement,
-                                   Boolean customNodeManagement) {
-        this.pluginManagementEnabled = pluginManagement;
-        this.modelManagementEnabled = modelManagement;
-        this.customNodeManagementEnabled = customNodeManagement;
-    }
-
-    /**
-     * 更新连接状态
-     *
-     * @param status 连接状态
-     */
-    public void updateConnectionStatus(String status) {
-        this.connectionStatus = status;
-        this.lastConnectionTestTime = LocalDateTime.now();
-    }
-
-    /**
-     * 判断SSH是否已配置且启用
-     *
-     * @return true-已配置且启用，false-未配置或未启用
-     */
-    public boolean isSshConfigured() {
-        return this.sshConfig != null && this.sshConfig.isConfigured();
-    }
-
-    /**
-     * 判断是否支持任何高级功能
-     *
-     * @return true-支持至少一项高级功能，false-不支持任何高级功能
-     */
-    public boolean hasAnyFeatureEnabled() {
-        return Boolean.TRUE.equals(this.pluginManagementEnabled)
-                || Boolean.TRUE.equals(this.modelManagementEnabled)
-                || Boolean.TRUE.equals(this.customNodeManagementEnabled);
-    }
+    private ConnectionStatus connectionStatus;
 }

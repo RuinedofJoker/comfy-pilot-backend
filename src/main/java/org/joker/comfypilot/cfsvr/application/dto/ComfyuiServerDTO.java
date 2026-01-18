@@ -55,4 +55,10 @@ public class ComfyuiServerDTO extends BaseDTO {
 
     @Schema(description = "健康状态：HEALTHY/UNHEALTHY/UNKNOWN")
     private String healthStatus;
+
+    @Schema(description = "是否启用高级功能")
+    private Boolean advancedFeaturesEnabled;
+
+    @Schema(description = "高级功能配置")
+    private Object advancedFeatures;
 }
