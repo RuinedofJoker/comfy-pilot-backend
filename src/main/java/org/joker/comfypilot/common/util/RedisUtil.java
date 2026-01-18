@@ -543,4 +543,53 @@ public class RedisUtil {
             return 0;
         }
     }
+
+    // ============================缓存双删=============================
+
+    /**
+     * 延迟双删
+     * 先删除缓存，等待指定时间后再次删除，确保数据一致性
+     *
+     * @param key   缓存键
+     * @param delayMillis 延迟时间（毫秒）
+     */
+    public void delayedDoubleDelete(String key, long delayMillis) {
+        // 第一次删除
+        del(key);
+
+        // 延迟后再次删除
+        new Thread(() -> {
+            try {
+                Thread.sleep(delayMillis);
+                del(key);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }).start();
+    }
+
+    /**
+     * 批量延迟双删
+     *
+     * @param delayMillis 延迟时间（毫秒）
+     * @param keys 缓存键数组
+     */
+    public void delayedDoubleDelete(long delayMillis, String... keys) {
+        if (keys == null || keys.length == 0) {
+            return;
+        }
+
+        // 第一次删除
+        del(keys);
+
+        // 延迟后再次删除
+        new Thread(() -> {
+            try {
+                Thread.sleep(delayMillis);
+                del(keys);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }).start();
+    }
 }
