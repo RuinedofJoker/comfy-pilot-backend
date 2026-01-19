@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.joker.comfypilot.common.interfaces.response.Result;
 import org.joker.comfypilot.model.application.dto.AiModelDTO;
+import org.joker.comfypilot.model.application.dto.AiModelSimpleDTO;
 import org.joker.comfypilot.model.application.dto.CreateModelRequest;
 import org.joker.comfypilot.model.application.dto.UpdateModelRequest;
 import org.joker.comfypilot.model.application.service.AiModelService;
@@ -91,5 +92,12 @@ public class AiModelController {
             @PathVariable Long id) {
         modelService.disableModel(id);
         return Result.success();
+    }
+
+    @Operation(summary = "查询启用的AI模型（前台）", description = "查询所有启用状态的AI模型简化信息，用于前台展示")
+    @GetMapping("/enabled")
+    public Result<List<AiModelSimpleDTO>> listEnabledModels() {
+        List<AiModelSimpleDTO> models = modelService.listEnabledModels();
+        return Result.success(models);
     }
 }

@@ -1,6 +1,7 @@
 package org.joker.comfypilot.model.application.service;
 
 import org.joker.comfypilot.model.application.dto.AiModelDTO;
+import org.joker.comfypilot.model.application.dto.AiModelSimpleDTO;
 import org.joker.comfypilot.model.application.dto.CreateModelRequest;
 import org.joker.comfypilot.model.application.dto.UpdateModelRequest;
 
@@ -71,4 +72,11 @@ public interface AiModelService {
      * @return 模型信息
      */
     AiModelDTO getByModelIdentifier(String modelIdentifier);
+
+    /**
+     * 查询所有启用的模型（用于前台）
+     *
+     * @return 启用的模型简化信息列表
+     */
+    List<AiModelSimpleDTO> listEnabledModels();
 }

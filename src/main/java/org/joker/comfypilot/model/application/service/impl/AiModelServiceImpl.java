@@ -6,7 +6,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.exception.ResourceNotFoundException;
 import org.joker.comfypilot.model.application.converter.AiModelDTOConverter;
+import org.joker.comfypilot.model.application.converter.AiModelSimpleDTOConverter;
 import org.joker.comfypilot.model.application.dto.AiModelDTO;
+import org.joker.comfypilot.model.application.dto.AiModelSimpleDTO;
 import org.joker.comfypilot.model.application.dto.CreateModelRequest;
 import org.joker.comfypilot.model.application.dto.UpdateModelRequest;
 import org.joker.comfypilot.model.application.service.AiModelService;
@@ -37,6 +39,8 @@ public class AiModelServiceImpl implements AiModelService {
     private ModelProviderRepository providerRepository;
     @Autowired
     private AiModelDTOConverter dtoConverter;
+    @Autowired
+    private AiModelSimpleDTOConverter simpleDtoConverter;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -195,6 +199,14 @@ public class AiModelServiceImpl implements AiModelService {
         AiModel model = modelRepository.findByModelIdentifier(modelIdentifier)
                 .orElseThrow(() -> new ResourceNotFoundException("AI模型", modelIdentifier));
         return dtoConverter.toDTO(model);
+    }
+
+    @Override
+    public List<AiModelSimpleDTO> listEnabledModels() {
+        List<AiModel> enabledModels = modelRepository.findByIsEnabled(true);
+        return enabledModels.stream()
+                .map(simpleDtoConverter::toSimpleDTO)
+                .collect(Collectors.toList());
     }
 
     // ==================== 私有辅助方法 ====================
