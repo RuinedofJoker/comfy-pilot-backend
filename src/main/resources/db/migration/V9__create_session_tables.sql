@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS chat_message (
     role VARCHAR(20) NOT NULL,
     content TEXT NOT NULL,
     metadata TEXT,
-    is_deleted INTEGER NOT NULL DEFAULT 0,
+    is_deleted BIGINT NOT NULL DEFAULT 0,
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by BIGINT,

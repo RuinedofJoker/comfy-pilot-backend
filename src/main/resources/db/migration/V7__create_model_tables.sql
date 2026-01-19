@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS model_provider (
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP,
     create_by BIGINT,
-    update_by BIGINT
+    update_by BIGINT,
+    is_deleted BIGINT NOT NULL DEFAULT 0
 );
 
 -- 创建索引
@@ -42,6 +43,7 @@ COMMENT ON COLUMN model_provider.create_time IS '创建时间';
 COMMENT ON COLUMN model_provider.update_time IS '更新时间';
 COMMENT ON COLUMN model_provider.create_by IS '创建人ID';
 COMMENT ON COLUMN model_provider.update_by IS '更新人ID';
+COMMENT ON COLUMN model_provider.is_deleted IS '逻辑删除标记（0-未删除，非0-删除时的时间戳）';
 
 -- =====================================================
 -- 2. ai_model - AI模型表
@@ -61,7 +63,7 @@ CREATE TABLE IF NOT EXISTS ai_model (
     update_time TIMESTAMP,
     create_by BIGINT,
     update_by BIGINT,
-    CONSTRAINT fk_ai_model_provider FOREIGN KEY (provider_id) REFERENCES model_provider(id)
+    is_deleted BIGINT NOT NULL DEFAULT 0
 );
 
 -- 创建索引
@@ -90,3 +92,4 @@ COMMENT ON COLUMN ai_model.create_time IS '创建时间';
 COMMENT ON COLUMN ai_model.update_time IS '更新时间';
 COMMENT ON COLUMN ai_model.create_by IS '创建人ID';
 COMMENT ON COLUMN ai_model.update_by IS '更新人ID';
+COMMENT ON COLUMN ai_model.is_deleted IS '逻辑删除标记（0-未删除，非0-删除时的时间戳）';

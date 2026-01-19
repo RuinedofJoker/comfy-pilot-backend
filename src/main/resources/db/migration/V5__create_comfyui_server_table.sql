@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS comfyui_server (
     is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
     last_health_check_time TIMESTAMP,
     health_status VARCHAR(20),
+    advanced_features_enabled BOOLEAN DEFAULT FALSE,
+    advanced_features JSONB,
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by BIGINT NOT NULL,
     update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -36,6 +38,8 @@ COMMENT ON COLUMN comfyui_server.max_retries IS '最大重试次数';
 COMMENT ON COLUMN comfyui_server.is_enabled IS '是否启用';
 COMMENT ON COLUMN comfyui_server.last_health_check_time IS '最后健康检查时间';
 COMMENT ON COLUMN comfyui_server.health_status IS '健康状态（HEALTHY-健康，UNHEALTHY-不健康，UNKNOWN-未知）';
+COMMENT ON COLUMN comfyui_server.advanced_features_enabled IS '是否启用高级功能';
+COMMENT ON COLUMN comfyui_server.advanced_features IS '高级功能配置（JSON格式存储）';
 COMMENT ON COLUMN comfyui_server.create_time IS '创建时间';
 COMMENT ON COLUMN comfyui_server.create_by IS '创建人ID';
 COMMENT ON COLUMN comfyui_server.update_time IS '更新时间';
@@ -45,3 +49,4 @@ COMMENT ON COLUMN comfyui_server.is_deleted IS '逻辑删除标记（0-未删除
 -- 2. 创建索引
 CREATE INDEX IF NOT EXISTS idx_comfyui_server_is_enabled ON comfyui_server(is_enabled);
 CREATE INDEX IF NOT EXISTS idx_comfyui_server_health_status ON comfyui_server(health_status);
+CREATE INDEX IF NOT EXISTS idx_comfyui_server_advanced_features_enabled ON comfyui_server(advanced_features_enabled);

@@ -68,6 +68,7 @@ mybatis-plus:
       # 逻辑删除字段（使用时间戳标记删除时间，0表示未删除，非0表示删除时的毫秒时间戳）
       logic-delete-field: isDeleted
       logic-not-delete-value: 0
+      logic-delete-value: (EXTRACT(EPOCH FROM NOW()) * 1000)::BIGINT
 
 # 日志配置
 logging:
@@ -86,7 +87,7 @@ file:
 # 默认管理员账户配置
 admin:
   default-account:
-    enabled: ${ADMIN_DEFAULT_ENABLED:false}
+    enabled: ${ADMIN_DEFAULT_ENABLED:true}
     username: ${ADMIN_DEFAULT_USERNAME:admin}
     password: ${ADMIN_DEFAULT_PASSWORD:admin123}
 

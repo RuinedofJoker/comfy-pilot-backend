@@ -88,7 +88,7 @@ public class LogicalDeleteInsertInterceptor implements Interceptor {
         Class<?> currentClass = clazz;
         while (currentClass != null && currentClass != Object.class) {
             for (Field field : currentClass.getDeclaredFields()) {
-                if (field.isAnnotationPresent(TableLogic.class)) {
+                if (field.isAnnotationPresent(TableLogic.class) || field.getName().equals("isDeleted")) {
                     return field;
                 }
             }
