@@ -3,6 +3,7 @@ package org.joker.comfypilot.common.config;
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
+import org.joker.comfypilot.common.infrastructure.persistence.interceptor.CustomLogicDeleteInnerInterceptor;
 import org.joker.comfypilot.common.infrastructure.persistence.interceptor.LogicalDeleteInsertInterceptor;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Bean;
@@ -17,11 +18,14 @@ public class MybatisPlusConfig {
 
     /**
      * 配置 MyBatis-Plus 拦截器
-     * 包含分页插件
+     * 包含分页插件和自定义逻辑删除插件
      */
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
+
+        // 添加自定义逻辑删除拦截器（必须在分页插件之前）
+        interceptor.addInnerInterceptor(new CustomLogicDeleteInnerInterceptor());
 
         // 添加分页插件
         PaginationInnerInterceptor paginationInnerInterceptor = new PaginationInnerInterceptor(DbType.POSTGRE_SQL);
