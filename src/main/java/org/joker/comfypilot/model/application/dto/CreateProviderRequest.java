@@ -35,4 +35,10 @@ public class CreateProviderRequest implements Serializable {
 
     @Schema(description = "描述信息")
     private String description;
+
+    @Schema(description = "API密钥")
+    private String apiKey;
+
+    @Schema(description = "是否启用")
+    private Boolean isEnabled;
 }

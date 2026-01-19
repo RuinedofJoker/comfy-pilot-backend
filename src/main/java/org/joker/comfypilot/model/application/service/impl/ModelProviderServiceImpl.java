@@ -1,5 +1,6 @@
 package org.joker.comfypilot.model.application.service.impl;
 
+import org.apache.commons.lang3.StringUtils;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.exception.ResourceNotFoundException;
 import org.joker.comfypilot.model.application.converter.ModelProviderDTOConverter;
@@ -38,9 +39,10 @@ public class ModelProviderServiceImpl implements ModelProviderService {
         ModelProvider provider = ModelProvider.builder()
                 .providerName(request.getProviderName())
                 .providerType(providerType)
+                .apiKey(request.getApiKey())
                 .apiBaseUrl(request.getApiBaseUrl())
                 .description(request.getDescription())
-                .isEnabled(true)
+                .isEnabled(request.getIsEnabled() != null ? request.getIsEnabled() : true)
                 .build();
 
         // 保存
@@ -72,14 +74,25 @@ public class ModelProviderServiceImpl implements ModelProviderService {
                 .orElseThrow(() -> new ResourceNotFoundException("模型提供商", id));
 
         // 更新字段
-        if (request.getProviderName() != null) {
+        if (request.getProviderName() != null && StringUtils.isNotBlank(request.getProviderName())) {
             provider.setProviderName(request.getProviderName());
         }
-        if (request.getApiBaseUrl() != null) {
+        if (request.getProviderType() != null && StringUtils.isNotBlank(request.getProviderType())) {
+            // 验证提供商类型是否有效
+            ProviderType providerType = validateProviderType(request.getProviderType());
+            provider.setProviderType(providerType);
+        }
+        if (request.getApiBaseUrl() != null && StringUtils.isNotBlank(request.getApiBaseUrl())) {
             provider.setApiBaseUrl(request.getApiBaseUrl());
         }
-        if (request.getDescription() != null) {
+        if (request.getDescription() != null && StringUtils.isNotBlank(request.getDescription())) {
             provider.setDescription(request.getDescription());
+        }
+        if (request.getApiKey() != null && StringUtils.isNotBlank(request.getApiKey())) {
+            provider.setApiKey(request.getApiKey());
+        }
+        if (request.getIsEnabled() != null) {
+            provider.setIsEnabled(request.getIsEnabled());
         }
 
         // 保存

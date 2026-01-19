@@ -1,6 +1,7 @@
 package org.joker.comfypilot.model.application.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -27,6 +28,16 @@ public class UpdateProviderRequest implements Serializable {
     @Size(max = 500, message = "API基础URL长度不能超过500")
     private String apiBaseUrl;
 
+    @Schema(description = "提供商类型", required = true)
+    @NotBlank(message = "提供商类型不能为空")
+    private String providerType;
+
     @Schema(description = "描述信息")
     private String description;
+
+    @Schema(description = "API密钥")
+    private String apiKey;
+
+    @Schema(description = "是否启用")
+    private Boolean isEnabled;
 }
