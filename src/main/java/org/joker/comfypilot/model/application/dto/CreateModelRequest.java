@@ -38,6 +38,9 @@ public class CreateModelRequest implements Serializable {
     @Size(max = 500, message = "API基础URL长度不能超过500")
     private String apiBaseUrl;
 
+    @Schema(description = "API Key")
+    private String apiKey;
+
     @Schema(description = "提供商ID")
     private Long providerId;
 

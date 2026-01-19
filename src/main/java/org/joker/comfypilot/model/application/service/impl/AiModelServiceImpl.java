@@ -103,6 +103,7 @@ public class AiModelServiceImpl implements AiModelService {
                 .modelIdentifier(finalModelIdentifier)
                 .modelCallingType(modelCallingType)
                 .apiBaseUrl(request.getApiBaseUrl())
+                .apiKey(request.getApiKey())
                 .accessType(accessType)
                 .modelType(modelType)
                 .providerId(request.getProviderId())
@@ -182,6 +183,7 @@ public class AiModelServiceImpl implements AiModelService {
         model.setModelName(request.getModelName());
         model.setModelCallingType(modelCallingType);
         model.setApiBaseUrl(request.getApiBaseUrl());
+        model.setApiKey(request.getApiKey());
         model.setAccessType(accessType);
         model.setModelType(modelType);
         model.setProviderId(request.getProviderId());

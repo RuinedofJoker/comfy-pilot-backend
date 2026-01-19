@@ -39,6 +39,9 @@ public class AiModelDTO extends BaseDTO {
     @Schema(description = "API基础URL")
     private String apiBaseUrl;
 
+    @Schema(description = "API Key")
+    private String apiKey;
+
     @Schema(description = "提供商ID")
     private Long providerId;
 

@@ -61,6 +61,11 @@ public class AiModel extends BaseEntity<Long> {
     private String apiBaseUrl;
 
     /**
+     * API Key
+     */
+    private String apiKey;
+
+    /**
      * 提供商ID（远程API时必填）
      */
     private Long providerId;
