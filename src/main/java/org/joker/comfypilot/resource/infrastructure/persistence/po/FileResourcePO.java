@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.joker.comfypilot.common.infrastructure.persistence.annotation.UniqueKey;
 import org.joker.comfypilot.common.infrastructure.persistence.po.BasePO;
 
 /**
@@ -29,6 +30,7 @@ public class FileResourcePO extends BasePO {
     /**
      * 存储文件名（唯一）
      */
+    @UniqueKey
     private String storedName;
 
     /**

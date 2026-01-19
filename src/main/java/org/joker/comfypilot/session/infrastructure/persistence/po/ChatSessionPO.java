@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.joker.comfypilot.common.infrastructure.persistence.annotation.UniqueKey;
 import org.joker.comfypilot.common.infrastructure.persistence.po.BasePO;
 
 /**
@@ -24,6 +25,7 @@ public class ChatSessionPO extends BasePO {
     /**
      * 会话编码（唯一标识）
      */
+    @UniqueKey
     private String sessionCode;
 
     /**

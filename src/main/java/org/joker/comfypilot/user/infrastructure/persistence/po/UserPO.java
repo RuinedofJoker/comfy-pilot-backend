@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.joker.comfypilot.common.infrastructure.persistence.annotation.UniqueKey;
 import org.joker.comfypilot.common.infrastructure.persistence.po.BasePO;
 import org.joker.comfypilot.user.domain.enums.UserStatus;
 
@@ -27,11 +28,13 @@ public class UserPO extends BasePO {
     /**
      * 用户编码（唯一）
      */
+    @UniqueKey
     private String userCode;
 
     /**
      * 邮箱地址（唯一）
      */
+    @UniqueKey
     private String email;
 
     /**

@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.joker.comfypilot.common.infrastructure.persistence.annotation.UniqueKey;
 import org.joker.comfypilot.common.infrastructure.persistence.po.BasePO;
 import org.joker.comfypilot.common.infrastructure.persistence.typehandler.PostgresJsonbTypeHandler;
 
@@ -28,6 +29,7 @@ public class ComfyuiServerPO extends BasePO {
     /**
      * 服务唯一标识符
      */
+    @UniqueKey
     private String serverKey;
 
     /**

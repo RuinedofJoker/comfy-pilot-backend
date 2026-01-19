@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.joker.comfypilot.common.infrastructure.persistence.annotation.UniqueKey;
 import org.joker.comfypilot.common.infrastructure.persistence.po.BasePO;
 
 /**
@@ -27,8 +28,9 @@ public class AiModelPO extends BasePO {
     private String modelName;
 
     /**
-     * 模型标识符
+     * 模型标识符（唯一）
      */
+    @UniqueKey
     private String modelIdentifier;
 
     /**

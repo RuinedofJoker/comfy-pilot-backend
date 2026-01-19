@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.joker.comfypilot.common.infrastructure.persistence.annotation.UniqueKey;
 import org.joker.comfypilot.common.infrastructure.persistence.po.BasePO;
 
 /**
@@ -20,8 +21,9 @@ import org.joker.comfypilot.common.infrastructure.persistence.po.BasePO;
 public class RolePO extends BasePO {
 
     /**
-     * 角色编码
+     * 角色编码（唯一）
      */
+    @UniqueKey
     private String roleCode;
 
     /**

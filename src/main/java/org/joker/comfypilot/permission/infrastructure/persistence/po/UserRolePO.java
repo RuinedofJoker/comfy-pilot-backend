@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.joker.comfypilot.common.infrastructure.persistence.annotation.UniqueKey;
 
 import java.time.LocalDateTime;
 
@@ -27,13 +28,15 @@ public class UserRolePO {
     private Long id;
 
     /**
-     * 用户ID
+     * 用户ID（联合唯一索引）
      */
+    @UniqueKey(group = "user_role", order = 1)
     private Long userId;
 
     /**
-     * 角色ID
+     * 角色ID（联合唯一索引）
      */
+    @UniqueKey(group = "user_role", order = 2)
     private Long roleId;
 
     /**

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.joker.comfypilot.common.infrastructure.persistence.annotation.UniqueKey;
 import org.joker.comfypilot.common.infrastructure.persistence.po.BasePO;
 
 /**
@@ -22,13 +23,15 @@ public class WorkflowVersionPO extends BasePO {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 所属工作流ID
+     * 所属工作流ID（联合唯一索引）
      */
+    @UniqueKey(group = "workflow_version", order = 1)
     private Long workflowId;
 
     /**
-     * 版本号（从1开始递增）
+     * 版本号（从1开始递增，联合唯一索引）
      */
+    @UniqueKey(group = "workflow_version", order = 2)
     private Integer versionNumber;
 
     /**
