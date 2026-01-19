@@ -3,6 +3,7 @@ package org.joker.comfypilot.model.application.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.exception.ResourceNotFoundException;
 import org.joker.comfypilot.model.application.converter.AiModelDTOConverter;
@@ -19,6 +20,7 @@ import org.joker.comfypilot.model.domain.enums.ModelType;
 import org.joker.comfypilot.model.domain.enums.ProviderType;
 import org.joker.comfypilot.model.domain.repository.AiModelRepository;
 import org.joker.comfypilot.model.domain.repository.ModelProviderRepository;
+import org.joker.comfypilot.model.domain.service.ModelTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +33,7 @@ import java.util.stream.Collectors;
  * AI模型服务实现
  */
 @Service
+@Slf4j
 public class AiModelServiceImpl implements AiModelService {
 
     @Autowired
@@ -71,10 +74,25 @@ public class AiModelServiceImpl implements AiModelService {
         // 4. 转换 providerType 字符串为枚举（可选）
         ProviderType providerType = parseProviderType(request.getProviderType());
 
-        // 5. TODO: 根据 modelCallingType 确定 accessType 和 modelType
-        ModelAccessType accessType = null;
-        ModelType modelType = null;
-        // TODO: 实现根据 modelCallingType 自动设置 accessType 和 modelType 的逻辑
+        // 5. 根据 modelCallingType 确定 accessType 和 modelType
+        ModelAccessType accessType;
+        ModelType modelType;
+        switch (modelCallingType) {
+            case API_LLM:
+                accessType = ModelAccessType.REMOTE_API;
+                modelType = ModelType.LLM;
+                break;
+            case API_EMBEDDING:
+                accessType = ModelAccessType.REMOTE_API;
+                modelType = ModelType.EMBEDDING;
+                break;
+            case SENTENCE_TRANSFORMERS_EMBEDDING:
+                accessType = ModelAccessType.LOCAL;
+                modelType = ModelType.EMBEDDING;
+                break;
+            default:
+                throw new BusinessException("不支持的模型调用方式: " + modelCallingType);
+        }
 
         // 6. 处理 modelConfig，将 JSON 字符串转换为 Map
         Map<String, Object> modelConfig = parseModelConfig(request.getModelConfig());
@@ -137,10 +155,25 @@ public class AiModelServiceImpl implements AiModelService {
         // 4. 转换 providerType 字符串为枚举（可选）
         ProviderType providerType = parseProviderType(request.getProviderType());
 
-        // 5. TODO: 根据 modelCallingType 确定 accessType 和 modelType
-        ModelAccessType accessType = null;
-        ModelType modelType = null;
-        // TODO: 实现根据 modelCallingType 自动设置 accessType 和 modelType 的逻辑
+        // 5. 根据 modelCallingType 确定 accessType 和 modelType
+        ModelAccessType accessType;
+        ModelType modelType;
+        switch (modelCallingType) {
+            case API_LLM:
+                accessType = ModelAccessType.REMOTE_API;
+                modelType = ModelType.LLM;
+                break;
+            case API_EMBEDDING:
+                accessType = ModelAccessType.REMOTE_API;
+                modelType = ModelType.EMBEDDING;
+                break;
+            case SENTENCE_TRANSFORMERS_EMBEDDING:
+                accessType = ModelAccessType.LOCAL;
+                modelType = ModelType.EMBEDDING;
+                break;
+            default:
+                throw new BusinessException("不支持的模型调用方式: " + modelCallingType);
+        }
 
         // 6. 处理 modelConfig，将 JSON 字符串转换为 Map
         Map<String, Object> modelConfig = parseModelConfig(request.getModelConfig());
@@ -209,6 +242,30 @@ public class AiModelServiceImpl implements AiModelService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public String getModelConfigFormat(String modelCallingType) {
+        // 1. 解析模型调用方式
+        ModelCallingType callingType = parseModelCallingType(modelCallingType);
+
+        // 2. 获取对应的ModelTemplate类
+        Class<? extends ModelTemplate> modelClass = callingType.getModelClass();
+
+        // 3. 实例化ModelTemplate（使用null作为AiModel参数，因为只需要获取配置格式）
+        try {
+            ModelTemplate template = modelClass.getDeclaredConstructor(AiModel.class).newInstance((AiModel) null);
+
+            // 4. 调用configFormat方法获取配置格式
+            Map<String, Object> configFormat = template.configFormat();
+
+            // 5. 将Map转换为JSON字符串
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.writeValueAsString(configFormat);
+        } catch (Exception e) {
+            log.error("获取模型配置格式失败", e);
+            throw new BusinessException("获取模型配置格式失败: " + e.getMessage());
+        }
+    }
+
     // ==================== 私有辅助方法 ====================
 
     /**
@@ -249,7 +306,8 @@ public class AiModelServiceImpl implements AiModelService {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.findAndRegisterModules();
-            return objectMapper.readValue(json, new TypeReference<Map<String, Object>>() {});
+            return objectMapper.readValue(json, new TypeReference<>() {
+            });
         } catch (JsonProcessingException e) {
             throw new BusinessException("无效的模型配置 JSON 格式: " + e.getMessage());
         }

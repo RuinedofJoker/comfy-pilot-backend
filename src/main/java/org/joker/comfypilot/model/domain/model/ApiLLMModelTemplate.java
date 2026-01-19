@@ -12,11 +12,10 @@ import java.util.Map;
 
 public class ApiLLMModelTemplate extends AbstractModelTemplate implements ModelTemplate {
 
-    private ChatModel chatModel;
+    private volatile ChatModel chatModel;
 
     public ApiLLMModelTemplate(AiModel aiModel) {
         super(aiModel);
-        SpringContextUtil.getBean(ChatModelFactory.class).createChatModel(aiModel.getModelIdentifier(), aiModel.getModelConfig());
     }
 
     @Override
@@ -35,7 +34,18 @@ public class ApiLLMModelTemplate extends AbstractModelTemplate implements ModelT
         );
     }
 
+    private void init() {
+        if (chatModel == null) {
+            synchronized (this) {
+                if (chatModel == null) {
+                    SpringContextUtil.getBean(ChatModelFactory.class).createChatModel(getAiModel().getModelIdentifier(), getAiModel().getModelConfig());
+                }
+            }
+        }
+    }
+
     public String chat(String userMessage) {
+        init();
         return chatModel.chat(userMessage);
     }
 

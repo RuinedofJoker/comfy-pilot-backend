@@ -11,8 +11,9 @@ import java.util.Map;
 public interface ModelTemplate {
 
     /**
+     * 返回模型实体类
      *
-     * @return
+     * @return 返回模型实体类
      */
     AiModel getAiModel();
 

@@ -79,4 +79,12 @@ public interface AiModelService {
      * @return 启用的模型简化信息列表
      */
     List<AiModelSimpleDTO> listEnabledModels();
+
+    /**
+     * 获取模型配置格式说明
+     *
+     * @param modelCallingType 模型调用方式
+     * @return 模型配置格式的JSON字符串
+     */
+    String getModelConfigFormat(String modelCallingType);
 }

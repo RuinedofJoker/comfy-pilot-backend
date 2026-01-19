@@ -100,4 +100,13 @@ public class AiModelController {
         List<AiModelSimpleDTO> models = modelService.listEnabledModels();
         return Result.success(models);
     }
+
+    @Operation(summary = "获取模型配置格式说明", description = "根据模型调用方式获取对应的模型配置格式说明（JSON格式）")
+    @GetMapping("/config-format")
+    public Result<String> getModelConfigFormat(
+            @Parameter(description = "模型调用方式（如：api_llm, api_embedding, sentence_transformers_embedding）", required = true)
+            @RequestParam String modelCallingType) {
+        String configFormat = modelService.getModelConfigFormat(modelCallingType);
+        return Result.success(configFormat);
+    }
 }
