@@ -10,6 +10,7 @@ import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.joker.comfypilot.agent.domain.service.AbstractAgent;
 import org.joker.comfypilot.agent.domain.service.Agent;
+import org.joker.comfypilot.agent.domain.service.AgentConfigDefinition;
 import org.joker.comfypilot.model.domain.repository.ModelProviderRepository;
 import org.joker.comfypilot.model.domain.service.StreamingChatModelFactory;
 import org.joker.comfypilot.tool.domain.service.ToolRegistry;
@@ -55,6 +56,11 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
     @Override
     public String getVersion() {
         return "1.0.0";
+    }
+
+    @Override
+    public List<AgentConfigDefinition> getConfigDefinitions() {
+        return List.of();
     }
 
     @Override

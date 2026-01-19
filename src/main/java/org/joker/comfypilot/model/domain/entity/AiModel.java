@@ -7,10 +7,12 @@ import lombok.NoArgsConstructor;
 import org.joker.comfypilot.common.domain.BaseEntity;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.model.domain.enums.ModelAccessType;
+import org.joker.comfypilot.model.domain.enums.ModelCallingType;
 import org.joker.comfypilot.model.domain.enums.ModelSource;
 import org.joker.comfypilot.model.domain.enums.ModelType;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 /**
  * AI模型领域实体
@@ -39,7 +41,7 @@ public class AiModel extends BaseEntity<Long> {
     private String modelIdentifier;
 
     /**
-     * 接入方式（远程API/本地）
+     * 接入方式（远程API/本地用命令调用）
      */
     private ModelAccessType accessType;
 
@@ -49,7 +51,17 @@ public class AiModel extends BaseEntity<Long> {
     private ModelType modelType;
 
     /**
-     * 模型来源（远程API创建/代码预定义）
+     * 模型调用方式，决定了模型调用使用的Model实现类
+     */
+    private ModelCallingType modelCallingType;
+
+    /**
+     * API基础URL
+     */
+    private String apiBaseUrl;
+
+    /**
+     * 模型来源（管理员页面创建/代码预定义）
      */
     private ModelSource modelSource;
 
@@ -61,7 +73,7 @@ public class AiModel extends BaseEntity<Long> {
     /**
      * 模型配置（JSON格式）
      */
-    private String modelConfig;
+    private Map<String, Object> modelConfig;
 
     /**
      * 描述信息

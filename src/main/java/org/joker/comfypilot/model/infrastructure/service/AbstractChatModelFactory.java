@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.common.exception.BusinessException;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * ChatModel 工厂抽象基类
@@ -32,11 +33,11 @@ public abstract class AbstractChatModelFactory {
      * <p>
      * 从 JSON 字符串中提取模型配置参数，并使用 agentConfig 覆盖
      *
-     * @param modelConfigJson 模型配置 JSON 字符串
+     * @param modelConfig 模型配置 JSON 字符串
      * @param agentConfig     Agent配置，用于覆盖模型默认配置
      * @return 模型配置对象
      */
-    protected ModelConfig parseModelConfig(String modelConfigJson, Map<String, Object> agentConfig) {
+    protected ModelConfig parseModelConfig(Map<String, Object> modelConfig, Map<String, Object> agentConfig) {
         try {
             // 1. 解析模型默认配置
             String apiKey = null;
@@ -46,14 +47,13 @@ public abstract class AbstractChatModelFactory {
             Integer timeoutSeconds = DEFAULT_TIMEOUT_SECONDS;
             String apiBaseUrl = null;
 
-            if (modelConfigJson != null && !modelConfigJson.isBlank()) {
-                JsonNode root = OBJECT_MAPPER.readTree(modelConfigJson);
-                apiKey = getStringValue(root, "apiKey");
-                temperature = getDoubleValue(root, "temperature", DEFAULT_TEMPERATURE);
-                maxTokens = getIntegerValue(root, "maxTokens");
-                topP = getDoubleValue(root, "topP", null);
-                timeoutSeconds = getIntegerValue(root, "timeout", DEFAULT_TIMEOUT_SECONDS);
-                apiBaseUrl = getStringValue(root, "apiBaseUrl");
+            if (modelConfig != null) {
+                apiKey = getStringValue(modelConfig, "apiKey");
+                temperature = getDoubleValue(modelConfig, "temperature", DEFAULT_TEMPERATURE);
+                maxTokens = getIntegerValue(modelConfig, "maxTokens");
+                topP = getDoubleValue(modelConfig, "topP", null);
+                timeoutSeconds = getIntegerValue(modelConfig, "timeout", DEFAULT_TIMEOUT_SECONDS);
+                apiBaseUrl = getStringValue(modelConfig, "apiBaseUrl");
             }
 
             // 2. 使用 agentConfig 覆盖模型配置
@@ -62,63 +62,68 @@ public abstract class AbstractChatModelFactory {
 
                 // 覆盖 temperature
                 if (agentConfig.containsKey("temperature")) {
-                    temperature = convertToDouble(agentConfig.get("temperature"), "temperature");
+                    temperature = Optional.ofNullable(convertToDouble(agentConfig.get("temperature"), "temperature")).orElse(temperature);
                 }
 
                 // 覆盖 maxTokens
                 if (agentConfig.containsKey("maxTokens")) {
-                    maxTokens = convertToInteger(agentConfig.get("maxTokens"), "maxTokens");
+                    maxTokens = Optional.ofNullable(convertToInteger(agentConfig.get("maxTokens"), "maxTokens")).orElse(maxTokens);
                 }
 
                 // 覆盖 topP
                 if (agentConfig.containsKey("topP")) {
-                    topP = convertToDouble(agentConfig.get("topP"), "topP");
+                    topP = Optional.ofNullable(convertToDouble(agentConfig.get("topP"), "topP")).orElse(topP);
                 }
 
                 // 覆盖 timeout
                 if (agentConfig.containsKey("timeout")) {
-                    timeoutSeconds = convertToInteger(agentConfig.get("timeout"), "timeout");
+                    timeoutSeconds = Optional.ofNullable(convertToInteger(agentConfig.get("timeout"), "timeout")).orElse(timeoutSeconds);
                 }
             }
 
             return new ModelConfig(apiKey, temperature, maxTokens, topP, timeoutSeconds, apiBaseUrl);
 
         } catch (Exception e) {
-            log.error("解析模型配置失败: modelConfig={}, agentConfig={}", modelConfigJson, agentConfig, e);
+            log.error("解析模型配置失败: modelConfig={}, agentConfig={}", modelConfig, agentConfig, e);
             throw new BusinessException("模型配置格式错误: " + e.getMessage());
         }
     }
 
     /**
-     * 从 JSON 节点中获取字符串值
+     * 从配置中获取字符串值
      */
-    protected String getStringValue(JsonNode root, String fieldName) {
-        JsonNode node = root.get(fieldName);
-        return (node != null && !node.isNull()) ? node.asText() : null;
+    protected String getStringValue(Map<String, Object> config, String fieldName) {
+        Object value = config.get(fieldName);
+        if (value == null) {
+            return null;
+        }
+        return value.toString();
     }
 
     /**
-     * 从 JSON 节点中获取整数值
+     * 从配置中获取整数值
      */
-    protected Integer getIntegerValue(JsonNode root, String fieldName) {
-        JsonNode node = root.get(fieldName);
-        return (node != null && !node.isNull()) ? node.asInt() : null;
+    protected Integer getIntegerValue(Map<String, Object> config, String fieldName) {
+        Object value = config.get(fieldName);
+        return convertToInteger(value, fieldName);
     }
 
     /**
-     * 从 JSON 节点中获取整数值（带默认值）
+     * 从配置中获取整数值（带默认值）
      */
-    protected Integer getIntegerValue(JsonNode root, String fieldName, Integer defaultValue) {
-        JsonNode node = root.get(fieldName);
-        return (node != null && !node.isNull()) ? node.asInt() : defaultValue;
+    protected Integer getIntegerValue(Map<String, Object> config, String fieldName, Integer defaultValue) {
+        Object value = config.get(fieldName);
+        Integer result = convertToInteger(value, fieldName);
+        return result != null ? result : defaultValue;
     }
 
     /**
-     * 从 JSON 节点中获取双精度浮点数值（带默认值）
+     * 从配置中获取双精度浮点数值（带默认值）
      */
-    protected Double getDoubleValue(JsonNode root, String fieldName, Double defaultValue) {
-        JsonNode node = root.get(fieldName);
-        return (node != null && !node.isNull()) ? node.asDouble() : defaultValue;
+    protected Double getDoubleValue(Map<String, Object> config, String fieldName, Double defaultValue) {
+        Object value = config.get(fieldName);
+        Double result = convertToDouble(value, fieldName);
+        return result != null ? result : defaultValue;
     }
 
     /**
@@ -138,6 +143,9 @@ public abstract class AbstractChatModelFactory {
             return ((Number) value).doubleValue();
         }
         if (value instanceof String) {
+            if (((String) value).isBlank()) {
+                return null;
+            }
             try {
                 return Double.parseDouble((String) value);
             } catch (NumberFormatException e) {
@@ -167,6 +175,9 @@ public abstract class AbstractChatModelFactory {
             return ((Number) value).intValue();
         }
         if (value instanceof String) {
+            if (((String) value).isBlank()) {
+                return null;
+            }
             try {
                 return Integer.parseInt((String) value);
             } catch (NumberFormatException e) {

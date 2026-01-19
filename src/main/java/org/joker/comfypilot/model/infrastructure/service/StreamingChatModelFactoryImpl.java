@@ -8,6 +8,7 @@ import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.model.domain.entity.AiModel;
 import org.joker.comfypilot.model.domain.entity.ModelProvider;
 import org.joker.comfypilot.model.domain.enums.ModelAccessType;
+import org.joker.comfypilot.model.domain.enums.ModelCallingType;
 import org.joker.comfypilot.model.domain.enums.ModelType;
 import org.joker.comfypilot.model.domain.enums.ProviderType;
 import org.joker.comfypilot.model.domain.repository.AiModelRepository;
@@ -41,7 +42,7 @@ public class StreamingChatModelFactoryImpl extends AbstractChatModelFactory impl
         AiModel model = aiModelRepository.findByModelIdentifier(modelIdentifier)
                 .orElseThrow(() -> new BusinessException("模型不存在: " + modelIdentifier));
 
-        if (!ModelAccessType.REMOTE_API.equals(model.getAccessType()) || !ModelType.LLM.equals(model.getModelType())) {
+        if (!ModelCallingType.API_LLM.equals(model.getModelCallingType())) {
             // 只提供远程API接入的LLM模型
             throw new BusinessException("模型标识" + modelIdentifier + "对应模型" + model.getModelName() + "不是远程API调用的LLM模型");
         }

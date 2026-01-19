@@ -39,7 +39,7 @@ public class AiModelDTO extends BaseDTO {
     @Schema(description = "提供商ID")
     private Long providerId;
 
-    @Schema(description = "模型配置")
+    @Schema(description = "模型配置（json格式）")
     private String modelConfig;
 
     @Schema(description = "描述信息")

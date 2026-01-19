@@ -1,5 +1,8 @@
 package org.joker.comfypilot.model.application.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.exception.ResourceNotFoundException;
 import org.joker.comfypilot.model.application.converter.AiModelDTOConverter;
@@ -18,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -37,7 +41,7 @@ public class AiModelServiceImpl implements AiModelService {
     @Transactional(rollbackFor = Exception.class)
     public AiModelDTO createModel(CreateModelRequest request) {
         // 验证接入方式是否有效
-        ModelAccessType accessType = validateAccessType(request.getAccessType());
+        ModelAccessType accessType = ModelAccessType.REMOTE_API;
 
         // 验证模型类型是否有效
         ModelType modelType = validateModelType(request.getModelType());
@@ -48,13 +52,10 @@ public class AiModelServiceImpl implements AiModelService {
                     throw new BusinessException("模型标识符已存在: " + request.getModelIdentifier());
                 });
 
-        // 如果是远程API接入，验证提供商是否存在
-        if (ModelAccessType.REMOTE_API.equals(accessType)) {
-            if (request.getProviderId() == null) {
-                throw new BusinessException("远程API接入方式必须指定提供商");
-            }
+        // 如果提供了模型提供商，验证提供商是否存在
+        if (request.getProviderId() != null) {
             providerRepository.findById(request.getProviderId())
-                    .orElseThrow(() -> new ResourceNotFoundException("模型提供商", request.getProviderId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("模型提供商不存在", request.getProviderId()));
         }
 
         // 创建领域实体
@@ -65,7 +66,7 @@ public class AiModelServiceImpl implements AiModelService {
                 .modelType(modelType)
                 .modelSource(ModelSource.REMOTE_API)  // 通过API创建的模型标记为远程API来源
                 .providerId(request.getProviderId())
-                .modelConfig(request.getModelConfig())
+                .modelConfig(stringToMap(request.getModelConfig()))
                 .description(request.getDescription())
                 .isEnabled(true)
                 .build();
@@ -116,7 +117,7 @@ public class AiModelServiceImpl implements AiModelService {
             model.setModelName(request.getModelName());
         }
         if (request.getModelConfig() != null) {
-            model.setModelConfig(request.getModelConfig());
+            model.setModelConfig(stringToMap(request.getModelConfig()));
         }
         if (request.getDescription() != null) {
             model.setDescription(request.getDescription());
@@ -191,6 +192,20 @@ public class AiModelServiceImpl implements AiModelService {
             return ModelType.fromCode(code);
         } catch (IllegalArgumentException e) {
             throw new BusinessException("无效的模型类型: " + code);
+        }
+    }
+
+    private Map<String, Object> stringToMap(String json) {
+        if (json == null || json.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.findAndRegisterModules();
+            return objectMapper.readValue(json, new TypeReference<>() {
+            });
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to deserialize advancedFeatures", e);
         }
     }
 }

@@ -2,6 +2,7 @@ package org.joker.comfypilot.agent.domain.service;
 
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,6 +39,14 @@ public interface Agent {
      * @return Agent 版本号
      */
     String getVersion();
+
+    /**
+     * 获取 Agent 配置项定义
+     * 根据该配置读取 Agent 配置
+     *
+     * @return Agent 配置项定义
+     */
+    List<AgentConfigDefinition> getConfigDefinitions();
 
     /**
      * 获取 Agent 配置

@@ -30,15 +30,11 @@ public class CreateModelRequest implements Serializable {
     @Size(max = 100, message = "模型标识符长度不能超过100")
     private String modelIdentifier;
 
-    @Schema(description = "接入方式（remote_api/local）", required = true)
-    @NotBlank(message = "接入方式不能为空")
-    private String accessType;
-
     @Schema(description = "模型类型（llm/embedding等）", required = true)
     @NotBlank(message = "模型类型不能为空")
     private String modelType;
 
-    @Schema(description = "提供商ID（远程API时必填）")
+    @Schema(description = "提供商ID")
     private Long providerId;
 
     @Schema(description = "模型配置（JSON格式）")

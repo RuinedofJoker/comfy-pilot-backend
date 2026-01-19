@@ -8,6 +8,7 @@ import org.joker.comfypilot.common.domain.BaseEntity;
 import org.joker.comfypilot.session.domain.enums.SessionStatus;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 会话领域实体
@@ -36,14 +37,19 @@ public class ChatSession extends BaseEntity<Long> {
     private Long userId;
 
     /**
-     * Agent ID（已废弃，改为在消息级别指定 agentCode）
+     * 会话标题
+     */
+    private String title;
+
+    /**
+     * Agent ID
      */
     private Long agentId;
 
     /**
-     * 会话标题
+     * 规则
      */
-    private String title;
+    private String rules;
 
     /**
      * 会话状态
@@ -65,14 +71,6 @@ public class ChatSession extends BaseEntity<Long> {
      */
     public void archive() {
         this.status = SessionStatus.ARCHIVED;
-        this.updateTime = LocalDateTime.now();
-    }
-
-    /**
-     * 领域行为：激活会话
-     */
-    public void activate() {
-        this.status = SessionStatus.ACTIVE;
         this.updateTime = LocalDateTime.now();
     }
 

@@ -4,10 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.joker.comfypilot.model.domain.enums.ModelCapability;
 
 import java.io.Serializable;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -21,11 +19,6 @@ import java.util.Map;
 public class ModelConfig implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    /**
-     * 模型支持的能力列表
-     */
-    private List<ModelCapability> capabilities;
 
     /**
      * 模型参数配置
@@ -44,16 +37,6 @@ public class ModelConfig implements Serializable {
      * 用于成本控制和优化
      */
     private Double costPer1kTokens;
-
-    /**
-     * 检查是否支持指定能力
-     *
-     * @param capability 能力类型
-     * @return 是否支持
-     */
-    public boolean supportsCapability(ModelCapability capability) {
-        return capabilities != null && capabilities.contains(capability);
-    }
 
     /**
      * 获取指定参数的值

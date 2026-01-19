@@ -1,5 +1,8 @@
 package org.joker.comfypilot.model.infrastructure.persistence.converter;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.joker.comfypilot.model.domain.entity.AiModel;
 import org.joker.comfypilot.model.domain.enums.ModelAccessType;
 import org.joker.comfypilot.model.domain.enums.ModelSource;
@@ -8,6 +11,8 @@ import org.joker.comfypilot.model.infrastructure.persistence.po.AiModelPO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
+
+import java.util.Map;
 
 /**
  * AI模型转换器
@@ -21,6 +26,7 @@ public interface AiModelConverter {
     @Mapping(target = "accessType", source = "accessType", qualifiedByName = "stringToAccessTypeEnum")
     @Mapping(target = "modelType", source = "modelType", qualifiedByName = "stringToModelTypeEnum")
     @Mapping(target = "modelSource", source = "modelSource", qualifiedByName = "stringToModelSourceEnum")
+    @Mapping(target = "modelConfig", source = "modelConfig", qualifiedByName = "stringToMap")
     AiModel toDomain(AiModelPO po);
 
     /**
@@ -29,6 +35,7 @@ public interface AiModelConverter {
     @Mapping(target = "accessType", source = "accessType", qualifiedByName = "accessTypeEnumToString")
     @Mapping(target = "modelType", source = "modelType", qualifiedByName = "modelTypeEnumToString")
     @Mapping(target = "modelSource", source = "modelSource", qualifiedByName = "modelSourceEnumToString")
+    @Mapping(target = "modelConfig", source = "modelConfig", qualifiedByName = "mapToString")
     AiModelPO toPO(AiModel domain);
 
     @Named("stringToAccessTypeEnum")
@@ -60,4 +67,34 @@ public interface AiModelConverter {
     default String modelSourceEnumToString(ModelSource source) {
         return source != null ? source.getCode() : null;
     }
+
+    @Named("stringToMap")
+    default Map<String, Object> stringToMap(String json) {
+        if (json == null || json.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.findAndRegisterModules();
+            return objectMapper.readValue(json, new TypeReference<>() {
+            });
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to deserialize advancedFeatures", e);
+        }
+    }
+
+    @Named("mapToString")
+    default String mapToString(Map<String, Object> map) {
+        if (map == null || map.isEmpty()) {
+            return "";
+        }
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.findAndRegisterModules();
+            return objectMapper.writeValueAsString(map);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to deserialize advancedFeatures", e);
+        }
+    }
+
 }
