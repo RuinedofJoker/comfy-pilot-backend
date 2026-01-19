@@ -100,4 +100,15 @@ public class ComfyuiServerController {
         comfyuiServerService.deleteServer(id);
         return Result.success();
     }
+
+    /**
+     * 测试服务器连接
+     */
+    @Operation(summary = "测试服务器连接", description = "手动测试ComfyUI服务器连接是否正常")
+    @PostMapping("/{id}/test-connection")
+    public Result<ComfyuiServerPublicDTO> testConnection(
+            @Parameter(description = "服务ID", required = true) @PathVariable Long id) {
+        ComfyuiServerPublicDTO result = comfyuiServerService.testConnection(id);
+        return Result.success(result);
+    }
 }

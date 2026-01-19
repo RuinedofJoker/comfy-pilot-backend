@@ -8,6 +8,7 @@ import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerDTO;
 import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerPublicDTO;
 import org.joker.comfypilot.cfsvr.application.dto.CreateServerRequest;
 import org.joker.comfypilot.cfsvr.application.dto.UpdateServerRequest;
+import org.joker.comfypilot.cfsvr.application.service.ComfyuiServerHealthCheckService;
 import org.joker.comfypilot.cfsvr.application.service.ComfyuiServerService;
 import org.joker.comfypilot.cfsvr.domain.entity.ComfyuiServer;
 import org.joker.comfypilot.cfsvr.domain.enums.AuthMode;
@@ -40,6 +41,8 @@ public class ComfyuiServerServiceImpl implements ComfyuiServerService {
     private ComfyuiServerAdvancedFeaturesConverter advancedFeaturesConverter;
     @Autowired
     private ComfyUIClientFactory clientFactory;
+    @Autowired
+    private ComfyuiServerHealthCheckService healthCheckService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -190,5 +193,22 @@ public class ComfyuiServerServiceImpl implements ComfyuiServerService {
         return servers.stream()
                 .map(publicDtoConverter::toPublicDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public ComfyuiServerPublicDTO testConnection(Long id) {
+        log.info("手动测试ComfyUI服务连接, id: {}", id);
+
+        // 查询服务（验证服务是否存在）
+        repository.findById(id)
+                .orElseThrow(() -> new BusinessException("服务不存在"));
+
+        healthCheckService.checkServer(id);
+
+        // 重新查询服务以获取最新的健康状态
+        ComfyuiServer serverAfter = repository.findById(id)
+                .orElseThrow(() -> new BusinessException("服务不存在"));
+
+        return publicDtoConverter.toPublicDTO(serverAfter);
     }
 }

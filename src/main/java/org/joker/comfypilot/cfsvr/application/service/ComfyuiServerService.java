@@ -65,4 +65,12 @@ public interface ComfyuiServerService {
      * @return 启用的服务列表
      */
     List<ComfyuiServerPublicDTO> listEnabledServers();
+
+    /**
+     * 测试服务器连接
+     *
+     * @param id 服务ID
+     * @return 测试结果
+     */
+    ComfyuiServerPublicDTO testConnection(Long id);
 }
