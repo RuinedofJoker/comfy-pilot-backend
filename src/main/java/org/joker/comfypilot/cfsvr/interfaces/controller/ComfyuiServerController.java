@@ -105,8 +105,8 @@ public class ComfyuiServerController {
      * 测试服务器连接
      */
     @Operation(summary = "测试服务器连接", description = "手动测试ComfyUI服务器连接是否正常")
-    @PostMapping("/{id}/test-connection")
-    public Result<ComfyuiServerPublicDTO> testConnection(
+    @PostMapping("/{id}/health-check")
+    public Result<ComfyuiServerPublicDTO> healthCheck(
             @Parameter(description = "服务ID", required = true) @PathVariable Long id) {
         ComfyuiServerPublicDTO result = comfyuiServerService.testConnection(id);
         return Result.success(result);
