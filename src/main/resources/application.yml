@@ -86,9 +86,9 @@ file:
 # 默认管理员账户配置
 admin:
   default-account:
-    enabled: ${ADMIN_DEFAULT_ENABLED:true}
+    enabled: ${ADMIN_DEFAULT_ENABLED:false}
     username: ${ADMIN_DEFAULT_USERNAME:admin}
-    password: ${ADMIN_DEFAULT_PASSWORD:admin}
+    password: ${ADMIN_DEFAULT_PASSWORD:admin123}
 
 # SpringDoc OpenAPI 配置
 springdoc:

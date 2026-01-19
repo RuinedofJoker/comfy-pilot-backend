@@ -3,6 +3,7 @@ package org.joker.comfypilot.common.config;
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
+import org.joker.comfypilot.common.infrastructure.persistence.interceptor.LogicalDeleteInsertInterceptor;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,5 +33,15 @@ public class MybatisPlusConfig {
         interceptor.addInnerInterceptor(paginationInnerInterceptor);
 
         return interceptor;
+    }
+
+    /**
+     * 配置逻辑删除插入拦截器
+     * 在逻辑删除场景下，如果插入操作指定了主键或唯一键，
+     * 先检查是否存在逻辑删除的记录，如果存在则物理删除后再插入
+     */
+    @Bean
+    public LogicalDeleteInsertInterceptor logicalDeleteInsertInterceptor() {
+        return new LogicalDeleteInsertInterceptor();
     }
 }
