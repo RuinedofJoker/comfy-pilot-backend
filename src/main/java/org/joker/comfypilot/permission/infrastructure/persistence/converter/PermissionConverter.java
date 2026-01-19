@@ -18,14 +18,12 @@ public interface PermissionConverter {
      * @param po 持久化对象
      * @return 领域实体
      */
-    @Mapping(target = "isDeleted", source = "isDeleted", qualifiedByName = "longToBoolean")
     Permission toDomain(PermissionPO po);
 
     /**
      * 领域实体转PO
      * 注意：映射所有字段，包括 BasePO 中的字段
      */
-    @Mapping(target = "isDeleted", source = "isDeleted", qualifiedByName = "booleanToLong")
     PermissionPO toPO(Permission domain);
 
     /**

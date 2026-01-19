@@ -41,6 +41,13 @@ public class MybatisPlusMetaObjectHandler implements MetaObjectHandler {
         this.strictUpdateFill(metaObject, "updateTime", LocalDateTime.class, LocalDateTime.now());
         // 自动填充更新人
         this.strictUpdateFill(metaObject, "updateBy", Long.class, getCurrentUserId());
+
+        // 逻辑删除时自动填充删除时间戳
+        Object isDeleted = this.getFieldValByName("isDeleted", metaObject);
+        if (isDeleted != null && !Long.valueOf(0L).equals(isDeleted)) {
+            // 如果 isDeleted 不为 0，说明是逻辑删除操作，填充当前时间戳
+            this.strictUpdateFill(metaObject, "isDeleted", Long.class, System.currentTimeMillis());
+        }
     }
 
     /**

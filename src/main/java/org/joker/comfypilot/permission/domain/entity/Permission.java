@@ -46,8 +46,4 @@ public class Permission {
      */
     private LocalDateTime createTime;
 
-    /**
-     * 是否已删除
-     */
-    private Boolean isDeleted;
 }

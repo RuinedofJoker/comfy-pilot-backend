@@ -63,11 +63,6 @@ public class Role {
     private Long updateBy;
 
     /**
-     * 是否已删除
-     */
-    private Boolean isDeleted;
-
-    /**
      * 更新角色名称
      */
     public void updateRoleName(String roleName) {

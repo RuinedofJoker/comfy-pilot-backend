@@ -83,7 +83,6 @@ public class PermissionInitializer implements CommandLineRunner {
                     .description("系统管理员，拥有所有权限")
                     .isSystem(true)
                     .createTime(LocalDateTime.now())
-                    .isDeleted(false)
                     .build();
             roleRepository.save(adminRole);
             log.info("创建系统角色: ADMIN");
@@ -98,7 +97,6 @@ public class PermissionInitializer implements CommandLineRunner {
                     .description("普通用户，拥有基础权限")
                     .isSystem(true)
                     .createTime(LocalDateTime.now())
-                    .isDeleted(false)
                     .build();
             roleRepository.save(userRole);
             log.info("创建系统角色: USER");
@@ -226,7 +224,6 @@ public class PermissionInitializer implements CommandLineRunner {
                 .passwordHash(passwordHash)
                 .status(UserStatus.ACTIVE)
                 .createTime(LocalDateTime.now())
-                .isDeleted(false)
                 .build();
 
         userRepository.save(adminUser);

@@ -86,11 +86,6 @@ public class User extends BaseEntity<Long> {
     private Long updateBy;
 
     /**
-     * 逻辑删除标记
-     */
-    private Boolean isDeleted;
-
-    /**
      * 更新用户名
      *
      * @param username 新用户名

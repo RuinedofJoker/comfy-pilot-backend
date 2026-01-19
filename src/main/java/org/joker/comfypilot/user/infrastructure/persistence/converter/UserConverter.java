@@ -18,14 +18,12 @@ public interface UserConverter {
      * @param po 持久化对象
      * @return 领域实体
      */
-    @Mapping(target = "isDeleted", source = "isDeleted", qualifiedByName = "longToBoolean")
     User toDomain(UserPO po);
 
     /**
      * 领域实体转PO
      * 注意：映射所有字段，包括 BasePO 中的字段
      */
-    @Mapping(target = "isDeleted", source = "isDeleted", qualifiedByName = "booleanToLong")
     UserPO toPO(User domain);
 
     /**
