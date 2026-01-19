@@ -3,7 +3,9 @@ package org.joker.comfypilot.cfsvr.application.service.impl;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.cfsvr.application.converter.ComfyuiServerAdvancedFeaturesConverter;
 import org.joker.comfypilot.cfsvr.application.converter.ComfyuiServerDTOConverter;
+import org.joker.comfypilot.cfsvr.application.converter.ComfyuiServerPublicDTOConverter;
 import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerDTO;
+import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerPublicDTO;
 import org.joker.comfypilot.cfsvr.application.dto.CreateServerRequest;
 import org.joker.comfypilot.cfsvr.application.dto.UpdateServerRequest;
 import org.joker.comfypilot.cfsvr.application.service.ComfyuiServerService;
@@ -32,6 +34,8 @@ public class ComfyuiServerServiceImpl implements ComfyuiServerService {
     private ComfyuiServerRepository repository;
     @Autowired
     private ComfyuiServerDTOConverter dtoConverter;
+    @Autowired
+    private ComfyuiServerPublicDTOConverter publicDtoConverter;
     @Autowired
     private ComfyuiServerAdvancedFeaturesConverter advancedFeaturesConverter;
     @Autowired
@@ -171,19 +175,20 @@ public class ComfyuiServerServiceImpl implements ComfyuiServerService {
     }
 
     @Override
-    public List<ComfyuiServerDTO> listServers(Boolean isEnabled) {
-        List<ComfyuiServer> servers;
-
-        if (isEnabled != null) {
-            // 按启用状态过滤
-            servers = repository.findByIsEnabled(isEnabled);
-        } else {
-            // 查询所有
-            servers = repository.findAll();
-        }
-
+    public List<ComfyuiServerDTO> listServers() {
+        // 查询所有服务（后台管理使用）
+        List<ComfyuiServer> servers = repository.findAll();
         return servers.stream()
                 .map(dtoConverter::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ComfyuiServerPublicDTO> listEnabledServers() {
+        // 只查询启用的服务（前台使用）
+        List<ComfyuiServer> servers = repository.findByIsEnabled(true);
+        return servers.stream()
+                .map(publicDtoConverter::toPublicDTO)
                 .collect(Collectors.toList());
     }
 }

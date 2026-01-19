@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerDTO;
+import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerPublicDTO;
 import org.joker.comfypilot.cfsvr.application.dto.CreateServerRequest;
 import org.joker.comfypilot.cfsvr.application.dto.UpdateServerRequest;
 import org.joker.comfypilot.cfsvr.application.service.ComfyuiServerService;
@@ -36,13 +37,22 @@ public class ComfyuiServerController {
     }
 
     /**
-     * 查询服务列表
+     * 查询服务列表（后台管理使用）
      */
-    @Operation(summary = "查询服务列表", description = "查询ComfyUI服务列表，支持按启用状态过滤")
+    @Operation(summary = "查询服务列表", description = "查询所有ComfyUI服务列表（后台管理使用）")
     @GetMapping
-    public Result<List<ComfyuiServerDTO>> listServers(
-            @Parameter(description = "是否启用") @RequestParam(required = false) Boolean isEnabled) {
-        List<ComfyuiServerDTO> list = comfyuiServerService.listServers(isEnabled);
+    public Result<List<ComfyuiServerDTO>> listServers() {
+        List<ComfyuiServerDTO> list = comfyuiServerService.listServers();
+        return Result.success(list);
+    }
+
+    /**
+     * 查询启用的服务列表（前台使用）
+     */
+    @Operation(summary = "查询启用的服务列表", description = "查询启用的ComfyUI服务列表（前台使用，不包含敏感配置）")
+    @GetMapping("/enabled")
+    public Result<List<ComfyuiServerPublicDTO>> listEnabledServers() {
+        List<ComfyuiServerPublicDTO> list = comfyuiServerService.listEnabledServers();
         return Result.success(list);
     }
 
