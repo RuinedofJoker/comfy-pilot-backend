@@ -6,10 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.joker.comfypilot.common.domain.BaseEntity;
 import org.joker.comfypilot.common.exception.BusinessException;
-import org.joker.comfypilot.model.domain.enums.ModelAccessType;
-import org.joker.comfypilot.model.domain.enums.ModelCallingType;
-import org.joker.comfypilot.model.domain.enums.ModelSource;
-import org.joker.comfypilot.model.domain.enums.ModelType;
+import org.joker.comfypilot.model.domain.enums.*;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -69,6 +66,11 @@ public class AiModel extends BaseEntity<Long> {
      * 提供商ID（远程API时必填）
      */
     private Long providerId;
+
+    /**
+     * 提供协议类型
+     */
+    private ProviderType providerType;
 
     /**
      * 模型配置（JSON格式）

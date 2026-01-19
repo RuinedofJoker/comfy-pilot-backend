@@ -33,11 +33,20 @@ public class AiModelDTO extends BaseDTO {
     @Schema(description = "模型类型（llm/embedding等）")
     private String modelType;
 
+    @Schema(description = "模型调用方式")
+    private String modelCallingType;
+
+    @Schema(description = "API基础URL")
+    private String apiBaseUrl;
+
     @Schema(description = "模型来源（remote_api/code_defined）")
     private String modelSource;
 
     @Schema(description = "提供商ID")
     private Long providerId;
+
+    @Schema(description = "提供协议类型")
+    private String providerType;
 
     @Schema(description = "模型配置（json格式）")
     private String modelConfig;

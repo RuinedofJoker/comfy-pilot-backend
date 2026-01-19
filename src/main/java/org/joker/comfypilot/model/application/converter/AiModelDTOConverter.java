@@ -22,7 +22,9 @@ public interface AiModelDTOConverter {
      */
     @Mapping(target = "accessType", source = "accessType.code")
     @Mapping(target = "modelType", source = "modelType.code")
+    @Mapping(target = "modelCallingType", source = "modelCallingType.code")
     @Mapping(target = "modelSource", source = "modelSource.code")
+    @Mapping(target = "providerType", source = "providerType.code")
     @Mapping(target = "modelConfig", source = "modelConfig", qualifiedByName = "mapToString")
     AiModelDTO toDTO(AiModel entity);
 
