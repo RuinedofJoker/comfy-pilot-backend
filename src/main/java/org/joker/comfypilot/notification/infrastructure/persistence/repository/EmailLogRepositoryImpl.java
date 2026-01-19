@@ -54,11 +54,7 @@ public class EmailLogRepositoryImpl implements EmailLogRepository {
     @Override
     public EmailLog save(EmailLog emailLog) {
         EmailLogPO po = emailLogConverter.toPO(emailLog);
-        if (po.getId() == null) {
-            emailLogMapper.insert(po);
-        } else {
-            emailLogMapper.updateById(po);
-        }
+        emailLogMapper.insertOrUpdate(po);
         return emailLogConverter.toDomain(po);
     }
 }

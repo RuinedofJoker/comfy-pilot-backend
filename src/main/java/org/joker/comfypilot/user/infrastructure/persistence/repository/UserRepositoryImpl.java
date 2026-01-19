@@ -57,13 +57,7 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public User save(User user) {
         UserPO userPO = userConverter.toPO(user);
-        if (user.getId() == null) {
-            // 新增
-            userMapper.insert(userPO);
-        } else {
-            // 更新
-            userMapper.updateById(userPO);
-        }
+        userMapper.insertOrUpdate(userPO);
         return userConverter.toDomain(userPO);
     }
 

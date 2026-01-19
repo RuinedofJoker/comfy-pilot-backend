@@ -68,11 +68,7 @@ public class WorkflowVersionRepositoryImpl implements WorkflowVersionRepository 
     @Override
     public WorkflowVersion save(WorkflowVersion version) {
         WorkflowVersionPO po = versionConverter.toPO(version);
-        if (po.getId() == null) {
-            versionMapper.insert(po);
-        } else {
-            versionMapper.updateById(po);
-        }
+        versionMapper.insertOrUpdate(po);
         return versionConverter.toDomain(po);
     }
 

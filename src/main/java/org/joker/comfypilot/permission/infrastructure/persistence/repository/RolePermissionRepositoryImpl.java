@@ -57,11 +57,7 @@ public class RolePermissionRepositoryImpl implements RolePermissionRepository {
     @Override
     public RolePermission save(RolePermission rolePermission) {
         RolePermissionPO po = rolePermissionConverter.toPO(rolePermission);
-        if (po.getId() == null) {
-            rolePermissionMapper.insert(po);
-        } else {
-            rolePermissionMapper.updateById(po);
-        }
+        rolePermissionMapper.insertOrUpdate(po);
         return rolePermissionConverter.toDomain(po);
     }
 }

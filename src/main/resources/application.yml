@@ -84,6 +84,13 @@ file:
     max-file-size: 10485760
     allowed-extensions: jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx,txt,json,zip
 
+# 默认管理员账户配置
+admin:
+  default-account:
+    enabled: ${ADMIN_DEFAULT_ENABLED:false}
+    username: ${ADMIN_DEFAULT_USERNAME:admin}
+    password: ${ADMIN_DEFAULT_PASSWORD:admin}
+
 # SpringDoc OpenAPI 配置
 springdoc:
   api-docs:

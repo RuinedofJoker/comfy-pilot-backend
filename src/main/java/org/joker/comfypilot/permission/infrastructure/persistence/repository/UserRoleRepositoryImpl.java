@@ -49,11 +49,7 @@ public class UserRoleRepositoryImpl implements UserRoleRepository {
     @Override
     public UserRole save(UserRole userRole) {
         UserRolePO po = userRoleConverter.toPO(userRole);
-        if (po.getId() == null) {
-            userRoleMapper.insert(po);
-        } else {
-            userRoleMapper.updateById(po);
-        }
+        userRoleMapper.insertOrUpdate(po);
         return userRoleConverter.toDomain(po);
     }
 

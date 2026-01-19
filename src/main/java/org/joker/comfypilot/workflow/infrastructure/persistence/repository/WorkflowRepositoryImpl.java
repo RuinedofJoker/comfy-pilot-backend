@@ -61,11 +61,7 @@ public class WorkflowRepositoryImpl implements WorkflowRepository {
     @Override
     public Workflow save(Workflow workflow) {
         WorkflowPO po = workflowConverter.toPO(workflow);
-        if (po.getId() == null) {
-            workflowMapper.insert(po);
-        } else {
-            workflowMapper.updateById(po);
-        }
+        workflowMapper.insertOrUpdate(po);
         return workflowConverter.toDomain(po);
     }
 

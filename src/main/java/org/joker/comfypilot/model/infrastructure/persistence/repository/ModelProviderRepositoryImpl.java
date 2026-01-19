@@ -32,11 +32,7 @@ public class ModelProviderRepositoryImpl implements ModelProviderRepository {
     @Override
     public ModelProvider save(ModelProvider provider) {
         ModelProviderPO po = converter.toPO(provider);
-        if (po.getId() == null) {
-            mapper.insert(po);
-        } else {
-            mapper.updateById(po);
-        }
+        mapper.insertOrUpdate(po);
         return converter.toDomain(po);
     }
 

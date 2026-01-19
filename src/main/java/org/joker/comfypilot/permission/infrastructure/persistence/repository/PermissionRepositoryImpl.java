@@ -49,11 +49,7 @@ public class PermissionRepositoryImpl implements PermissionRepository {
     @Override
     public Permission save(Permission permission) {
         PermissionPO po = permissionConverter.toPO(permission);
-        if (po.getId() == null) {
-            permissionMapper.insert(po);
-        } else {
-            permissionMapper.updateById(po);
-        }
+        permissionMapper.insertOrUpdate(po);
         return permissionConverter.toDomain(po);
     }
 }

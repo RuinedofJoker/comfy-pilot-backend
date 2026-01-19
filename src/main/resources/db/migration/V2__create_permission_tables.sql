@@ -61,9 +61,7 @@ CREATE TABLE IF NOT EXISTS role_permission (
     role_id BIGINT NOT NULL,
     permission_id BIGINT NOT NULL,
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uk_role_permission UNIQUE (role_id, permission_id),
-    CONSTRAINT fk_role_permission_role FOREIGN KEY (role_id) REFERENCES role(id),
-    CONSTRAINT fk_role_permission_perm FOREIGN KEY (permission_id) REFERENCES permission(id)
+    CONSTRAINT uk_role_permission UNIQUE (role_id, permission_id)
 );
 
 COMMENT ON TABLE role_permission IS '角色权限关联表';
@@ -78,9 +76,7 @@ CREATE TABLE IF NOT EXISTS user_role (
     user_id BIGINT NOT NULL,
     role_id BIGINT NOT NULL,
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uk_user_role UNIQUE (user_id, role_id),
-    CONSTRAINT fk_user_role_user FOREIGN KEY (user_id) REFERENCES "user"(id),
-    CONSTRAINT fk_user_role_role FOREIGN KEY (role_id) REFERENCES role(id)
+    CONSTRAINT uk_user_role UNIQUE (user_id, role_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_user_role_user_id ON user_role(user_id);

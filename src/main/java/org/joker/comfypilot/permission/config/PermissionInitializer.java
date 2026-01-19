@@ -4,12 +4,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.permission.domain.entity.Permission;
 import org.joker.comfypilot.permission.domain.entity.Role;
 import org.joker.comfypilot.permission.domain.entity.RolePermission;
+import org.joker.comfypilot.permission.domain.entity.UserRole;
 import org.joker.comfypilot.permission.domain.repository.PermissionRepository;
 import org.joker.comfypilot.permission.domain.repository.RolePermissionRepository;
 import org.joker.comfypilot.permission.domain.repository.RoleRepository;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
+import org.joker.comfypilot.permission.domain.repository.UserRoleRepository;
+import org.joker.comfypilot.user.config.DefaultAdminProperties;
+import org.joker.comfypilot.user.domain.entity.User;
+import org.joker.comfypilot.user.domain.enums.UserStatus;
+import org.joker.comfypilot.user.domain.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -29,6 +36,14 @@ public class PermissionInitializer implements CommandLineRunner {
     private PermissionRepository permissionRepository;
     @Autowired
     private RolePermissionRepository rolePermissionRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private UserRoleRepository userRoleRepository;
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+    @Autowired
+    private DefaultAdminProperties defaultAdminProperties;
 
     @Override
     public void run(String... args) {
@@ -43,6 +58,9 @@ public class PermissionInitializer implements CommandLineRunner {
 
             // 3. 为角色分配权限
             assignPermissionsToRoles();
+
+            // 4. 初始化默认管理员账户
+            initDefaultAdminAccount();
 
             log.info("权限模块初始化完成");
         } catch (Exception e) {
@@ -59,6 +77,7 @@ public class PermissionInitializer implements CommandLineRunner {
         // 创建 ADMIN 角色
         if (!roleRepository.existsByRoleCode("ADMIN")) {
             Role adminRole = Role.builder()
+                    .id(1L)
                     .roleCode("ADMIN")
                     .roleName("管理员")
                     .description("系统管理员，拥有所有权限")
@@ -73,6 +92,7 @@ public class PermissionInitializer implements CommandLineRunner {
         // 创建 USER 角色
         if (!roleRepository.existsByRoleCode("USER")) {
             Role userRole = Role.builder()
+                    .id(2L)
                     .roleCode("USER")
                     .roleName("普通用户")
                     .description("普通用户，拥有基础权限")
@@ -94,34 +114,6 @@ public class PermissionInitializer implements CommandLineRunner {
         log.info("初始化基础权限...");
 
         List<PermissionDefinition> permissions = new ArrayList<>();
-
-        // Workflow 相关权限
-        permissions.add(new PermissionDefinition("workflow:create", "创建工作流", "workflow"));
-        permissions.add(new PermissionDefinition("workflow:read", "查看工作流", "workflow"));
-        permissions.add(new PermissionDefinition("workflow:update", "更新工作流", "workflow"));
-        permissions.add(new PermissionDefinition("workflow:delete", "删除工作流", "workflow"));
-        permissions.add(new PermissionDefinition("workflow:execute", "执行工作流", "workflow"));
-
-        // User 相关权限
-        permissions.add(new PermissionDefinition("user:read", "查看用户信息", "user"));
-        permissions.add(new PermissionDefinition("user:update", "更新用户信息", "user"));
-
-        // 保存权限
-        for (PermissionDefinition def : permissions) {
-            if (!permissionRepository.findByPermissionCode(def.code).isPresent()) {
-                Permission permission = Permission.builder()
-                        .permissionCode(def.code)
-                        .permissionName(def.name)
-                        .resourceType(def.resourceType)
-                        .description(def.name)
-                        .createTime(LocalDateTime.now())
-                        .isDeleted(false)
-                        .build();
-                permissionRepository.save(permission);
-                log.info("创建权限: {}", def.code);
-            }
-        }
-
         log.info("基础权限初始化完成");
     }
 
@@ -153,34 +145,12 @@ public class PermissionInitializer implements CommandLineRunner {
      * 为 ADMIN 角色分配所有权限
      */
     private void assignAllPermissionsToRole(Role role) {
-        List<String> allPermissions = List.of(
-                "workflow:create", "workflow:read", "workflow:update", "workflow:delete", "workflow:execute",
-                "user:read", "user:update"
-        );
-
-        for (String permCode : allPermissions) {
-            Permission permission = permissionRepository.findByPermissionCode(permCode).orElse(null);
-            if (permission != null) {
-                assignPermissionToRole(role.getId(), permission.getId());
-            }
-        }
     }
 
     /**
      * 为 USER 角色分配基础权限
      */
     private void assignBasicPermissionsToRole(Role role) {
-        List<String> basicPermissions = List.of(
-                "workflow:read", "workflow:execute",
-                "user:read", "user:update"
-        );
-
-        for (String permCode : basicPermissions) {
-            Permission permission = permissionRepository.findByPermissionCode(permCode).orElse(null);
-            if (permission != null) {
-                assignPermissionToRole(role.getId(), permission.getId());
-            }
-        }
     }
 
     /**
@@ -198,6 +168,127 @@ public class PermissionInitializer implements CommandLineRunner {
                     .createTime(LocalDateTime.now())
                     .build();
             rolePermissionRepository.save(rolePermission);
+        }
+    }
+
+    /**
+     * 初始化默认管理员账户
+     */
+    private void initDefaultAdminAccount() {
+        log.info("开始初始化默认管理员账户...");
+
+        if (defaultAdminProperties.getEnabled()) {
+            // 配置启用，创建或更新默认管理员账户
+            createOrUpdateDefaultAdmin();
+        } else {
+            // 配置未启用，删除默认管理员账户
+            deleteDefaultAdmin();
+        }
+
+        log.info("默认管理员账户初始化完成");
+    }
+
+    /**
+     * 创建或更新默认管理员账户
+     */
+    private void createOrUpdateDefaultAdmin() {
+        String username = defaultAdminProperties.getUsername();
+        String password = defaultAdminProperties.getPassword();
+
+        log.info("配置已启用，创建/更新默认管理员账户: {}", username);
+
+        // 检查 ID=1 的用户是否存在
+        User existingUser = userRepository.findById(1L).orElse(null);
+
+        if (existingUser == null) {
+            // 用户不存在，创建新用户
+            createDefaultAdmin(username, password);
+        } else {
+            // 用户已存在，更新用户信息
+            updateDefaultAdmin(existingUser, username, password);
+        }
+
+        // 确保用户角色关联存在
+        ensureAdminRole();
+    }
+
+    /**
+     * 创建默认管理员用户
+     */
+    private void createDefaultAdmin(String username, String password) {
+        String passwordHash = passwordEncoder.encode(password);
+
+        User adminUser = User.builder()
+                .id(1L)
+                .userCode(username)
+                .username(username)
+                .email(username)
+                .passwordHash(passwordHash)
+                .status(UserStatus.ACTIVE)
+                .createTime(LocalDateTime.now())
+                .isDeleted(false)
+                .build();
+
+        userRepository.save(adminUser);
+        log.info("创建默认管理员账户成功: id=1, username={}", username);
+    }
+
+    /**
+     * 更新默认管理员用户
+     */
+    private void updateDefaultAdmin(User existingUser, String username, String password) {
+        String passwordHash = passwordEncoder.encode(password);
+
+        existingUser.setUserCode(username);
+        existingUser.setUsername(username);
+        existingUser.setEmail(username);
+        existingUser.setPasswordHash(passwordHash);
+        existingUser.setStatus(UserStatus.ACTIVE);
+        existingUser.setUpdateTime(LocalDateTime.now());
+
+        userRepository.save(existingUser);
+        log.info("更新默认管理员账户成功: id=1, username={}", username);
+    }
+
+    /**
+     * 确保管理员角色关联存在
+     */
+    private void ensureAdminRole() {
+        List<UserRole> existingRoles = userRoleRepository.findByUserId(1L);
+        boolean hasAdminRole = existingRoles.stream()
+                .anyMatch(ur -> ur.getRoleId().equals(1L));
+
+        if (!hasAdminRole) {
+            UserRole userRole = UserRole.builder()
+                    .id(1L)
+                    .userId(1L)
+                    .roleId(1L)
+                    .createTime(LocalDateTime.now())
+                    .build();
+            userRoleRepository.save(userRole);
+            log.info("创建默认管理员角色关联: user_id=1, role_id=1");
+        }
+    }
+
+    /**
+     * 删除默认管理员账户
+     */
+    private void deleteDefaultAdmin() {
+        log.info("配置未启用，删除默认管理员账户");
+
+        // 检查 ID=1 的用户是否存在
+        User existingUser = userRepository.findById(1L).orElse(null);
+
+        if (existingUser != null) {
+            // 删除用户角色关联
+            userRoleRepository.deleteByUserIdAndRoleId(1L, 1L);
+            log.info("删除默认管理员角色关联: user_id=1, role_id=1");
+
+            // 删除用户
+            userRepository.deleteById(1L);
+            log.info("删除默认管理员账户: id=1");
+        } else {
+            log.info("默认管理员账户不存在，无需删除");
         }
     }
 

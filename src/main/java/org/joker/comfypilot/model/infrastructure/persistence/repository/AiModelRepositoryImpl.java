@@ -28,11 +28,7 @@ public class AiModelRepositoryImpl implements AiModelRepository {
     @Override
     public AiModel save(AiModel model) {
         AiModelPO po = converter.toPO(model);
-        if (po.getId() == null) {
-            mapper.insert(po);
-        } else {
-            mapper.updateById(po);
-        }
+        mapper.insertOrUpdate(po);
         return converter.toDomain(po);
     }
 

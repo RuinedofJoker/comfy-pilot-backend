@@ -62,11 +62,7 @@ public class FileResourceRepositoryImpl implements FileResourceRepository {
     @Override
     public FileResource save(FileResource fileResource) {
         FileResourcePO po = fileResourceConverter.toPO(fileResource);
-        if (po.getId() == null) {
-            fileResourceMapper.insert(po);
-        } else {
-            fileResourceMapper.updateById(po);
-        }
+        fileResourceMapper.insertOrUpdate(po);
         return fileResourceConverter.toDomain(po);
     }
 
