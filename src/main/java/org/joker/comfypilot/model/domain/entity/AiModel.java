@@ -6,7 +6,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.joker.comfypilot.common.domain.BaseEntity;
 import org.joker.comfypilot.common.exception.BusinessException;
-import org.joker.comfypilot.model.domain.enums.*;
+import org.joker.comfypilot.model.domain.enums.ModelAccessType;
+import org.joker.comfypilot.model.domain.enums.ModelCallingType;
+import org.joker.comfypilot.model.domain.enums.ModelType;
+import org.joker.comfypilot.model.domain.enums.ProviderType;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -56,11 +59,6 @@ public class AiModel extends BaseEntity<Long> {
      * API基础URL
      */
     private String apiBaseUrl;
-
-    /**
-     * 模型来源（管理员页面创建/代码预定义）
-     */
-    private ModelSource modelSource;
 
     /**
      * 提供商ID（远程API时必填）
@@ -178,43 +176,5 @@ public class AiModel extends BaseEntity<Long> {
      */
     public boolean isEmbedding() {
         return ModelType.EMBEDDING.equals(this.modelType);
-    }
-
-    /**
-     * 检查是否为远程API创建的模型
-     *
-     * @return true-远程API创建，false-代码预定义
-     */
-    public boolean isRemoteApiSource() {
-        return ModelSource.REMOTE_API.equals(this.modelSource);
-    }
-
-    /**
-     * 检查是否为代码预定义的模型
-     *
-     * @return true-代码预定义，false-远程API创建
-     */
-    public boolean isCodeDefined() {
-        return ModelSource.CODE_DEFINED.equals(this.modelSource);
-    }
-
-    /**
-     * 检查是否可以删除
-     * 只有远程API创建的模型才能删除
-     *
-     * @return true-可删除，false-不可删除
-     */
-    public boolean canDelete() {
-        return isRemoteApiSource();
-    }
-
-    /**
-     * 检查是否可以完全编辑
-     * 只有远程API创建的模型才能完全编辑
-     *
-     * @return true-可完全编辑，false-只能编辑基本信息
-     */
-    public boolean canFullEdit() {
-        return isRemoteApiSource();
     }
 }

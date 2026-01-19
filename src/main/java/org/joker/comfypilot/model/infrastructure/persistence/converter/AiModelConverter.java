@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.joker.comfypilot.model.domain.entity.AiModel;
 import org.joker.comfypilot.model.domain.enums.ModelAccessType;
 import org.joker.comfypilot.model.domain.enums.ModelCallingType;
-import org.joker.comfypilot.model.domain.enums.ModelSource;
 import org.joker.comfypilot.model.domain.enums.ModelType;
 import org.joker.comfypilot.model.domain.enums.ProviderType;
 import org.joker.comfypilot.model.infrastructure.persistence.po.AiModelPO;
@@ -28,7 +27,6 @@ public interface AiModelConverter {
     @Mapping(target = "accessType", source = "accessType", qualifiedByName = "stringToAccessTypeEnum")
     @Mapping(target = "modelType", source = "modelType", qualifiedByName = "stringToModelTypeEnum")
     @Mapping(target = "modelCallingType", source = "modelCallingType", qualifiedByName = "stringToModelCallingTypeEnum")
-    @Mapping(target = "modelSource", source = "modelSource", qualifiedByName = "stringToModelSourceEnum")
     @Mapping(target = "providerType", source = "providerType", qualifiedByName = "stringToProviderTypeEnum")
     @Mapping(target = "modelConfig", source = "modelConfig", qualifiedByName = "stringToMap")
     AiModel toDomain(AiModelPO po);
@@ -39,7 +37,6 @@ public interface AiModelConverter {
     @Mapping(target = "accessType", source = "accessType", qualifiedByName = "accessTypeEnumToString")
     @Mapping(target = "modelType", source = "modelType", qualifiedByName = "modelTypeEnumToString")
     @Mapping(target = "modelCallingType", source = "modelCallingType", qualifiedByName = "modelCallingTypeEnumToString")
-    @Mapping(target = "modelSource", source = "modelSource", qualifiedByName = "modelSourceEnumToString")
     @Mapping(target = "providerType", source = "providerType", qualifiedByName = "providerTypeEnumToString")
     @Mapping(target = "modelConfig", source = "modelConfig", qualifiedByName = "mapToString")
     AiModelPO toPO(AiModel domain);
@@ -72,16 +69,6 @@ public interface AiModelConverter {
     @Named("modelCallingTypeEnumToString")
     default String modelCallingTypeEnumToString(ModelCallingType type) {
         return type != null ? type.getCode() : null;
-    }
-
-    @Named("stringToModelSourceEnum")
-    default ModelSource stringToModelSourceEnum(String value) {
-        return value != null ? ModelSource.fromCode(value) : null;
-    }
-
-    @Named("modelSourceEnumToString")
-    default String modelSourceEnumToString(ModelSource source) {
-        return source != null ? source.getCode() : null;
     }
 
     @Named("stringToProviderTypeEnum")

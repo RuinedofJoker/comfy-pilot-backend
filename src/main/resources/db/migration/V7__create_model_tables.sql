@@ -56,7 +56,6 @@ CREATE TABLE IF NOT EXISTS ai_model (
     model_type VARCHAR(50) NOT NULL,
     model_calling_type VARCHAR(50),
     api_base_url VARCHAR(500),
-    model_source VARCHAR(50) NOT NULL DEFAULT 'remote_api',
     provider_id BIGINT,
     provider_type VARCHAR(50),
     model_config TEXT,
@@ -74,7 +73,6 @@ CREATE UNIQUE INDEX uk_model_identifier ON ai_model(model_identifier);
 CREATE INDEX idx_model_access_type ON ai_model(access_type);
 CREATE INDEX idx_model_type ON ai_model(model_type);
 CREATE INDEX idx_model_calling_type ON ai_model(model_calling_type);
-CREATE INDEX idx_model_source ON ai_model(model_source);
 CREATE INDEX idx_model_provider_id ON ai_model(provider_id);
 CREATE INDEX idx_model_provider_type ON ai_model(provider_type);
 CREATE INDEX idx_model_enabled ON ai_model(is_enabled);
@@ -90,7 +88,6 @@ COMMENT ON COLUMN ai_model.access_type IS '接入方式(remote_api/local)';
 COMMENT ON COLUMN ai_model.model_type IS '模型类型(llm/embedding/sentiment_classification等)';
 COMMENT ON COLUMN ai_model.model_calling_type IS '模型调用方式，决定了模型调用使用的Model实现类';
 COMMENT ON COLUMN ai_model.api_base_url IS 'API基础URL';
-COMMENT ON COLUMN ai_model.model_source IS '模型来源(remote_api/code_defined)';
 COMMENT ON COLUMN ai_model.provider_id IS '提供商ID';
 COMMENT ON COLUMN ai_model.provider_type IS '提供协议类型(openai/anthropic等)';
 COMMENT ON COLUMN ai_model.model_config IS '模型配置(JSON格式)';

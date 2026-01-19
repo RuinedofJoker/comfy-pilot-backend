@@ -54,11 +54,6 @@ public class AiModelPO extends BasePO {
     private String apiBaseUrl;
 
     /**
-     * 模型来源（远程API创建/代码预定义）
-     */
-    private String modelSource;
-
-    /**
      * 提供商ID
      */
     private Long providerId;

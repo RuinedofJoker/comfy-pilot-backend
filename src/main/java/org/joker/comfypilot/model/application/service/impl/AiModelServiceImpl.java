@@ -12,8 +12,9 @@ import org.joker.comfypilot.model.application.dto.UpdateModelRequest;
 import org.joker.comfypilot.model.application.service.AiModelService;
 import org.joker.comfypilot.model.domain.entity.AiModel;
 import org.joker.comfypilot.model.domain.enums.ModelAccessType;
-import org.joker.comfypilot.model.domain.enums.ModelSource;
+import org.joker.comfypilot.model.domain.enums.ModelCallingType;
 import org.joker.comfypilot.model.domain.enums.ModelType;
+import org.joker.comfypilot.model.domain.enums.ProviderType;
 import org.joker.comfypilot.model.domain.repository.AiModelRepository;
 import org.joker.comfypilot.model.domain.repository.ModelProviderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,41 +41,59 @@ public class AiModelServiceImpl implements AiModelService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public AiModelDTO createModel(CreateModelRequest request) {
-        // 验证接入方式是否有效
-        ModelAccessType accessType = ModelAccessType.REMOTE_API;
-
-        // 验证模型类型是否有效
-        ModelType modelType = validateModelType(request.getModelType());
+        // 1. 生成或验证模型标识符
+        String modelIdentifier = request.getModelIdentifier();
+        if (modelIdentifier == null || modelIdentifier.trim().isEmpty()) {
+            // 自动生成模型标识符：使用模型名称转换为小写并替换空格为下划线
+            modelIdentifier = request.getModelName().toLowerCase().replaceAll("\\s+", "_");
+        }
 
         // 验证模型标识符是否唯一
-        modelRepository.findByModelIdentifier(request.getModelIdentifier())
+        final String finalModelIdentifier = modelIdentifier;
+        modelRepository.findByModelIdentifier(finalModelIdentifier)
                 .ifPresent(existing -> {
-                    throw new BusinessException("模型标识符已存在: " + request.getModelIdentifier());
+                    throw new BusinessException("模型标识符已存在: " + finalModelIdentifier);
                 });
 
-        // 如果提供了模型提供商，验证提供商是否存在
+        // 2. 转换 modelCallingType 字符串为枚举
+        ModelCallingType modelCallingType = parseModelCallingType(request.getModelCallingType());
+
+        // 3. 如果提供了模型提供商，验证提供商是否存在
         if (request.getProviderId() != null) {
             providerRepository.findById(request.getProviderId())
                     .orElseThrow(() -> new ResourceNotFoundException("模型提供商不存在", request.getProviderId()));
         }
 
-        // 创建领域实体
+        // 4. 转换 providerType 字符串为枚举（可选）
+        ProviderType providerType = parseProviderType(request.getProviderType());
+
+        // 5. TODO: 根据 modelCallingType 确定 accessType 和 modelType
+        ModelAccessType accessType = null;
+        ModelType modelType = null;
+        // TODO: 实现根据 modelCallingType 自动设置 accessType 和 modelType 的逻辑
+
+        // 6. 处理 modelConfig，将 JSON 字符串转换为 Map
+        Map<String, Object> modelConfig = parseModelConfig(request.getModelConfig());
+
+        // 7. 创建领域实体
         AiModel model = AiModel.builder()
                 .modelName(request.getModelName())
-                .modelIdentifier(request.getModelIdentifier())
+                .modelIdentifier(finalModelIdentifier)
+                .modelCallingType(modelCallingType)
+                .apiBaseUrl(request.getApiBaseUrl())
                 .accessType(accessType)
                 .modelType(modelType)
-                .modelSource(ModelSource.REMOTE_API)  // 通过API创建的模型标记为远程API来源
                 .providerId(request.getProviderId())
-                .modelConfig(stringToMap(request.getModelConfig()))
+                .providerType(providerType)
+                .modelConfig(modelConfig)
                 .description(request.getDescription())
-                .isEnabled(true)
+                .isEnabled(request.getIsEnabled())
                 .build();
 
-        // 调用领域实体的验证方法
+        // 8. 调用领域实体的验证方法
         model.validate();
 
-        // 保存
+        // 9. 保存
         AiModel savedModel = modelRepository.save(model);
 
         return dtoConverter.toDTO(savedModel);
@@ -98,32 +117,43 @@ public class AiModelServiceImpl implements AiModelService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public AiModelDTO updateModel(Long id, UpdateModelRequest request) {
-        // 查询现有模型
+        // 1. 查询现有模型
         AiModel model = modelRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("AI模型", id));
 
-        // 检查是否可以编辑
-        // 代码预定义的模型只能编辑基本信息（modelName, description）
-        // 远程API创建的模型可以完全编辑
-        if (!model.canFullEdit()) {
-            // 代码预定义的模型，只允许更新基本信息
-            if (request.getModelConfig() != null) {
-                throw new BusinessException("代码预定义的模型不允许修改模型配置");
-            }
+        // 2. 转换 modelCallingType 字符串为枚举
+        ModelCallingType modelCallingType = parseModelCallingType(request.getModelCallingType());
+
+        // 3. 如果提供了模型提供商，验证提供商是否存在
+        if (request.getProviderId() != null) {
+            providerRepository.findById(request.getProviderId())
+                    .orElseThrow(() -> new ResourceNotFoundException("模型提供商不存在", request.getProviderId()));
         }
 
-        // 更新字段
-        if (request.getModelName() != null) {
-            model.setModelName(request.getModelName());
-        }
-        if (request.getModelConfig() != null) {
-            model.setModelConfig(stringToMap(request.getModelConfig()));
-        }
-        if (request.getDescription() != null) {
-            model.setDescription(request.getDescription());
-        }
+        // 4. 转换 providerType 字符串为枚举（可选）
+        ProviderType providerType = parseProviderType(request.getProviderType());
 
-        // 保存
+        // 5. TODO: 根据 modelCallingType 确定 accessType 和 modelType
+        ModelAccessType accessType = null;
+        ModelType modelType = null;
+        // TODO: 实现根据 modelCallingType 自动设置 accessType 和 modelType 的逻辑
+
+        // 6. 处理 modelConfig，将 JSON 字符串转换为 Map
+        Map<String, Object> modelConfig = parseModelConfig(request.getModelConfig());
+
+        // 7. 更新字段
+        model.setModelName(request.getModelName());
+        model.setModelCallingType(modelCallingType);
+        model.setApiBaseUrl(request.getApiBaseUrl());
+        model.setAccessType(accessType);
+        model.setModelType(modelType);
+        model.setProviderId(request.getProviderId());
+        model.setProviderType(providerType);
+        model.setModelConfig(modelConfig);
+        model.setDescription(request.getDescription());
+        model.setIsEnabled(request.getIsEnabled());
+
+        // 8. 保存
         AiModel updatedModel = modelRepository.save(model);
 
         return dtoConverter.toDTO(updatedModel);
@@ -135,12 +165,6 @@ public class AiModelServiceImpl implements AiModelService {
         // 查询模型是否存在
         AiModel model = modelRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("AI模型", id));
-
-        // 检查是否可以删除
-        // 只有远程API创建的模型才能删除，代码预定义的模型不能删除
-        if (!model.canDelete()) {
-            throw new BusinessException("代码预定义的模型不允许删除");
-        }
 
         // 删除
         modelRepository.deleteById(id);
@@ -173,39 +197,49 @@ public class AiModelServiceImpl implements AiModelService {
         return dtoConverter.toDTO(model);
     }
 
+    // ==================== 私有辅助方法 ====================
+
     /**
-     * 验证接入方式是否有效
+     * 解析模型调用方式字符串为枚举
      */
-    private ModelAccessType validateAccessType(String code) {
+    private ModelCallingType parseModelCallingType(String code) {
+        if (code == null || code.trim().isEmpty()) {
+            throw new BusinessException("模型调用方式不能为空");
+        }
         try {
-            return ModelAccessType.fromCode(code);
+            return ModelCallingType.fromCode(code);
         } catch (IllegalArgumentException e) {
-            throw new BusinessException("无效的接入方式: " + code);
+            throw new BusinessException("无效的模型调用方式: " + code);
         }
     }
 
     /**
-     * 验证模型类型是否有效
+     * 解析提供协议类型字符串为枚举（可选）
      */
-    private ModelType validateModelType(String code) {
-        try {
-            return ModelType.fromCode(code);
-        } catch (IllegalArgumentException e) {
-            throw new BusinessException("无效的模型类型: " + code);
-        }
-    }
-
-    private Map<String, Object> stringToMap(String json) {
-        if (json == null || json.trim().isEmpty()) {
+    private ProviderType parseProviderType(String code) {
+        if (code == null || code.trim().isEmpty()) {
             return null;
+        }
+        try {
+            return ProviderType.fromCode(code);
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException("无效的提供协议类型: " + code);
+        }
+    }
+
+    /**
+     * 解析模型配置 JSON 字符串为 Map
+     */
+    private Map<String, Object> parseModelConfig(String json) {
+        if (json == null || json.trim().isEmpty()) {
+            return Map.of(); // 返回空 Map
         }
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.findAndRegisterModules();
-            return objectMapper.readValue(json, new TypeReference<>() {
-            });
+            return objectMapper.readValue(json, new TypeReference<Map<String, Object>>() {});
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to deserialize advancedFeatures", e);
+            throw new BusinessException("无效的模型配置 JSON 格式: " + e.getMessage());
         }
     }
 }
