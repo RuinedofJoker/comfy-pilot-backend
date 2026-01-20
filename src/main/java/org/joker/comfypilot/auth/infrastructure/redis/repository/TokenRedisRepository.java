@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.auth.domain.enums.TokenType;
 import org.joker.comfypilot.auth.infrastructure.redis.model.UserTokenRedis;
+import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.util.RedisUtil;
 import org.springframework.stereotype.Repository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,7 +90,7 @@ public class TokenRedisRepository {
             redisUtil.set(key, json, ttl, TimeUnit.SECONDS);
         } catch (JsonProcessingException e) {
             log.error("保存Token失败", e);
-            throw new RuntimeException("保存Token失败", e);
+            throw new BusinessException("保存Token失败", e);
         }
     }
 

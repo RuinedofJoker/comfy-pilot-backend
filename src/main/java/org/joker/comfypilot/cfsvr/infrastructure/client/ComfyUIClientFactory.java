@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.cfsvr.domain.entity.ComfyuiServer;
 import org.joker.comfypilot.cfsvr.domain.enums.AuthMode;
 import org.joker.comfypilot.cfsvr.domain.repository.ComfyuiServerRepository;
+import org.joker.comfypilot.common.exception.BusinessException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
@@ -56,7 +57,7 @@ public class ComfyUIClientFactory {
     public ComfyUIRestClient createRestClient(Long serverId) {
         // 查询服务器
         ComfyuiServer server = comfyuiServerRepository.findById(serverId)
-                .orElseThrow(() -> new RuntimeException("服务器不存在, serverId: " + serverId));
+                .orElseThrow(() -> new BusinessException("服务器不存在, serverId: " + serverId));
         return createRestClient(server);
     }
 
@@ -70,7 +71,7 @@ public class ComfyUIClientFactory {
     public ComfyUIRestClient createRestClient(String serverKey) {
         // 查询服务器
         ComfyuiServer server = comfyuiServerRepository.findByServerKey(serverKey)
-                .orElseThrow(() -> new RuntimeException("服务器不存在, serverKey: " + serverKey));
+                .orElseThrow(() -> new BusinessException("服务器不存在, serverKey: " + serverKey));
         return createRestClient(server);
     }
 

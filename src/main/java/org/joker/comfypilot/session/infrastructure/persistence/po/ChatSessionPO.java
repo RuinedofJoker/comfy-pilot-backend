@@ -34,9 +34,14 @@ public class ChatSessionPO extends BasePO {
     private Long userId;
 
     /**
-     * Agent ID
+     * 会话使用的agent的agentCode
      */
-    private Long agentId;
+    private String agentCode;
+
+    /**
+     * 会话使用的agent的运行时配置（json格式）
+     */
+    private String agentConfig;
 
     /**
      * 会话标题

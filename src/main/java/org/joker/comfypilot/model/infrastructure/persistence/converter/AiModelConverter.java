@@ -3,6 +3,7 @@ package org.joker.comfypilot.model.infrastructure.persistence.converter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.model.domain.entity.AiModel;
 import org.joker.comfypilot.model.domain.enums.ModelAccessType;
 import org.joker.comfypilot.model.domain.enums.ModelCallingType;
@@ -92,7 +93,7 @@ public interface AiModelConverter {
             return objectMapper.readValue(json, new TypeReference<>() {
             });
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to deserialize advancedFeatures", e);
+            throw new BusinessException("Failed to deserialize advancedFeatures", e);
         }
     }
 
@@ -106,7 +107,7 @@ public interface AiModelConverter {
             objectMapper.findAndRegisterModules();
             return objectMapper.writeValueAsString(map);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to deserialize advancedFeatures", e);
+            throw new BusinessException("Failed to deserialize advancedFeatures", e);
         }
     }
 

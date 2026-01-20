@@ -58,11 +58,11 @@ public class ChatSessionRepositoryImpl implements ChatSessionRepository {
     }
 
     @Override
-    public List<ChatSession> findByUserIdAndAgentId(Long userId, Long agentId) {
+    public List<ChatSession> findActiveByUserId(Long userId) {
         LambdaQueryWrapper<ChatSessionPO> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ChatSessionPO::getUserId, userId)
-                .eq(ChatSessionPO::getAgentId, agentId)
                 .eq(ChatSessionPO::getIsDeleted, 0L)
+                .eq(ChatSessionPO::getStatus, "ACTIVE")
                 .orderByDesc(ChatSessionPO::getUpdateTime);
         return chatSessionMapper.selectList(wrapper).stream()
                 .map(chatSessionConverter::toDomain)

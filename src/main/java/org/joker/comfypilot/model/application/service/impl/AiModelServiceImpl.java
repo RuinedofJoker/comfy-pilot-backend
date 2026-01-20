@@ -231,9 +231,11 @@ public class AiModelServiceImpl implements AiModelService {
     }
 
     @Override
-    public List<AiModelSimpleDTO> listEnabledModels() {
+    public List<AiModelSimpleDTO> listEnabledModels(String modelCallingType) {
+        ModelCallingType callingType = ModelCallingType.fromCode(modelCallingType);
         List<AiModel> enabledModels = modelRepository.findByIsEnabled(true);
         return enabledModels.stream()
+                .filter(aiModel -> callingType.equals(aiModel.getModelCallingType()))
                 .map(simpleDtoConverter::toSimpleDTO)
                 .collect(Collectors.toList());
     }

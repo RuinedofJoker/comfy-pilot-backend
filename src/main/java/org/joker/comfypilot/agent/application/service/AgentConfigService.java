@@ -33,6 +33,14 @@ public interface AgentConfigService {
     AgentConfigDTO getAgentById(Long id);
 
     /**
+     * 根据CODE获取Agent配置
+     *
+     * @param agentCode Agent CODE
+     * @return Agent配置
+     */
+    AgentConfigDTO getAgentByCode(String agentCode);
+
+    /**
      * 根据编码获取Agent配置
      *
      * @param agentCode Agent编码

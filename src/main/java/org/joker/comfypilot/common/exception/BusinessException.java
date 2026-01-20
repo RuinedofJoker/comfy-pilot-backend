@@ -31,6 +31,10 @@ public class BusinessException extends RuntimeException {
         this.message = message;
     }
 
+    public BusinessException(String message, Throwable cause) {
+        this(500, message, cause);
+    }
+
     public BusinessException(Integer code, String message, Throwable cause) {
         super(message, cause);
         this.code = code;

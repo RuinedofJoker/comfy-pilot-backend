@@ -2,6 +2,7 @@ package org.joker.comfypilot.session.infrastructure.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.joker.comfypilot.common.constant.AuthConstants;
 import org.joker.comfypilot.session.application.dto.WebSocketMessage;
 import org.joker.comfypilot.session.application.service.ChatSessionService;
@@ -14,6 +15,8 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
+
+import java.util.Map;
 
 /**
  * 聊天WebSocket处理器
@@ -32,29 +35,35 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        String sessionId = session.getId();
+        String wsSessionId = session.getId();
 
-        // 从WebSocket会话属性中获取已认证的用户ID
+        // 从WebSocket会话属性中获取已认证的用户ID和sessionCode
         Long userId = (Long) session.getAttributes().get(AuthConstants.USER_ID_ATTRIBUTE);
+        String sessionCode = (String) session.getAttributes().get(AuthConstants.SESSION_CODE_ATTRIBUTE);
 
         if (userId == null) {
             log.error("WebSocket连接建立失败: 未找到用户ID");
             session.close();
             return;
         }
+        if (StringUtils.isBlank(sessionCode)) {
+            log.error("WebSocket连接建立失败: 未找到sessionCode");
+            session.close();
+            return;
+        }
 
-        sessionManager.addSession(sessionId, session, userId);
+        sessionManager.addSession(wsSessionId, session, userId, sessionCode);
 
-        log.info("WebSocket连接已建立: sessionId={}, userId={}", sessionId, userId);
+        log.info("WebSocket连接已建立: sessionId={}, userId={}", wsSessionId, userId);
     }
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        String sessionId = session.getId();
-        WebSocketSessionContext context = sessionManager.getContext(sessionId);
+        String wsSessionId = session.getId();
+        WebSocketSessionContext context = sessionManager.getContext(wsSessionId);
 
         if (context == null) {
-            log.warn("未找到WebSocket会话上下文: sessionId={}", sessionId);
+            log.warn("未找到WebSocket会话上下文: wsSessionId={}", wsSessionId);
             return;
         }
 
@@ -65,12 +74,10 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             WebSocketMessage wsMessage = objectMapper.readValue(message.getPayload(), WebSocketMessage.class);
             String messageType = wsMessage.getType();
 
-            log.info("收到WebSocket消息: sessionId={}, type={}", sessionId, messageType);
+            log.info("收到WebSocket消息: wsSessionId={}, type={}", wsSessionId, messageType);
 
             // 根据消息类型处理
-            if (WebSocketMessageType.START_SESSION.name().equals(messageType)) {
-                handleStartSession(session, context, wsMessage);
-            } else if (WebSocketMessageType.USER_MESSAGE.name().equals(messageType)) {
+            if (WebSocketMessageType.USER_MESSAGE.name().equals(messageType)) {
                 handleUserMessage(session, context, wsMessage);
             } else if (WebSocketMessageType.USER_RESPONSE.name().equals(messageType)) {
                 handleUserResponse(session, context, wsMessage);
@@ -83,7 +90,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             }
 
         } catch (Exception e) {
-            log.error("处理WebSocket消息失败: sessionId={}, error={}", sessionId, e.getMessage(), e);
+            log.error("处理WebSocket消息失败: wsSessionId={}, error={}", wsSessionId, e.getMessage(), e);
             sendErrorMessage(session, "处理消息失败: " + e.getMessage());
         }
     }
@@ -103,46 +110,15 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     }
 
     /**
-     * 处理开始会话消息
-     */
-    private void handleStartSession(WebSocketSession session, WebSocketSessionContext context, WebSocketMessage wsMessage) {
-        try {
-            // 从消息中获取标题
-            String title = (String) wsMessage.getData().get("title");
-
-            // 创建聊天会话
-            String sessionCode = chatSessionService.createSession(context.getUserId(), title);
-
-            // 更新上下文
-            sessionManager.updateSessionCode(session.getId(), sessionCode);
-
-            // 发送会话创建成功消息
-            WebSocketMessage response = WebSocketMessage.builder()
-                    .type(WebSocketMessageType.SESSION_CREATED.name())
-                    .sessionCode(sessionCode)
-                    .timestamp(System.currentTimeMillis())
-                    .build();
-
-            sendMessage(session, response);
-
-            log.info("会话已创建: sessionCode={}", sessionCode);
-
-        } catch (Exception e) {
-            log.error("创建会话失败: {}", e.getMessage(), e);
-            sendErrorMessage(session, "创建会话失败: " + e.getMessage());
-        }
-    }
-
-    /**
      * 处理用户消息
      */
     private void handleUserMessage(WebSocketSession session, WebSocketSessionContext context, WebSocketMessage wsMessage) {
         String sessionCode = wsMessage.getSessionCode();
         String content = wsMessage.getContent();
-        String agentCode = (String) wsMessage.getData().get("agentCode");
+        Map<String, Object> data = wsMessage.getData();
 
-        if (sessionCode == null || content == null || agentCode == null) {
-            sendErrorMessage(session, "会话编码、消息内容和Agent编码不能为空");
+        if (sessionCode == null || content == null) {
+            sendErrorMessage(session, "会话编码、消息内容不能为空");
             return;
         }
 
@@ -153,7 +129,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         }
 
         // 异步执行Agent（传递agentCode）
-        chatSessionService.sendMessageAsync(sessionCode, content, agentCode, context, session);
+        chatSessionService.sendMessageAsync(sessionCode, content, data, context, session);
     }
 
     /**

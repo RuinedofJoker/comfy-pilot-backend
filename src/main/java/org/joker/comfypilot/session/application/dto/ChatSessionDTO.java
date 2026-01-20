@@ -27,8 +27,11 @@ public class ChatSessionDTO extends BaseDTO {
     @Schema(description = "用户ID")
     private Long userId;
 
-    @Schema(description = "Agent ID")
-    private Long agentId;
+    @Schema(description = "会话使用的agent的agentCode")
+    private String agentCode;
+
+    @Schema(description = "会话使用的agent的运行时配置（json格式）")
+    private String agentConfig;
 
     @Schema(description = "会话标题")
     private String title;

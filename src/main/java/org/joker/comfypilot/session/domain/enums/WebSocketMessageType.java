@@ -6,11 +6,6 @@ package org.joker.comfypilot.session.domain.enums;
 public enum WebSocketMessageType {
 
     /**
-     * 客户端 -> 服务端：开始会话
-     */
-    START_SESSION("开始会话"),
-
-    /**
      * 客户端 -> 服务端：发送用户消息
      */
     USER_MESSAGE("用户消息"),

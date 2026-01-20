@@ -22,7 +22,7 @@ public class ToolExecutor {
         try {
             this.toolInstance = toolClass.getDeclaredConstructor().newInstance();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new BusinessException(e);
         }
 
         this.methodMap = Arrays.stream(toolClass.getDeclaredMethods())
@@ -46,7 +46,7 @@ public class ToolExecutor {
             return OBJECT_MAPPER.writeValueAsString(result);
 
         } catch (Exception e) {
-            throw new RuntimeException("Tool execution failed", e);
+            throw new BusinessException("Tool execution failed", e);
         }
     }
 

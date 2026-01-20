@@ -69,6 +69,19 @@ public record AgentConfigDefinition(
     }
 
     /**
+     * 创建文本类型配置定义
+     *
+     * @param name 配置名
+     * @param description 配置描述
+     * @param require 是否必填
+     * @param userOverride 用户是否能覆盖
+     * @return 字符串类型配置定义
+     */
+    public static AgentConfigDefinition textValue(String name, String description, Boolean require, Boolean userOverride) {
+        return new AgentConfigDefinition(name, description, require, userOverride, AgentConfigType.TEXT, null, null, null, null, null, null);
+    }
+
+    /**
      * 创建整数类型配置定义
      *
      * @param name 配置名

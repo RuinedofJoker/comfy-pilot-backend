@@ -31,7 +31,7 @@ public class ChatSessionController {
     @PostMapping
     public Result<String> createSession(@RequestBody CreateSessionRequest request) {
         Long userId = UserContextHolder.getCurrentUserId();
-        String sessionCode = chatSessionService.createSession(userId, request.getTitle());
+        String sessionCode = chatSessionService.createSession(userId, request);
         return Result.success(sessionCode);
     }
 
@@ -50,6 +50,14 @@ public class ChatSessionController {
     public Result<List<ChatSessionDTO>> getUserSessions() {
         Long userId = UserContextHolder.getCurrentUserId();
         List<ChatSessionDTO> sessions = chatSessionService.getSessionsByUserId(userId);
+        return Result.success(sessions);
+    }
+
+    @Operation(summary = "查询用户活跃会话列表", description = "查询当前用户的所有活跃会话")
+    @GetMapping("/active")
+    public Result<List<ChatSessionDTO>> getUserActiveSessions() {
+        Long userId = UserContextHolder.getCurrentUserId();
+        List<ChatSessionDTO> sessions = chatSessionService.getActiveSessionsByUserId(userId);
         return Result.success(sessions);
     }
 

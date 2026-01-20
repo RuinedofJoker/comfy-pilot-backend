@@ -55,6 +55,13 @@ public class AgentConfigServiceImpl implements AgentConfigService {
     }
 
     @Override
+    public AgentConfigDTO getAgentByCode(String agentCode) {
+        AgentConfig agent = agentConfigRepository.findByAgentCode(agentCode)
+                .orElseThrow(() -> new BusinessException("Agent不存在"));
+        return dtoConverter.toDTO(agent);
+    }
+
+    @Override
     public AgentRuntimeConfigDTO getRuntimeAgentByCode(String agentCode) {
         AgentConfig agent = agentConfigRepository.findByAgentCode(agentCode)
                 .orElseThrow(() -> new BusinessException("Agent不存在: " + agentCode));

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.joker.comfypilot.common.domain.BaseEntity;
 import org.joker.comfypilot.session.domain.enums.MessageRole;
+import org.joker.comfypilot.session.domain.enums.MessageStatus;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -35,6 +36,11 @@ public class ChatMessage extends BaseEntity<Long> {
      * 消息角色
      */
     private MessageRole role;
+
+    /**
+     * 消息状态
+     */
+    private MessageStatus status;
 
     /**
      * 消息内容

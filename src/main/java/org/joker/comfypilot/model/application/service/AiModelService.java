@@ -76,9 +76,10 @@ public interface AiModelService {
     /**
      * 查询所有启用的模型（用于前台）
      *
+     * @param modelCallingType 模型调用方式
      * @return 启用的模型简化信息列表
      */
-    List<AiModelSimpleDTO> listEnabledModels();
+    List<AiModelSimpleDTO> listEnabledModels(String modelCallingType);
 
     /**
      * 获取模型配置格式说明

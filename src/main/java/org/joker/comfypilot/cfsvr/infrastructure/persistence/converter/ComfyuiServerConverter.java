@@ -7,6 +7,7 @@ import org.joker.comfypilot.cfsvr.domain.entity.ComfyuiServerAdvancedFeatures;
 import org.joker.comfypilot.cfsvr.domain.enums.AuthMode;
 import org.joker.comfypilot.cfsvr.domain.enums.HealthStatus;
 import org.joker.comfypilot.cfsvr.infrastructure.persistence.po.ComfyuiServerPO;
+import org.joker.comfypilot.common.exception.BusinessException;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -63,7 +64,7 @@ public interface ComfyuiServerConverter {
             objectMapper.findAndRegisterModules();
             return objectMapper.readValue(json, ComfyuiServerAdvancedFeatures.class);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to deserialize advancedFeatures", e);
+            throw new BusinessException("Failed to deserialize advancedFeatures", e);
         }
     }
 
@@ -77,7 +78,7 @@ public interface ComfyuiServerConverter {
             objectMapper.findAndRegisterModules();
             return objectMapper.writeValueAsString(features);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to serialize advancedFeatures", e);
+            throw new BusinessException("Failed to serialize advancedFeatures", e);
         }
     }
 }

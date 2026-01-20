@@ -2,13 +2,13 @@ package org.joker.comfypilot.session.infrastructure.persistence.po;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.joker.comfypilot.common.infrastructure.persistence.po.BasePO;
+import org.joker.comfypilot.common.infrastructure.persistence.typehandler.PostgresJsonbTypeHandler;
 
 import java.util.Map;
 
@@ -36,6 +36,11 @@ public class ChatMessagePO extends BasePO {
     private String role;
 
     /**
+     * 消息状态（ACTIVE, ARCHIVED）
+     */
+    private String status;
+
+    /**
      * 消息内容
      */
     private String content;
@@ -43,6 +48,6 @@ public class ChatMessagePO extends BasePO {
     /**
      * 元数据（JSONB类型）
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @TableField(typeHandler = PostgresJsonbTypeHandler.class)
     private Map<String, Object> metadata;
 }

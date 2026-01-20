@@ -27,18 +27,19 @@ public class WebSocketSessionManager {
     /**
      * 添加会话
      */
-    public void addSession(String sessionId, WebSocketSession webSocketSession, Long userId) {
+    public void addSession(String wsSessionId, WebSocketSession webSocketSession, Long userId, String sessionCode) {
         WebSocketSessionContext context = WebSocketSessionContext.builder()
                 .webSocketSession(webSocketSession)
                 .userId(userId)
+                .sessionCode(sessionCode)
                 .executing(new AtomicBoolean(false))
                 .interrupted(new AtomicBoolean(false))
                 .createTime(System.currentTimeMillis())
                 .lastActiveTime(System.currentTimeMillis())
                 .build();
 
-        sessions.put(sessionId, context);
-        log.info("WebSocket会话已添加: sessionId={}, userId={}", sessionId, userId);
+        sessions.put(wsSessionId, context);
+        log.info("WebSocket会话已添加: wsSessionId={}, userId={}", wsSessionId, userId);
     }
 
     /**

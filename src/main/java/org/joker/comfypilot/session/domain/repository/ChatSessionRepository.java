@@ -43,13 +43,12 @@ public interface ChatSessionRepository {
     List<ChatSession> findByUserId(Long userId);
 
     /**
-     * 根据用户ID和Agent ID查询会话列表
+     * 根据用户ID查询活跃会话列表
      *
-     * @param userId  用户ID
-     * @param agentId Agent ID
+     * @param userId 用户ID
      * @return 会话列表
      */
-    List<ChatSession> findByUserIdAndAgentId(Long userId, Long agentId);
+    List<ChatSession> findActiveByUserId(Long userId);
 
     /**
      * 更新会话

@@ -3,10 +3,10 @@ package org.joker.comfypilot.session.domain.enums;
 import lombok.Getter;
 
 /**
- * 会话状态枚举
+ * 消息状态枚举
  */
 @Getter
-public enum SessionStatus {
+public enum MessageStatus {
 
     /**
      * 活跃状态 - 会话正在进行中
@@ -20,7 +20,8 @@ public enum SessionStatus {
 
     private final String description;
 
-    SessionStatus(String description) {
+    MessageStatus(String description) {
         this.description = description;
     }
+
 }

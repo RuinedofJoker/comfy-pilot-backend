@@ -9,6 +9,7 @@ import lombok.Getter;
 public enum AgentConfigType {
 
     STRING("字符串"),
+    TEXT("文本"),
     INT("整数"),
     FLOAT("浮点数"),
     BOOLEAN("布尔"),

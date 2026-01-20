@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.auth.infrastructure.redis.model.PasswordResetTokenRedis;
+import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.util.RedisUtil;
 import org.springframework.stereotype.Repository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +39,7 @@ public class PasswordResetTokenRedisRepository {
             log.info("保存密码重置令牌成功, userId: {}, token: {}", tokenRedis.getUserId(), tokenRedis.getToken());
         } catch (JsonProcessingException e) {
             log.error("保存密码重置令牌失败", e);
-            throw new RuntimeException("保存密码重置令牌失败", e);
+            throw new BusinessException("保存密码重置令牌失败", e);
         }
     }
 

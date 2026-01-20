@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import jakarta.validation.Valid;
+
 import java.util.List;
 
 /**
@@ -55,7 +56,7 @@ public class AiModelController {
     }
 
     @Operation(summary = "更新AI模型",
-               description = "更新AI模型信息。注意：代码预定义的模型只能更新基本信息（modelName, description），不能修改模型配置")
+            description = "更新AI模型信息。注意：代码预定义的模型只能更新基本信息（modelName, description），不能修改模型配置")
     @PutMapping("/{id}")
     public Result<AiModelDTO> updateModel(
             @Parameter(description = "模型ID", required = true)
@@ -67,7 +68,7 @@ public class AiModelController {
     }
 
     @Operation(summary = "删除AI模型",
-               description = "删除AI模型。注意：只能删除远程API创建的模型，代码预定义的模型不能删除")
+            description = "删除AI模型。注意：只能删除远程API创建的模型，代码预定义的模型不能删除")
     @DeleteMapping("/{id}")
     public Result<Void> deleteModel(
             @Parameter(description = "模型ID", required = true)
@@ -96,8 +97,8 @@ public class AiModelController {
 
     @Operation(summary = "查询启用的AI模型（前台）", description = "查询所有启用状态的AI模型简化信息，用于前台展示")
     @GetMapping("/enabled")
-    public Result<List<AiModelSimpleDTO>> listEnabledModels() {
-        List<AiModelSimpleDTO> models = modelService.listEnabledModels();
+    public Result<List<AiModelSimpleDTO>> listEnabledModels(@Parameter(description = "模型调用方式", required = true) String modelCallingType) {
+        List<AiModelSimpleDTO> models = modelService.listEnabledModels(modelCallingType);
         return Result.success(models);
     }
 

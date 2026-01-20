@@ -1,6 +1,7 @@
 package org.joker.comfypilot.common.config;
 
 import lombok.extern.slf4j.Slf4j;
+import org.joker.comfypilot.common.exception.BusinessException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -32,7 +33,7 @@ public class EnvLoader {
 
         } catch (IOException e) {
             log.error("加载环境变量失败", e);
-            throw new RuntimeException("加载环境变量失败", e);
+            throw new BusinessException("加载环境变量失败", e);
         }
     }
 

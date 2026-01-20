@@ -8,6 +8,7 @@ import org.joker.comfypilot.cfsvr.domain.repository.ComfyuiServerRepository;
 import org.joker.comfypilot.cfsvr.infrastructure.client.ComfyUIClientFactory;
 import org.joker.comfypilot.cfsvr.infrastructure.client.ComfyUIRestClient;
 import org.joker.comfypilot.cfsvr.infrastructure.client.dto.SystemStatsResponse;
+import org.joker.comfypilot.common.exception.BusinessException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -56,7 +57,7 @@ public class ComfyuiServerHealthCheckServiceImpl implements ComfyuiServerHealthC
 
         // 查询服务器
         ComfyuiServer server = repository.findById(serverId)
-                .orElseThrow(() -> new RuntimeException("服务器不存在, serverId: " + serverId));
+                .orElseThrow(() -> new BusinessException("服务器不存在, serverId: " + serverId));
 
         HealthStatus healthStatus;
         try {

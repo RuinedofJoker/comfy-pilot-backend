@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.joker.comfypilot.agent.application.dto.AgentConfigDTO;
 import org.joker.comfypilot.agent.domain.entity.AgentConfig;
+import org.joker.comfypilot.common.exception.BusinessException;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -39,7 +40,7 @@ public interface AgentConfigDTOConverter {
             objectMapper.findAndRegisterModules();
             return objectMapper.writeValueAsString(map);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to deserialize advancedFeatures", e);
+            throw new BusinessException("Failed to deserialize advancedFeatures", e);
         }
     }
 }

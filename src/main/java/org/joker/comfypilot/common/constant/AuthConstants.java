@@ -22,4 +22,9 @@ public class AuthConstants {
      * WebSocket Session 属性：用户ID
      */
     public static final String USER_ID_ATTRIBUTE = "userId";
+
+    /**
+     * WebSocket Session 属性：ChatSession实体的 sessionCode
+     */
+    public static final String SESSION_CODE_ATTRIBUTE = "sessionCode";
 }
