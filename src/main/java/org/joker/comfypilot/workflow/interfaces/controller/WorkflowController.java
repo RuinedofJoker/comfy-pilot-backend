@@ -77,9 +77,9 @@ public class WorkflowController {
     @Operation(summary = "删除工作流", description = "删除指定的工作流")
     @DeleteMapping("/{id}")
     public Result<Void> deleteWorkflow(
-            @Parameter(description = "工作流ID", required = true) @PathVariable Long id,
-            @Parameter(description = "消息ID", required = true) @RequestParam Long messageId) {
-        workflowService.deleteWorkflow(id, messageId);
+            @Parameter(description = "工作流ID", required = true) @PathVariable Long id
+    ) {
+        workflowService.deleteWorkflow(id);
         return Result.success();
     }
 
@@ -90,9 +90,9 @@ public class WorkflowController {
     @PostMapping("/{id}/content")
     public Result<WorkflowDTO> saveContent(
             @Parameter(description = "工作流ID", required = true) @PathVariable Long id,
-            @Parameter(description = "消息ID", required = true) @RequestParam Long messageId,
-            @Validated @RequestBody SaveWorkflowContentRequest request) {
-        WorkflowDTO dto = workflowService.saveContent(id, request, messageId);
+            @Validated @RequestBody SaveWorkflowContentRequest request
+    ) {
+        WorkflowDTO dto = workflowService.saveContent(id, request);
         return Result.success(dto);
     }
 

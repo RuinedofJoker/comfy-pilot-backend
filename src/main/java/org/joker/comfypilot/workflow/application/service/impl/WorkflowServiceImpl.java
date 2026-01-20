@@ -152,8 +152,8 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void deleteWorkflow(Long id, Long messageId) {
-        log.info("删除工作流, id: {}, messageId: {}", id, messageId);
+    public void deleteWorkflow(Long id) {
+        log.info("删除工作流, id: {}", id);
 
         // 查询工作流
         Workflow workflow = workflowRepository.findById(id)
@@ -165,7 +165,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         }
 
         // 从Redis检查锁定状态
-        if (workflowLockService.isLocked(id) && !workflowLockService.isLockedByMessage(id, messageId)) {
+        if (workflowLockService.isLocked(id)) {
             throw new BusinessException("工作流已被其他消息锁定，无法删除");
         }
 
@@ -176,8 +176,8 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public WorkflowDTO saveContent(Long id, SaveWorkflowContentRequest request, Long messageId) {
-        log.info("保存工作流内容, id: {}, messageId: {}", id, messageId);
+    public WorkflowDTO saveContent(Long id, SaveWorkflowContentRequest request) {
+        log.info("保存工作流内容, id: {}", id);
 
         // 查询工作流
         Workflow workflow = workflowRepository.findById(id)
@@ -189,7 +189,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         }
 
         // 从Redis检查锁定状态
-        if (workflowLockService.isLocked(id) && !workflowLockService.isLockedByMessage(id, messageId)) {
+        if (workflowLockService.isLocked(id)) {
             throw new BusinessException("工作流已被其他消息锁定，无法保存内容");
         }
 

@@ -45,15 +45,6 @@ public interface WorkflowLockService {
     boolean isLocked(Long workflowId);
 
     /**
-     * 检查工作流是否被指定消息锁定
-     *
-     * @param workflowId 工作流ID
-     * @param messageId  消息ID
-     * @return 是否被指定消息锁定
-     */
-    boolean isLockedByMessage(Long workflowId, Long messageId);
-
-    /**
      * 强制解锁工作流（管理员操作）
      *
      * @param workflowId 工作流ID

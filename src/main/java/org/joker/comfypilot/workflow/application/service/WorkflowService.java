@@ -50,19 +50,17 @@ public interface WorkflowService {
      * 删除工作流
      *
      * @param id        工作流ID
-     * @param messageId 消息ID
      */
-    void deleteWorkflow(Long id, Long messageId);
+    void deleteWorkflow(Long id);
 
     /**
      * 保存工作流内容
      *
      * @param id        工作流ID
      * @param request   保存内容请求
-     * @param messageId 消息ID
      * @return 工作流DTO
      */
-    WorkflowDTO saveContent(Long id, SaveWorkflowContentRequest request, Long messageId);
+    WorkflowDTO saveContent(Long id, SaveWorkflowContentRequest request);
 
     /**
      * 获取工作流内容

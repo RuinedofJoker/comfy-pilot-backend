@@ -113,16 +113,6 @@ public class WorkflowLockServiceImpl implements WorkflowLockService {
     }
 
     @Override
-    public boolean isLockedByMessage(Long workflowId, Long messageId) {
-        Optional<WorkflowLockInfo> lockInfoOpt = getLockInfo(workflowId);
-        if (lockInfoOpt.isEmpty()) {
-            return false;
-        }
-
-        return lockInfoOpt.get().getMessageId().equals(messageId);
-    }
-
-    @Override
     public void forceUnlock(Long workflowId) {
         String lockKey = getLockKey(workflowId);
         redisUtil.del(lockKey);
