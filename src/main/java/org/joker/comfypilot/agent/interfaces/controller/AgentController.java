@@ -4,12 +4,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.joker.comfypilot.agent.application.dto.AgentConfigDTO;
-import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
-import org.joker.comfypilot.agent.application.dto.AgentExecutionResponse;
 import org.joker.comfypilot.agent.application.dto.AgentRuntimeConfigDTO;
 import org.joker.comfypilot.agent.application.executor.AgentExecutor;
 import org.joker.comfypilot.agent.application.service.AgentConfigService;
-import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.joker.comfypilot.common.interfaces.response.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -81,16 +78,4 @@ public class AgentController {
         return Result.success();
     }
 
-    @Operation(summary = "执行Agent", description = "执行指定的Agent并返回结果")
-    @PostMapping("/{agentCode}/execute")
-    public Result<AgentExecutionResponse> executeAgent(
-            @Parameter(description = "Agent编码", required = true)
-            @PathVariable String agentCode,
-            @Parameter(description = "执行请求", required = true)
-            @RequestBody AgentExecutionRequest request) {
-        request.setIsStreamable(false);
-        AgentExecutionContext executionContext = agentExecutor.getExecutionContext(agentCode, request);
-        AgentExecutionResponse response = agentExecutor.execute(executionContext);
-        return Result.success(response);
-    }
 }

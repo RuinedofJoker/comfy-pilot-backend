@@ -1,10 +1,6 @@
 package org.joker.comfypilot.agent.application.executor;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionResponse;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
@@ -53,23 +49,15 @@ public class AgentExecutorImpl implements AgentExecutor {
         // 2. 创建执行日志
         AgentExecutionLog executionLog = AgentExecutionLog.builder()
                 .sessionId(request.getSessionId())
-                .input(request.getInput())
+                .input(request.getUserMessage())
                 .status(ExecutionStatus.RUNNING)
                 .createTime(LocalDateTime.now())
                 .updateTime(LocalDateTime.now())
                 .build();
 
         Map<String, Object> agentRuntimeConfig = new HashMap<>();
-        ObjectMapper  objectMapper = new ObjectMapper();
-        if (StringUtils.isNotBlank(request.getAgentConfig())) {
-            try {
-                Map<String, Object> requestAgentRuntimeConfig = objectMapper.readValue(request.getAgentConfig(), new TypeReference<>() {
-                });
-                agentRuntimeConfig.putAll(requestAgentRuntimeConfig);
-            } catch (JsonProcessingException e) {
-                log.error("agent运行时配置解析失败", e);
-                throw new BusinessException("agent运行时配置解析失败，" + e.getMessage());
-            }
+        if (request.getAgentConfig() != null) {
+            agentRuntimeConfig.putAll(request.getAgentConfig());
         }
 
         return AgentExecutionContext.builder()

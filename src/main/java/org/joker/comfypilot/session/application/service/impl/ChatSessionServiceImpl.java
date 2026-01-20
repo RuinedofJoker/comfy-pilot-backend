@@ -14,6 +14,7 @@ import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
 import org.joker.comfypilot.session.application.dto.ChatSessionDTO;
 import org.joker.comfypilot.session.application.dto.CreateSessionRequest;
 import org.joker.comfypilot.session.application.service.ChatSessionService;
+import org.joker.comfypilot.session.domain.constant.WebSocketDataConstants;
 import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
 import org.joker.comfypilot.session.domain.entity.ChatMessage;
 import org.joker.comfypilot.session.domain.entity.ChatSession;
@@ -180,47 +181,59 @@ public class ChatSessionServiceImpl implements ChatSessionService {
                 throw new BusinessException("用户消息未提供额外数据");
             }
 
-            String agentConfig;
-            if (data.get("agentConfig") instanceof String) {
-                agentConfig = (String) data.get("agentConfig");
-            } else if (data.get("agentConfig") instanceof Map<?, ?>) {
-                agentConfig = objectMapper.writeValueAsString(data.get("agentConfig"));
-            } else if (data.get("agentConfig") == null) {
-                agentConfig = "{}";
-            } else {
-                throw new BusinessException("不能识别的agentConfig类型" +  data.get("agentConfig"));
+            // 3.验证额外数据 data
+
+            // 工作流内容
+            String workflowContent = null;
+            if (data.get(WebSocketDataConstants.WORKFLOW_CONTENT) != null) {
+                Object workflowContentObj = data.get(WebSocketDataConstants.WORKFLOW_CONTENT);
+                if (!(workflowContentObj instanceof String)) {
+                    throw new BusinessException("工作流内容必须是字符串");
+                }
+                workflowContent = (String) workflowContentObj;
             }
 
+            // 多模态列表 TODO 目前还不确定一定得是 List<String>
+            List<String> multimodalList = null;
+            if (data.get(WebSocketDataConstants.MULTIMODAL_LIST) != null) {
+                Object multimodalListObj = data.get(WebSocketDataConstants.MULTIMODAL_LIST);
+                if (multimodalListObj instanceof String) {
+                    // todo
+                }
+            }
 
-            // 3. 保存用户消息
+            // 4. 保存用户消息
             ChatMessage userMessage = ChatMessage.builder()
                     .sessionId(chatSession.getId())
                     .role(MessageRole.USER)
                     .status(MessageStatus.ACTIVE)
+                    .metadata(new HashMap<>())
                     .content(content)
                     .build();
             chatMessageRepository.save(userMessage);
 
-            // 4. 创建流式回调
+            // 5. 创建流式回调
             WebSocketStreamCallback streamCallback = new WebSocketStreamCallback(
                     webSocketSession, wsContext, sessionCode, objectMapper);
 
-            // 5. 构建Agent执行请求
+            // 6. 构建Agent执行请求
             AgentExecutionRequest agentRequest = AgentExecutionRequest.builder()
                     .sessionId(chatSession.getId())
                     .userId(wsContext.getUserId())
-                    .input(content)
-                    .agentConfig(agentConfig)
+                    .workflowContent(workflowContent)
+                    .multimodalList(multimodalList)
+                    .userMessage(content)
+                    .agentConfig(chatSession.getAgentConfig())
                     .isStreamable(true)
                     .build();
 
-            // 6. 获取Agent执行上下文（直接使用传入的agentCode）
+            // 7. 获取Agent执行上下文（直接使用传入的agentCode）
             AgentExecutionContext executionContext = agentExecutor.getExecutionContext(chatSession.getAgentCode(), agentRequest);
 
             // 设置流式回调
             executionContext.setStreamCallback(streamCallback);
 
-            // 7. 执行Agent
+            // 8. 执行Agent
             agentExecutor.execute(executionContext);
 
             log.info("消息发送成功: sessionCode={}", sessionCode);

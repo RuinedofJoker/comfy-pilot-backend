@@ -1,6 +1,7 @@
 package org.joker.comfypilot.workflow.application.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import org.joker.comfypilot.auth.infrastructure.context.UserContextHolder;
 import org.joker.comfypilot.cfsvr.domain.repository.ComfyuiServerRepository;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.exception.ResourceNotFoundException;
@@ -126,6 +127,11 @@ public class WorkflowServiceImpl implements WorkflowService {
         Workflow workflow = workflowRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("工作流不存在"));
 
+        Long currentUserId = UserContextHolder.getCurrentUserId();
+        if (!workflow.getCreateBy().equals(currentUserId)) {
+            throw new BusinessException("工作流不属于当前用户，无法修改");
+        }
+
         // 从Redis检查锁定状态
         if (workflowLockService.isLocked(id)) {
             throw new BusinessException("工作流已被其他消息锁定，无法编辑");
@@ -158,6 +164,11 @@ public class WorkflowServiceImpl implements WorkflowService {
         Workflow workflow = workflowRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("工作流不存在"));
 
+        Long currentUserId = UserContextHolder.getCurrentUserId();
+        if (!workflow.getCreateBy().equals(currentUserId)) {
+            throw new BusinessException("工作流不属于当前用户，无法删除");
+        }
+
         // 从Redis检查锁定状态
         if (workflowLockService.isLocked(id) && !workflowLockService.isLockedByMessage(id, messageId)) {
             throw new BusinessException("工作流已被其他消息锁定，无法删除");
@@ -176,6 +187,11 @@ public class WorkflowServiceImpl implements WorkflowService {
         // 查询工作流
         Workflow workflow = workflowRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("工作流不存在"));
+
+        Long currentUserId = UserContextHolder.getCurrentUserId();
+        if (!workflow.getCreateBy().equals(currentUserId)) {
+            throw new BusinessException("工作流不属于当前用户，无法保存内容");
+        }
 
         // 从Redis检查锁定状态
         if (workflowLockService.isLocked(id) && !workflowLockService.isLockedByMessage(id, messageId)) {
@@ -199,6 +215,11 @@ public class WorkflowServiceImpl implements WorkflowService {
         Workflow workflow = workflowRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("工作流不存在"));
 
+        Long currentUserId = UserContextHolder.getCurrentUserId();
+        if (!workflow.getCreateBy().equals(currentUserId)) {
+            throw new BusinessException("工作流不属于当前用户，无法查看");
+        }
+
         return workflow.getContent();
     }
 
@@ -210,6 +231,11 @@ public class WorkflowServiceImpl implements WorkflowService {
         // 查询工作流
         Workflow workflow = workflowRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("工作流不存在"));
+
+        Long currentUserId = UserContextHolder.getCurrentUserId();
+        if (!workflow.getCreateBy().equals(currentUserId)) {
+            throw new BusinessException("工作流不属于当前用户，无法修改");
+        }
 
         // 使用Redis锁定服务锁定工作流
         boolean locked = workflowLockService.lockWorkflow(id, messageId);
@@ -237,6 +263,11 @@ public class WorkflowServiceImpl implements WorkflowService {
         // 查询工作流
         Workflow workflow = workflowRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("工作流不存在"));
+
+        Long currentUserId = UserContextHolder.getCurrentUserId();
+        if (!workflow.getCreateBy().equals(currentUserId)) {
+            throw new BusinessException("工作流不属于当前用户，无法修改");
+        }
 
         // 使用Redis锁定服务解锁工作流
         boolean unlocked = workflowLockService.unlockWorkflow(id, messageId);

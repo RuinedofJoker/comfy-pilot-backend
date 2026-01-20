@@ -38,13 +38,12 @@ public class WorkflowController {
     /**
      * 查询工作流列表
      */
-    @Operation(summary = "查询工作流列表", description = "查询工作流列表，支持按ComfyUI服务、锁定状态、创建人过滤")
+    @Operation(summary = "查询当前用户的工作流列表", description = "查询工作流列表，支持按ComfyUI服务过滤")
     @GetMapping
     public Result<List<WorkflowDTO>> listWorkflows(
-            @Parameter(description = "ComfyUI服务ID") @RequestParam(required = false) Long comfyuiServerId,
-            @Parameter(description = "是否锁定") @RequestParam(required = false) Boolean isLocked,
-            @Parameter(description = "创建人ID") @RequestParam(required = false) Long createBy) {
-        List<WorkflowDTO> list = workflowService.listWorkflows(comfyuiServerId, isLocked, createBy);
+            @Parameter(description = "ComfyUI服务ID") @RequestParam(required = false) Long comfyuiServerId) {
+        Long currentUserId = UserContextHolder.getCurrentUserId();
+        List<WorkflowDTO> list = workflowService.listWorkflows(comfyuiServerId, null, currentUserId);
         return Result.success(list);
     }
 
@@ -86,7 +85,7 @@ public class WorkflowController {
     /**
      * 保存工作流内容
      */
-    @Operation(summary = "保存工作流内容", description = "保存工作流的激活内容（用户手动保存或Ctrl+S）")
+    @Operation(summary = "保存工作流内容", description = "保存工作流的激活内容（用户手动保存）")
     @PostMapping("/{id}/content")
     public Result<WorkflowDTO> saveContent(
             @Parameter(description = "工作流ID", required = true) @PathVariable Long id,
@@ -107,27 +106,4 @@ public class WorkflowController {
         return Result.success(content);
     }
 
-    /**
-     * 锁定工作流
-     */
-    @Operation(summary = "锁定工作流", description = "锁定工作流，防止其他消息编辑")
-    @PostMapping("/{id}/lock")
-    public Result<WorkflowDTO> lockWorkflow(
-            @Parameter(description = "工作流ID", required = true) @PathVariable Long id,
-            @Parameter(description = "消息ID", required = true) @RequestParam Long messageId) {
-        WorkflowDTO dto = workflowService.lockWorkflow(id, messageId);
-        return Result.success(dto);
-    }
-
-    /**
-     * 解锁工作流
-     */
-    @Operation(summary = "解锁工作流", description = "解锁工作流，允许其他消息编辑")
-    @PostMapping("/{id}/unlock")
-    public Result<WorkflowDTO> unlockWorkflow(
-            @Parameter(description = "工作流ID", required = true) @PathVariable Long id,
-            @Parameter(description = "消息ID", required = true) @RequestParam Long messageId) {
-        WorkflowDTO dto = workflowService.unlockWorkflow(id, messageId);
-        return Result.success(dto);
-    }
 }

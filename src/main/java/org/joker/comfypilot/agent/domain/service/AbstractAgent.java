@@ -15,7 +15,7 @@ public abstract class AbstractAgent implements Agent {
         AgentExecutionRequest request = executionContext.getRequest();
         log.info("{}开始执行: sessionId={}, input={}, isStreamable={}",
                 getClass().getSimpleName(),
-                request.getSessionId(), request.getInput(), request.getIsStreamable());
+                request.getSessionId(), request.getUserMessage(), request.getIsStreamable());
 
         try {
             if (Boolean.TRUE.equals(request.getIsStreamable())) {

@@ -8,7 +8,6 @@ import dev.langchain4j.model.chat.StreamingChatModel;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
-import org.joker.comfypilot.agent.domain.enums.AgentConfigType;
 import org.joker.comfypilot.agent.domain.service.AbstractAgent;
 import org.joker.comfypilot.agent.domain.service.Agent;
 import org.joker.comfypilot.agent.domain.service.AgentConfigDefinition;
@@ -89,7 +88,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
 
         AgentExecutionRequest request = executionContext.getRequest();
 
-        Map<String, Object> input = OBJECT_MAPPER.readValue(request.getInput(), new TypeReference<>() {
+        Map<String, Object> input = OBJECT_MAPPER.readValue(request.getUserMessage(), new TypeReference<>() {
         });
 
         Map<String, Object> agentConfig = new HashMap<>(executionContext.getAgentConfig());
