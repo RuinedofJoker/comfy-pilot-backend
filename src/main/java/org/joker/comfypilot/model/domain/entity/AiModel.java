@@ -113,18 +113,6 @@ public class AiModel extends BaseEntity<Long> {
     // ==================== 业务方法 ====================
 
     /**
-     * 验证模型配置
-     * 远程API接入时必须有providerId
-     */
-    public void validate() {
-        if (ModelAccessType.REMOTE_API.equals(this.accessType)) {
-            if (this.providerId == null) {
-                throw new BusinessException("远程API接入方式必须指定提供商");
-            }
-        }
-    }
-
-    /**
      * 启用模型
      */
     public void enable() {

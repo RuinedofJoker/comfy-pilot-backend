@@ -112,10 +112,7 @@ public class AiModelServiceImpl implements AiModelService {
                 .isEnabled(request.getIsEnabled())
                 .build();
 
-        // 8. 调用领域实体的验证方法
-        model.validate();
-
-        // 9. 保存
+        // 8. 保存
         AiModel savedModel = modelRepository.save(model);
 
         return dtoConverter.toDTO(savedModel);
