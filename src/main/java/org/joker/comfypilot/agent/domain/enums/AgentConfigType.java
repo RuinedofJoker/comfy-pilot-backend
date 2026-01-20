@@ -1,8 +1,11 @@
 package org.joker.comfypilot.agent.domain.enums;
 
+import lombok.Getter;
+
 /**
  * Agent配置项类型
  */
+@Getter
 public enum AgentConfigType {
 
     STRING("字符串"),
@@ -16,10 +19,6 @@ public enum AgentConfigType {
 
     AgentConfigType(String description) {
         this.description = description;
-    }
-
-    public String getDescription() {
-        return description;
     }
 
 }
