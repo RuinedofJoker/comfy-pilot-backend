@@ -8,6 +8,7 @@ import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
 import org.joker.comfypilot.agent.application.executor.AgentExecutor;
 import org.joker.comfypilot.agent.application.service.AgentConfigService;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
+import org.joker.comfypilot.cfsvr.application.service.ComfyuiServerService;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.session.application.converter.ChatSessionDTOConverter;
 import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
@@ -53,6 +54,8 @@ public class ChatSessionServiceImpl implements ChatSessionService {
     private ChatSessionDTOConverter dtoConverter;
     @Autowired
     private AgentConfigService agentConfigService;
+    @Autowired
+    private ComfyuiServerService comfyuiServerService;
     @Lazy
     @Autowired
     private AgentExecutor agentExecutor;
@@ -62,7 +65,9 @@ public class ChatSessionServiceImpl implements ChatSessionService {
     @Override
     @Transactional
     public String createSession(Long userId, CreateSessionRequest request) {
-        log.info("创建会话: userId={}", userId);
+        log.info("创建会话: userId={}, comfyuiServerId={}", userId, request.getComfyuiServerId());
+
+        comfyuiServerService.getById(request.getComfyuiServerId());
 
         // 生成会话编码
         String sessionCode = "session_" + UUID.randomUUID().toString().replace("-", "");
@@ -73,6 +78,7 @@ public class ChatSessionServiceImpl implements ChatSessionService {
         ChatSession chatSession = ChatSession.builder()
                 .sessionCode(sessionCode)
                 .userId(userId)
+                .comfyuiServerId(request.getComfyuiServerId())
                 .agentCode(request.getAgentCode())
                 .agentConfig(getAgentConfig(agent, request.getAgentConfig()))
                 .title(request.getTitle() != null ? request.getTitle() : "新会话")
@@ -119,10 +125,10 @@ public class ChatSessionServiceImpl implements ChatSessionService {
     }
 
     @Override
-    public List<ChatSessionDTO> getActiveSessionsByUserId(Long userId) {
+    public List<ChatSessionDTO> getActiveSessionsByUserIdAndComfyuiServerId(Long userId, Long comfyuiServerId) {
         log.info("查询用户活跃会话列表: userId={}", userId);
 
-        List<ChatSession> sessions = chatSessionRepository.findActiveByUserId(userId);
+        List<ChatSession> sessions = chatSessionRepository.findActiveByUserIdAndComfyuiServerId(userId, comfyuiServerId);
         return sessions.stream()
                 .map(dtoConverter::toDTO)
                 .collect(Collectors.toList());

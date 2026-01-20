@@ -42,7 +42,6 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
     public List<ChatMessage> findBySessionId(Long sessionId) {
         LambdaQueryWrapper<ChatMessagePO> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ChatMessagePO::getSessionId, sessionId)
-                .eq(ChatMessagePO::getIsDeleted, 0L)
                 .orderByAsc(ChatMessagePO::getCreateTime);
         return chatMessageMapper.selectList(wrapper).stream()
                 .map(chatMessageConverter::toDomain)
@@ -54,7 +53,6 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
         Page<ChatMessagePO> page = new Page<>(offset / limit + 1, limit);
         LambdaQueryWrapper<ChatMessagePO> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ChatMessagePO::getSessionId, sessionId)
-                .eq(ChatMessagePO::getIsDeleted, 0L)
                 .orderByAsc(ChatMessagePO::getCreateTime);
         Page<ChatMessagePO> result = chatMessageMapper.selectPage(page, wrapper);
         return result.getRecords().stream()
@@ -65,8 +63,7 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
     @Override
     public long countBySessionId(Long sessionId) {
         LambdaQueryWrapper<ChatMessagePO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(ChatMessagePO::getSessionId, sessionId)
-                .eq(ChatMessagePO::getIsDeleted, 0L);
+        wrapper.eq(ChatMessagePO::getSessionId, sessionId);
         return chatMessageMapper.selectCount(wrapper);
     }
 

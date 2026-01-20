@@ -39,19 +39,10 @@ public class WorkflowRepositoryImpl implements WorkflowRepository {
     }
 
     @Override
-    public List<Workflow> findByComfyuiServerId(Long comfyuiServerId) {
+    public List<Workflow> findByUserIdAndComfyuiServerId(Long userId, Long comfyuiServerId) {
         LambdaQueryWrapper<WorkflowPO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(WorkflowPO::getComfyuiServerId, comfyuiServerId);
-        List<WorkflowPO> poList = workflowMapper.selectList(wrapper);
-        return poList.stream()
-                .map(workflowConverter::toDomain)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<Workflow> findByCreateBy(Long createBy) {
-        LambdaQueryWrapper<WorkflowPO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(WorkflowPO::getCreateBy, createBy);
+        wrapper.eq(comfyuiServerId != null, WorkflowPO::getComfyuiServerId, comfyuiServerId)
+                .eq(WorkflowPO::getCreateBy, userId);
         List<WorkflowPO> poList = workflowMapper.selectList(wrapper);
         return poList.stream()
                 .map(workflowConverter::toDomain)

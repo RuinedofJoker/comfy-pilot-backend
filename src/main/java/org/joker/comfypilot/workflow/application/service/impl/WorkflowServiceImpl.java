@@ -70,25 +70,19 @@ public class WorkflowServiceImpl implements WorkflowService {
     }
 
     @Override
-    public List<WorkflowDTO> listWorkflows(Long comfyuiServerId, Boolean isLocked, Long createBy) {
-        log.info("查询工作流列表, comfyuiServerId: {}, isLocked: {}, createBy: {}",
-                comfyuiServerId, isLocked, createBy);
+    public List<WorkflowDTO> listWorkflows(Long comfyuiServerId, Boolean isLocked, Long userId) {
+        log.info("查询工作流列表, comfyuiServerId: {}, isLocked: {}, userId: {}",
+                comfyuiServerId, isLocked, userId);
 
         List<Workflow> workflows;
 
         // 根据过滤条件查询
-        if (comfyuiServerId != null) {
-            workflows = workflowRepository.findByComfyuiServerId(comfyuiServerId);
-        } else if (createBy != null) {
-            workflows = workflowRepository.findByCreateBy(createBy);
-        } else {
-            workflows = workflowRepository.findAll();
-        }
+        workflows = workflowRepository.findByUserIdAndComfyuiServerId(comfyuiServerId, userId);
 
         // 应用额外的过滤条件
-        if (createBy != null && comfyuiServerId == null) {
+        if (userId != null && comfyuiServerId == null) {
             workflows = workflows.stream()
-                    .filter(w -> w.getCreateBy().equals(createBy))
+                    .filter(w -> w.getCreateBy().equals(userId))
                     .collect(Collectors.toList());
         }
 

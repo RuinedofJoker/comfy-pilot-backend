@@ -39,8 +39,8 @@ public class ChatSessionController {
     @GetMapping("/{sessionCode}")
     public Result<ChatSessionDTO> getSession(
             @Parameter(description = "会话编码", required = true)
-            @PathVariable String sessionCode) {
-
+            @PathVariable String sessionCode
+    ) {
         ChatSessionDTO session = chatSessionService.getSessionByCode(sessionCode);
         return Result.success(session);
     }
@@ -53,11 +53,13 @@ public class ChatSessionController {
         return Result.success(sessions);
     }
 
-    @Operation(summary = "查询用户活跃会话列表", description = "查询当前用户的所有活跃会话")
+    @Operation(summary = "查询用户活跃会话列表", description = "查询当前用户的所有活跃会话，支持按ComfyUI服务过滤")
     @GetMapping("/active")
-    public Result<List<ChatSessionDTO>> getUserActiveSessions() {
+    public Result<List<ChatSessionDTO>> getUserActiveSessions(
+            @Parameter(description = "ComfyUI服务ID") @RequestParam(required = false) Long comfyuiServerId
+    ) {
         Long userId = UserContextHolder.getCurrentUserId();
-        List<ChatSessionDTO> sessions = chatSessionService.getActiveSessionsByUserId(userId);
+        List<ChatSessionDTO> sessions = chatSessionService.getActiveSessionsByUserIdAndComfyuiServerId(userId, comfyuiServerId);
         return Result.success(sessions);
     }
 
@@ -66,7 +68,6 @@ public class ChatSessionController {
     public Result<List<ChatMessageDTO>> getMessageHistory(
             @Parameter(description = "会话编码", required = true)
             @PathVariable String sessionCode) {
-
         List<ChatMessageDTO> messages = chatSessionService.getMessageHistory(sessionCode);
         return Result.success(messages);
     }
@@ -76,7 +77,6 @@ public class ChatSessionController {
     public Result<Void> archiveSession(
             @Parameter(description = "会话编码", required = true)
             @PathVariable String sessionCode) {
-
         chatSessionService.archiveSession(sessionCode);
         return Result.success(null);
     }

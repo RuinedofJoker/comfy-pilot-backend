@@ -37,6 +37,11 @@ public class ChatSession extends BaseEntity<Long> {
     private Long userId;
 
     /**
+     * ComfyUI服务ID
+     */
+    private Long comfyuiServerId;
+
+    /**
      * 会话标题
      */
     private String title;

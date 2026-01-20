@@ -17,8 +17,8 @@ public interface ChatSessionService {
     /**
      * 创建会话（WebSocket版本）
      *
-     * @param userId 用户ID
-     * @param request  创建会话DTO
+     * @param userId  用户ID
+     * @param request 创建会话DTO
      * @return 会话编码
      */
     String createSession(Long userId, CreateSessionRequest request);
@@ -50,10 +50,11 @@ public interface ChatSessionService {
     /**
      * 根据用户ID查询活跃会话列表
      *
-     * @param userId 用户ID
+     * @param userId          用户ID
+     * @param comfyuiServerId ComfyUI服务ID
      * @return 会话列表
      */
-    List<ChatSessionDTO> getActiveSessionsByUserId(Long userId);
+    List<ChatSessionDTO> getActiveSessionsByUserIdAndComfyuiServerId(Long userId, Long comfyuiServerId);
 
     /**
      * 异步发送消息（WebSocket版本，支持流式输出）

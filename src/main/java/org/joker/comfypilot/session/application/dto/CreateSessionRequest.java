@@ -20,6 +20,9 @@ public class CreateSessionRequest implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    @Schema(description = "ComfyUI服务ID")
+    private Long comfyuiServerId;
+
     @Schema(description = "会话标题")
     private String title;
 

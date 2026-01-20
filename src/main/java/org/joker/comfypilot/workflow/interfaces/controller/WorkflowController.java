@@ -41,7 +41,8 @@ public class WorkflowController {
     @Operation(summary = "查询当前用户的工作流列表", description = "查询工作流列表，支持按ComfyUI服务过滤")
     @GetMapping
     public Result<List<WorkflowDTO>> listWorkflows(
-            @Parameter(description = "ComfyUI服务ID") @RequestParam(required = false) Long comfyuiServerId) {
+            @Parameter(description = "ComfyUI服务ID") @RequestParam(required = false) Long comfyuiServerId
+    ) {
         Long currentUserId = UserContextHolder.getCurrentUserId();
         List<WorkflowDTO> list = workflowService.listWorkflows(comfyuiServerId, null, currentUserId);
         return Result.success(list);

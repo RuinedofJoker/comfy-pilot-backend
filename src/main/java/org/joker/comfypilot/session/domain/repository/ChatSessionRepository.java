@@ -45,10 +45,11 @@ public interface ChatSessionRepository {
     /**
      * 根据用户ID查询活跃会话列表
      *
-     * @param userId 用户ID
+     * @param userId          用户ID
+     * @param comfyuiServerId ComfyUI服务ID
      * @return 会话列表
      */
-    List<ChatSession> findActiveByUserId(Long userId);
+    List<ChatSession> findActiveByUserIdAndComfyuiServerId(Long userId, Long comfyuiServerId);
 
     /**
      * 更新会话

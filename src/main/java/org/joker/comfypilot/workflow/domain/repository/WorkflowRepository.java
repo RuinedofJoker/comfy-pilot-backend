@@ -28,18 +28,11 @@ public interface WorkflowRepository {
     /**
      * 根据ComfyUI服务ID查询
      *
+     * @param userId          创建人ID
      * @param comfyuiServerId ComfyUI服务ID
      * @return 工作流列表
      */
-    List<Workflow> findByComfyuiServerId(Long comfyuiServerId);
-
-    /**
-     * 根据创建人查询
-     *
-     * @param createBy 创建人ID
-     * @return 工作流列表
-     */
-    List<Workflow> findByCreateBy(Long createBy);
+    List<Workflow> findByUserIdAndComfyuiServerId(Long userId, Long comfyuiServerId);
 
     /**
      * 保存工作流

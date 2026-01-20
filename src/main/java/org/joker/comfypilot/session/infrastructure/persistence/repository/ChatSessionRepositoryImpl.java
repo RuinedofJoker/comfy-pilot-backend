@@ -40,8 +40,7 @@ public class ChatSessionRepositoryImpl implements ChatSessionRepository {
     @Override
     public Optional<ChatSession> findBySessionCode(String sessionCode) {
         LambdaQueryWrapper<ChatSessionPO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(ChatSessionPO::getSessionCode, sessionCode)
-                .eq(ChatSessionPO::getIsDeleted, 0L);
+        wrapper.eq(ChatSessionPO::getSessionCode, sessionCode);
         ChatSessionPO po = chatSessionMapper.selectOne(wrapper);
         return Optional.ofNullable(po).map(chatSessionConverter::toDomain);
     }
@@ -50,7 +49,6 @@ public class ChatSessionRepositoryImpl implements ChatSessionRepository {
     public List<ChatSession> findByUserId(Long userId) {
         LambdaQueryWrapper<ChatSessionPO> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ChatSessionPO::getUserId, userId)
-                .eq(ChatSessionPO::getIsDeleted, 0L)
                 .orderByDesc(ChatSessionPO::getUpdateTime);
         return chatSessionMapper.selectList(wrapper).stream()
                 .map(chatSessionConverter::toDomain)
@@ -58,10 +56,11 @@ public class ChatSessionRepositoryImpl implements ChatSessionRepository {
     }
 
     @Override
-    public List<ChatSession> findActiveByUserId(Long userId) {
+    public List<ChatSession> findActiveByUserIdAndComfyuiServerId(Long userId, Long comfyuiServerId) {
         LambdaQueryWrapper<ChatSessionPO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(ChatSessionPO::getUserId, userId)
-                .eq(ChatSessionPO::getIsDeleted, 0L)
+        wrapper
+                .eq(ChatSessionPO::getUserId, userId)
+                .eq(comfyuiServerId != null, ChatSessionPO::getComfyuiServerId, comfyuiServerId)
                 .eq(ChatSessionPO::getStatus, "ACTIVE")
                 .orderByDesc(ChatSessionPO::getUpdateTime);
         return chatSessionMapper.selectList(wrapper).stream()
