@@ -3,6 +3,7 @@ package org.joker.comfypilot.model.application.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.exception.ResourceNotFoundException;
@@ -261,6 +262,7 @@ public class AiModelServiceImpl implements AiModelService {
 
             // 5. 将Map转换为JSON字符串
             ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
             return objectMapper.writeValueAsString(configFormat);
         } catch (Exception e) {
             log.error("获取模型配置格式失败", e);

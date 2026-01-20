@@ -26,11 +26,16 @@ public class ApiLLMModelTemplate extends AbstractModelTemplate implements ModelT
     @Override
     public Map<String, Object> configFormat() {
         return Map.of(
-                "apiKey", "第三方apiKey，可选，没填用模型上的",
-                "temperature", "模型温度",
-                "maxTokens", "最大token数",
-                "topP", "",
-                "timeout", "超时时间"
+                "apiKey", "skuxxxx",
+                "$apiKey", "第三方apiKey，可选，没填用模型上的",
+                "temperature", 0.8,
+                "$temperature", "模型温度",
+                "maxTokens", 1024,
+                "$maxTokens", "最大token数",
+                "topP", 5,
+                "$topP", "",
+                "timeout", 200,
+                "$timeout", "超时时间"
         );
     }
 
