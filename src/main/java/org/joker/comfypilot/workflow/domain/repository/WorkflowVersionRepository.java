@@ -11,12 +11,13 @@ import java.util.Optional;
 public interface WorkflowVersionRepository {
 
     /**
-     * 根据ID查询
+     * 根据versionCode查询
      *
-     * @param id 版本ID
+     * @param workflowId  工作流id
+     * @param versionCode 版本号
      * @return 版本实体
      */
-    Optional<WorkflowVersion> findById(Long id);
+    Optional<WorkflowVersion> findByWorkflowIdAndVersionCode(Long workflowId, String versionCode);
 
     /**
      * 根据工作流ID查询所有版本
@@ -27,15 +28,6 @@ public interface WorkflowVersionRepository {
     List<WorkflowVersion> findByWorkflowId(Long workflowId);
 
     /**
-     * 根据工作流ID和版本号查询
-     *
-     * @param workflowId    工作流ID
-     * @param versionNumber 版本号
-     * @return 版本实体
-     */
-    Optional<WorkflowVersion> findByWorkflowIdAndVersionNumber(Long workflowId, Integer versionNumber);
-
-    /**
      * 根据内容哈希查询
      *
      * @param workflowId  工作流ID
@@ -43,14 +35,6 @@ public interface WorkflowVersionRepository {
      * @return 版本实体
      */
     Optional<WorkflowVersion> findByWorkflowIdAndContentHash(Long workflowId, String contentHash);
-
-    /**
-     * 获取工作流的最大版本号
-     *
-     * @param workflowId 工作流ID
-     * @return 最大版本号（如果没有版本则返回0）
-     */
-    Integer getMaxVersionNumber(Long workflowId);
 
     /**
      * 保存版本

@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -34,7 +35,7 @@ public class WorkflowVersionServiceImpl implements WorkflowVersionService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public WorkflowVersionDTO createVersion(Long workflowId, CreateVersionRequest request, Long userId) {
+    public WorkflowVersionDTO createVersion(Long workflowId, CreateVersionRequest request, Long userId, String fromVersionCode) {
         log.info("创建工作流版本, workflowId: {}, userId: {}", workflowId, userId);
 
         // 验证工作流是否存在
@@ -58,31 +59,32 @@ public class WorkflowVersionServiceImpl implements WorkflowVersionService {
                     .build();
 
             if (existingVersion.isSameContent(tempVersion)) {
-                log.info("发现相同内容的版本，复用已有版本, versionId: {}, versionNumber: {}",
-                        existingVersion.getId(), existingVersion.getVersionNumber());
+                log.info("发现相同内容的版本，复用已有版本, versionId: {}, versionCode: {}",
+                        existingVersion.getId(), existingVersion.getVersionCode());
                 return dtoConverter.toDTO(existingVersion);
             }
         }
 
         // 获取下一个版本号
-        Integer maxVersionNumber = versionRepository.getMaxVersionNumber(workflowId);
-        Integer nextVersionNumber = (maxVersionNumber == null || maxVersionNumber == 0) ? 1 : maxVersionNumber + 1;
-        log.info("生成新版本号: {}", nextVersionNumber);
+        String nextVersionCode = UUID.randomUUID().toString();
+        log.info("生成新版本号: {}", nextVersionCode);
 
         // 构建新版本实体
         WorkflowVersion newVersion = WorkflowVersion.builder()
                 .workflowId(workflowId)
-                .versionNumber(nextVersionNumber)
+                .versionCode(nextVersionCode)
+                .fromVersionCode(fromVersionCode)
                 .content(request.getContent())
                 .contentHash(contentHash)
                 .changeSummary(request.getChangeSummary())
                 .sessionId(request.getSessionId())
+                .messageId(request.getMessageId())
                 .build();
 
         // 保存版本
         WorkflowVersion savedVersion = versionRepository.save(newVersion);
-        log.info("创建工作流版本成功, versionId: {}, versionNumber: {}",
-                savedVersion.getId(), savedVersion.getVersionNumber());
+        log.info("创建工作流版本成功, versionId: {}, versionCode: {}",
+                savedVersion.getId(), savedVersion.getVersionCode());
 
         return dtoConverter.toDTO(savedVersion);
     }
@@ -95,7 +97,7 @@ public class WorkflowVersionServiceImpl implements WorkflowVersionService {
         workflowRepository.findById(workflowId)
                 .orElseThrow(() -> new ResourceNotFoundException("工作流不存在"));
 
-        // 查询版本列表（按版本号降序）
+        // 查询版本列表（按创建时间降序）
         List<WorkflowVersion> versions = versionRepository.findByWorkflowId(workflowId);
 
         return versions.stream()
@@ -104,21 +106,16 @@ public class WorkflowVersionServiceImpl implements WorkflowVersionService {
     }
 
     @Override
-    public WorkflowVersionDTO getVersionById(Long workflowId, Long versionId) {
-        log.info("查询工作流版本详情, workflowId: {}, versionId: {}", workflowId, versionId);
+    public WorkflowVersionDTO getVersionByVersionCode(Long workflowId, String versionCode) {
+        log.info("查询工作流版本详情, workflowId: {}, versionCode: {}", workflowId, versionCode);
 
         // 验证工作流是否存在
         workflowRepository.findById(workflowId)
                 .orElseThrow(() -> new ResourceNotFoundException("工作流不存在"));
 
         // 查询版本
-        WorkflowVersion version = versionRepository.findById(versionId)
+        WorkflowVersion version = versionRepository.findByWorkflowIdAndVersionCode(workflowId, versionCode)
                 .orElseThrow(() -> new ResourceNotFoundException("版本不存在"));
-
-        // 验证版本是否属于该工作流
-        if (!version.getWorkflowId().equals(workflowId)) {
-            throw new ResourceNotFoundException("版本不属于该工作流");
-        }
 
         return dtoConverter.toDTO(version);
     }

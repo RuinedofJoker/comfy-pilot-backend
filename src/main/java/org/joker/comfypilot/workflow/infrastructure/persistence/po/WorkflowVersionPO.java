@@ -29,10 +29,15 @@ public class WorkflowVersionPO extends BasePO {
     private Long workflowId;
 
     /**
-     * 版本号（从1开始递增，联合唯一索引）
+     * 版本号
      */
     @UniqueKey(group = "workflow_version", order = 2)
-    private Integer versionNumber;
+    private String versionCode;
+
+    /**
+     * 来源版本号
+     */
+    private String fromVersionCode;
 
     /**
      * 版本内容（JSON格式）
@@ -53,4 +58,9 @@ public class WorkflowVersionPO extends BasePO {
      * 关联的会话ID（如果是Agent对话生成）
      */
     private Long sessionId;
+
+    /**
+     * 关联的会话消息ID（如果是Agent对话生成）
+     */
+    private Long messageId;
 }

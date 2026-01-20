@@ -54,11 +54,12 @@ CREATE INDEX idx_workflow_create_by ON workflow(create_by);
 CREATE TABLE workflow_version (
     id BIGINT PRIMARY KEY,
     workflow_id BIGINT NOT NULL,
-    version_number INT NOT NULL,
+    version_code VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     content_hash VARCHAR(64) NOT NULL,
     change_summary VARCHAR(500),
     session_id BIGINT,
+    message_id BIGINT,
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by BIGINT NOT NULL,
     is_deleted BIGINT NOT NULL DEFAULT 0
@@ -68,11 +69,12 @@ CREATE TABLE workflow_version (
 COMMENT ON TABLE workflow_version IS '工作流版本表';
 COMMENT ON COLUMN workflow_version.id IS '主键ID（雪花算法）';
 COMMENT ON COLUMN workflow_version.workflow_id IS '所属工作流ID';
-COMMENT ON COLUMN workflow_version.version_number IS '版本号（从1开始递增）';
+COMMENT ON COLUMN workflow_version.version_code IS '版本号（UUID）';
 COMMENT ON COLUMN workflow_version.content IS '版本内容（JSON格式）';
 COMMENT ON COLUMN workflow_version.content_hash IS '内容的SHA-256哈希值';
 COMMENT ON COLUMN workflow_version.change_summary IS '变更摘要（Agent生成）';
 COMMENT ON COLUMN workflow_version.session_id IS '关联的会话ID（如果是Agent对话生成）';
+COMMENT ON COLUMN workflow_version.message_id IS '关联的会话消息ID（如果是Agent对话生成）';
 COMMENT ON COLUMN workflow_version.create_time IS '创建时间';
 COMMENT ON COLUMN workflow_version.create_by IS '创建人ID';
 COMMENT ON COLUMN workflow_version.is_deleted IS '逻辑删除标记（0-未删除，非0-删除时的时间戳）';
@@ -80,8 +82,9 @@ COMMENT ON COLUMN workflow_version.is_deleted IS '逻辑删除标记（0-未删�
 -- =====================================================
 -- 4. 创建workflow_version表的索引
 -- =====================================================
-CREATE UNIQUE INDEX uk_workflow_version ON workflow_version(workflow_id, version_number);
+CREATE UNIQUE INDEX uk_workflow_version ON workflow_version(workflow_id, version_code);
 CREATE INDEX idx_version_workflow_id ON workflow_version(workflow_id);
 CREATE INDEX idx_version_content_hash ON workflow_version(content_hash);
 CREATE INDEX idx_version_session_id ON workflow_version(session_id);
+CREATE INDEX idx_version_message_id ON workflow_version(message_id);
 CREATE INDEX idx_version_create_time ON workflow_version(create_time);

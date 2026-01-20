@@ -1,5 +1,6 @@
 package org.joker.comfypilot.workflow.application.service;
 
+import jakarta.annotation.Nullable;
 import org.joker.comfypilot.workflow.application.dto.CreateVersionRequest;
 import org.joker.comfypilot.workflow.application.dto.WorkflowVersionDTO;
 
@@ -13,12 +14,13 @@ public interface WorkflowVersionService {
     /**
      * 创建工作流版本
      *
-     * @param workflowId 工作流ID
-     * @param request    创建请求
-     * @param userId     创建人ID
+     * @param workflowId      工作流ID
+     * @param request         创建请求
+     * @param userId          创建人ID
+     * @param fromVersionCode 来源版本号
      * @return 版本DTO
      */
-    WorkflowVersionDTO createVersion(Long workflowId, CreateVersionRequest request, Long userId);
+    WorkflowVersionDTO createVersion(Long workflowId, CreateVersionRequest request, Long userId, @Nullable String fromVersionCode);
 
     /**
      * 查询工作流的版本列表
@@ -32,8 +34,8 @@ public interface WorkflowVersionService {
      * 查询版本详情
      *
      * @param workflowId 工作流ID
-     * @param versionId  版本ID
+     * @param versionCode  版本号
      * @return 版本DTO
      */
-    WorkflowVersionDTO getVersionById(Long workflowId, Long versionId);
+    WorkflowVersionDTO getVersionByVersionCode(Long workflowId, String versionCode);
 }

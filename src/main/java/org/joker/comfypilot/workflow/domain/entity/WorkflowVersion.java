@@ -30,9 +30,14 @@ public class WorkflowVersion extends BaseEntity<Long> {
     private Long workflowId;
 
     /**
-     * 版本号（从1开始递增）
+     * 版本号（UUID）
      */
-    private Integer versionNumber;
+    private String versionCode;
+
+    /**
+     * 来源版本号
+     */
+    private String fromVersionCode;
 
     /**
      * 版本内容（JSON格式）
@@ -53,6 +58,11 @@ public class WorkflowVersion extends BaseEntity<Long> {
      * 关联的会话ID（如果是Agent对话生成）
      */
     private Long sessionId;
+
+    /**
+     * 关联的会话消息ID（如果是Agent对话生成）
+     */
+    private Long messageId;
 
     /**
      * 创建时间

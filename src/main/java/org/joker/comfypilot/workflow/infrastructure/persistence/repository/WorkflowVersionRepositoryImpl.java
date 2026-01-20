@@ -25,8 +25,12 @@ public class WorkflowVersionRepositoryImpl implements WorkflowVersionRepository 
     private WorkflowVersionConverter versionConverter;
 
     @Override
-    public Optional<WorkflowVersion> findById(Long id) {
-        WorkflowVersionPO po = versionMapper.selectById(id);
+    public Optional<WorkflowVersion> findByWorkflowIdAndVersionCode(Long workflowId, String versionCode) {
+        WorkflowVersionPO po = versionMapper.selectOne(
+                new LambdaQueryWrapper<WorkflowVersionPO>()
+                        .eq(WorkflowVersionPO::getWorkflowId, workflowId)
+                        .eq(WorkflowVersionPO::getVersionCode, versionCode)
+        );
         return Optional.ofNullable(po).map(versionConverter::toDomain);
     }
 
@@ -34,20 +38,11 @@ public class WorkflowVersionRepositoryImpl implements WorkflowVersionRepository 
     public List<WorkflowVersion> findByWorkflowId(Long workflowId) {
         LambdaQueryWrapper<WorkflowVersionPO> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(WorkflowVersionPO::getWorkflowId, workflowId)
-                .orderByDesc(WorkflowVersionPO::getVersionNumber);
+                .orderByDesc(WorkflowVersionPO::getCreateTime);
         List<WorkflowVersionPO> poList = versionMapper.selectList(wrapper);
         return poList.stream()
                 .map(versionConverter::toDomain)
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    public Optional<WorkflowVersion> findByWorkflowIdAndVersionNumber(Long workflowId, Integer versionNumber) {
-        LambdaQueryWrapper<WorkflowVersionPO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(WorkflowVersionPO::getWorkflowId, workflowId)
-                .eq(WorkflowVersionPO::getVersionNumber, versionNumber);
-        WorkflowVersionPO po = versionMapper.selectOne(wrapper);
-        return Optional.ofNullable(po).map(versionConverter::toDomain);
     }
 
     @Override
@@ -57,12 +52,6 @@ public class WorkflowVersionRepositoryImpl implements WorkflowVersionRepository 
                 .eq(WorkflowVersionPO::getContentHash, contentHash);
         WorkflowVersionPO po = versionMapper.selectOne(wrapper);
         return Optional.ofNullable(po).map(versionConverter::toDomain);
-    }
-
-    @Override
-    public Integer getMaxVersionNumber(Long workflowId) {
-        Integer maxVersion = versionMapper.getMaxVersionNumber(workflowId);
-        return maxVersion != null ? maxVersion : 0;
     }
 
     @Override

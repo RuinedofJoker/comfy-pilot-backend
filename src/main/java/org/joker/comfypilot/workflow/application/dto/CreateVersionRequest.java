@@ -30,4 +30,7 @@ public class CreateVersionRequest implements Serializable {
 
     @Schema(description = "关联的会话ID", example = "5555555555")
     private Long sessionId;
+
+    @Schema(description = "关联的会话消息ID", example = "5555555555")
+    private Long messageId;
 }

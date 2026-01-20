@@ -25,7 +25,10 @@ public class WorkflowVersionDTO extends BaseDTO {
     private Long workflowId;
 
     @Schema(description = "版本号")
-    private Integer versionNumber;
+    private String versionCode;
+
+    @Schema(description = "来源版本号")
+    private String fromVersionCode;
 
     @Schema(description = "版本内容（JSON格式）")
     private String content;
