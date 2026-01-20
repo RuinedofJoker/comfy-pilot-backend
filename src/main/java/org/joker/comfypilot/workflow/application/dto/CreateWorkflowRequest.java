@@ -33,8 +33,4 @@ public class CreateWorkflowRequest implements Serializable {
     @Schema(description = "所属ComfyUI服务ID", example = "1234567890", required = true)
     @NotNull(message = "ComfyUI服务ID不能为空")
     private Long comfyuiServerId;
-
-    @Schema(description = "所属ComfyUI服务唯一标识符", example = "my-comfyui-server", required = true)
-    @NotBlank(message = "ComfyUI服务Key不能为空")
-    private String comfyuiServerKey;
 }

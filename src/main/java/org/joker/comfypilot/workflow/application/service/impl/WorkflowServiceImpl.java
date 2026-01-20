@@ -2,6 +2,7 @@ package org.joker.comfypilot.workflow.application.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.auth.infrastructure.context.UserContextHolder;
+import org.joker.comfypilot.cfsvr.domain.entity.ComfyuiServer;
 import org.joker.comfypilot.cfsvr.domain.repository.ComfyuiServerRepository;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.exception.ResourceNotFoundException;
@@ -41,7 +42,7 @@ public class WorkflowServiceImpl implements WorkflowService {
                 request.getWorkflowName(), request.getComfyuiServerId(), userId);
 
         // 验证ComfyUI服务是否存在
-        comfyuiServerRepository.findById(request.getComfyuiServerId())
+        ComfyuiServer comfyuiServer = comfyuiServerRepository.findById(request.getComfyuiServerId())
                 .orElseThrow(() -> new ResourceNotFoundException("ComfyUI服务不存在"));
 
         // 构建领域实体
@@ -49,7 +50,7 @@ public class WorkflowServiceImpl implements WorkflowService {
                 .workflowName(request.getWorkflowName())
                 .description(request.getDescription())
                 .comfyuiServerId(request.getComfyuiServerId())
-                .comfyuiServerKey(request.getComfyuiServerKey())
+                .comfyuiServerKey(comfyuiServer.getServerKey())
                 .build();
 
         // 保存到数据库
@@ -77,7 +78,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         List<Workflow> workflows;
 
         // 根据过滤条件查询
-        workflows = workflowRepository.findByUserIdAndComfyuiServerId(comfyuiServerId, userId);
+        workflows = workflowRepository.findByUserIdAndComfyuiServerId(userId, comfyuiServerId);
 
         // 应用额外的过滤条件
         if (userId != null && comfyuiServerId == null) {
