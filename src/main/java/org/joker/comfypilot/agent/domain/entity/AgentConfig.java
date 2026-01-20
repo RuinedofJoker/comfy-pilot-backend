@@ -5,9 +5,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.joker.comfypilot.agent.domain.enums.AgentStatus;
+import org.joker.comfypilot.agent.domain.service.AgentConfigDefinition;
 import org.joker.comfypilot.common.domain.BaseEntity;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -52,9 +54,14 @@ public class AgentConfig extends BaseEntity<Long> {
     private Map<String, Object> agentScopeConfig;
 
     /**
-     * agent运行时配置参数（JSON格式）
+     * agent运行时配置（JSON格式）
      */
     private Map<String, Object> config;
+
+    /**
+     * agent运行时配置定义（JSON格式）
+     */
+    private List<AgentConfigDefinition> agentConfigDefinitions;
 
     /**
      * Agent状态
@@ -84,15 +91,6 @@ public class AgentConfig extends BaseEntity<Long> {
      */
     public void disable() {
         this.status = AgentStatus.DISABLED;
-        this.updateTime = LocalDateTime.now();
-    }
-
-    /**
-     * 领域行为：更新名称和描述（管理员可编辑）
-     */
-    public void updateNameAndDescription(String newName, String newDescription) {
-        this.agentName = newName;
-        this.description = newDescription;
         this.updateTime = LocalDateTime.now();
     }
 

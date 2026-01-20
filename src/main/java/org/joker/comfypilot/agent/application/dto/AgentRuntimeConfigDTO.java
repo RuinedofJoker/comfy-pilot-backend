@@ -12,15 +12,15 @@ import org.joker.comfypilot.common.application.dto.BaseDTO;
 import java.util.List;
 
 /**
- * Agent配置DTO
+ * Agent运行时配置信息DTO
  */
 @Data
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@Schema(description = "Agent配置信息")
-public class AgentConfigDTO extends BaseDTO {
+@Schema(description = "Agent运行时配置信息")
+public class AgentRuntimeConfigDTO extends BaseDTO {
 
     private static final long serialVersionUID = 1L;
 
@@ -36,15 +36,6 @@ public class AgentConfigDTO extends BaseDTO {
     @Schema(description = "Agent版本号")
     private String version;
 
-    @Schema(description = "Agent Scope配置")
-    private String agentScopeConfig;
-
-    @Schema(description = "Agent运行时配置")
-    private String config;
-
     @Schema(description = "Agent运行时配置定义")
     private List<AgentConfigDefinition> agentConfigDefinitions;
-
-    @Schema(description = "Agent状态")
-    private String status;
 }

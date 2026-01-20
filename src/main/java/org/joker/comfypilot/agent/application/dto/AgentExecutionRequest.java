@@ -32,6 +32,6 @@ public class AgentExecutionRequest implements Serializable {
     @Schema(description = "是否流式执行")
     private Boolean isStreamable;
 
-    @Schema(description = "agent配置")
+    @Schema(description = "agent配置（json格式，格式内容是根据agentConfigDefinitions填写的）")
     private String agentConfig;
 }

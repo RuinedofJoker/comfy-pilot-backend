@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.joker.comfypilot.agent.application.dto.AgentConfigDTO;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionResponse;
+import org.joker.comfypilot.agent.application.dto.AgentRuntimeConfigDTO;
 import org.joker.comfypilot.agent.application.executor.AgentExecutor;
 import org.joker.comfypilot.agent.application.service.AgentConfigService;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
@@ -37,10 +38,10 @@ public class AgentController {
         return Result.success(agents);
     }
 
-    @Operation(summary = "获取已启用的Agent", description = "获取系统中所有已启用的Agent配置列表，供用户页面使用")
-    @GetMapping("/enabled")
-    public Result<List<AgentConfigDTO>> getEnabledAgents() {
-        List<AgentConfigDTO> agents = agentConfigService.getEnabledAgents();
+    @Operation(summary = "运行时获取已启用的Agent", description = "获取系统中所有已启用的Agent配置列表，供用户页面使用")
+    @GetMapping("/runtime/enabled")
+    public Result<List<AgentRuntimeConfigDTO>> getEnabledRuntimeAgents() {
+        List<AgentRuntimeConfigDTO> agents = agentConfigService.getEnabledRuntimeAgents();
         return Result.success(agents);
     }
 
@@ -53,12 +54,12 @@ public class AgentController {
         return Result.success(agent);
     }
 
-    @Operation(summary = "根据编码获取Agent", description = "根据Agent编码获取详细配置信息")
-    @GetMapping("/code/{agentCode}")
-    public Result<AgentConfigDTO> getAgentByCode(
+    @Operation(summary = "运行时根据编码获取Agent", description = "根据Agent编码获取详细配置信息，供用户页面使用")
+    @GetMapping("/runtime/code/{agentCode}")
+    public Result<AgentRuntimeConfigDTO> getRuntimeAgentByCode(
             @Parameter(description = "Agent编码", required = true)
             @PathVariable String agentCode) {
-        AgentConfigDTO agent = agentConfigService.getAgentByCode(agentCode);
+        AgentRuntimeConfigDTO agent = agentConfigService.getRuntimeAgentByCode(agentCode);
         return Result.success(agent);
     }
 

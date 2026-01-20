@@ -123,6 +123,8 @@ public class AgentRegistryImpl implements AgentRegistry, ApplicationContextAware
                 .description(agent.getDescription())
                 .version(agent.getVersion())
                 .agentScopeConfig(agent.getAgentScopeConfig())
+                .config(agent.getAgentConfig())
+                .agentConfigDefinitions(agent.getConfigDefinitions())
                 .status(AgentStatus.ENABLED)
                 .createTime(LocalDateTime.now())
                 .updateTime(LocalDateTime.now())
@@ -140,6 +142,7 @@ public class AgentRegistryImpl implements AgentRegistry, ApplicationContextAware
         existingConfig.setVersion(agent.getVersion());
         existingConfig.setConfig(agent.getAgentConfig());
         existingConfig.setAgentScopeConfig(agent.getAgentScopeConfig());
+        existingConfig.setAgentConfigDefinitions(agent.getConfigDefinitions());
         existingConfig.setUpdateTime(LocalDateTime.now());
 
         agentConfigRepository.update(existingConfig);

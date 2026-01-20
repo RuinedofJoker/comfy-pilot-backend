@@ -8,9 +8,11 @@ import dev.langchain4j.model.chat.StreamingChatModel;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
+import org.joker.comfypilot.agent.domain.enums.AgentConfigType;
 import org.joker.comfypilot.agent.domain.service.AbstractAgent;
 import org.joker.comfypilot.agent.domain.service.Agent;
 import org.joker.comfypilot.agent.domain.service.AgentConfigDefinition;
+import org.joker.comfypilot.model.domain.enums.ModelCallingType;
 import org.joker.comfypilot.model.domain.repository.ModelProviderRepository;
 import org.joker.comfypilot.model.domain.service.StreamingChatModelFactory;
 import org.joker.comfypilot.tool.domain.service.ToolRegistry;
@@ -60,7 +62,10 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
 
     @Override
     public List<AgentConfigDefinition> getConfigDefinitions() {
-        return List.of();
+        return List.of(
+                AgentConfigDefinition.modelValue("modelIdentifier", "使用LLM模型", true, true, ModelCallingType.API_LLM),
+                AgentConfigDefinition.stringValue("apiKey", "模型调用apiKey", false, true, "")
+        );
     }
 
     @Override

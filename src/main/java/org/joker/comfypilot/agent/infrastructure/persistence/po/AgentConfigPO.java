@@ -8,9 +8,11 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.joker.comfypilot.agent.domain.service.AgentConfigDefinition;
 import org.joker.comfypilot.common.infrastructure.persistence.annotation.UniqueKey;
 import org.joker.comfypilot.common.infrastructure.persistence.po.BasePO;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -48,16 +50,22 @@ public class AgentConfigPO extends BasePO {
     private String version;
 
     /**
-     * Agent Scope配置（JSONB类型，类似langchain4j的agentic-scope）
+     * Agent Scope配置（JSON类型，类似langchain4j的agentic-scope）
      */
     @TableField(typeHandler = JacksonTypeHandler.class)
     private Map<String, Object> agentScopeConfig;
 
     /**
-     * 配置参数（JSONB类型）
+     * Agent运行时配置（JSON类型）
      */
     @TableField(typeHandler = JacksonTypeHandler.class)
     private Map<String, Object> config;
+
+    /**
+     * Agent运行时配置定义（JSON类型数组）
+     */
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<AgentConfigDefinition> agentConfigDefinitions;
 
     /**
      * Agent状态（ENABLED, DISABLED）

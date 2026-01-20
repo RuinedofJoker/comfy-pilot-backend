@@ -2,7 +2,9 @@ package org.joker.comfypilot.agent.application.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.agent.application.converter.AgentConfigDTOConverter;
+import org.joker.comfypilot.agent.application.converter.AgentRuntimeConfigDTOConverter;
 import org.joker.comfypilot.agent.application.dto.AgentConfigDTO;
+import org.joker.comfypilot.agent.application.dto.AgentRuntimeConfigDTO;
 import org.joker.comfypilot.agent.application.service.AgentConfigService;
 import org.joker.comfypilot.agent.domain.entity.AgentConfig;
 import org.joker.comfypilot.agent.domain.repository.AgentConfigRepository;
@@ -25,6 +27,8 @@ public class AgentConfigServiceImpl implements AgentConfigService {
     private AgentConfigRepository agentConfigRepository;
     @Autowired
     private AgentConfigDTOConverter dtoConverter;
+    @Autowired
+    private AgentRuntimeConfigDTOConverter runtimeDTOConverter;
 
     @Override
     public List<AgentConfigDTO> getAllAgents() {
@@ -35,11 +39,11 @@ public class AgentConfigServiceImpl implements AgentConfigService {
     }
 
     @Override
-    public List<AgentConfigDTO> getEnabledAgents() {
+    public List<AgentRuntimeConfigDTO> getEnabledRuntimeAgents() {
         List<AgentConfig> agents = agentConfigRepository.findAll();
         return agents.stream()
                 .filter(AgentConfig::isEnabled)
-                .map(dtoConverter::toDTO)
+                .map(runtimeDTOConverter::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -51,10 +55,10 @@ public class AgentConfigServiceImpl implements AgentConfigService {
     }
 
     @Override
-    public AgentConfigDTO getAgentByCode(String agentCode) {
+    public AgentRuntimeConfigDTO getRuntimeAgentByCode(String agentCode) {
         AgentConfig agent = agentConfigRepository.findByAgentCode(agentCode)
                 .orElseThrow(() -> new BusinessException("Agent不存在: " + agentCode));
-        return dtoConverter.toDTO(agent);
+        return runtimeDTOConverter.toDTO(agent);
     }
 
     @Override

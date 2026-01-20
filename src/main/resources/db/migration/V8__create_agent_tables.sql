@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS agent_config (
     description TEXT,
     version VARCHAR(20) NOT NULL,
     agent_scope_config TEXT,
+    agent_config_definitions TEXT,
     config TEXT,
     status VARCHAR(20) NOT NULL DEFAULT 'ENABLED',
     is_deleted BIGINT NOT NULL DEFAULT 0,

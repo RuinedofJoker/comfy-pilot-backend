@@ -1,6 +1,7 @@
 package org.joker.comfypilot.agent.application.service;
 
 import org.joker.comfypilot.agent.application.dto.AgentConfigDTO;
+import org.joker.comfypilot.agent.application.dto.AgentRuntimeConfigDTO;
 
 import java.util.List;
 
@@ -21,7 +22,7 @@ public interface AgentConfigService {
      *
      * @return 已启用的Agent配置列表
      */
-    List<AgentConfigDTO> getEnabledAgents();
+    List<AgentRuntimeConfigDTO> getEnabledRuntimeAgents();
 
     /**
      * 根据ID获取Agent配置
@@ -37,7 +38,7 @@ public interface AgentConfigService {
      * @param agentCode Agent编码
      * @return Agent配置
      */
-    AgentConfigDTO getAgentByCode(String agentCode);
+    AgentRuntimeConfigDTO getRuntimeAgentByCode(String agentCode);
 
     /**
      * 启用Agent
