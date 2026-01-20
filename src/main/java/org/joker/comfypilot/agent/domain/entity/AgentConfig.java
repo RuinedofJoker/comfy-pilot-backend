@@ -52,7 +52,7 @@ public class AgentConfig extends BaseEntity<Long> {
     private Map<String, Object> agentScopeConfig;
 
     /**
-     * 配置参数（JSON格式）
+     * agent运行时配置参数（JSON格式）
      */
     private Map<String, Object> config;
 

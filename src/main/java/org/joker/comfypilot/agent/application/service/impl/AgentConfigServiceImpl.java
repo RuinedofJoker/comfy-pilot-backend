@@ -59,19 +59,6 @@ public class AgentConfigServiceImpl implements AgentConfigService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public AgentConfigDTO updateAgentInfo(Long id, String name, String description) {
-        AgentConfig agent = agentConfigRepository.findById(id)
-                .orElseThrow(() -> new BusinessException("Agent不存在"));
-
-        agent.updateNameAndDescription(name, description);
-        agent = agentConfigRepository.update(agent);
-
-        log.info("更新Agent信息成功: id={}, name={}", id, name);
-        return dtoConverter.toDTO(agent);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
     public void enableAgent(Long id) {
         AgentConfig agent = agentConfigRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Agent不存在"));

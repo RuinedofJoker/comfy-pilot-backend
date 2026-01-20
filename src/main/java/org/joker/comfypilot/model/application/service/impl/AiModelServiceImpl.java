@@ -77,23 +77,21 @@ public class AiModelServiceImpl implements AiModelService {
 
         // 5. 根据 modelCallingType 确定 accessType 和 modelType
         ModelAccessType accessType;
-        ModelType modelType;
-        switch (modelCallingType) {
-            case API_LLM:
+        ModelType modelType = switch (modelCallingType) {
+            case API_LLM -> {
                 accessType = ModelAccessType.REMOTE_API;
-                modelType = ModelType.LLM;
-                break;
-            case API_EMBEDDING:
+                yield ModelType.LLM;
+            }
+            case API_EMBEDDING -> {
                 accessType = ModelAccessType.REMOTE_API;
-                modelType = ModelType.EMBEDDING;
-                break;
-            case SENTENCE_TRANSFORMERS_EMBEDDING:
+                yield ModelType.EMBEDDING;
+            }
+            case SENTENCE_TRANSFORMERS_EMBEDDING -> {
                 accessType = ModelAccessType.LOCAL;
-                modelType = ModelType.EMBEDDING;
-                break;
-            default:
-                throw new BusinessException("不支持的模型调用方式: " + modelCallingType);
-        }
+                yield ModelType.EMBEDDING;
+            }
+            default -> throw new BusinessException("不支持的模型调用方式: " + modelCallingType);
+        };
 
         // 6. 处理 modelConfig，将 JSON 字符串转换为 Map
         Map<String, Object> modelConfig = parseModelConfig(request.getModelConfig());
@@ -159,23 +157,21 @@ public class AiModelServiceImpl implements AiModelService {
 
         // 5. 根据 modelCallingType 确定 accessType 和 modelType
         ModelAccessType accessType;
-        ModelType modelType;
-        switch (modelCallingType) {
-            case API_LLM:
+        ModelType modelType = switch (modelCallingType) {
+            case API_LLM -> {
                 accessType = ModelAccessType.REMOTE_API;
-                modelType = ModelType.LLM;
-                break;
-            case API_EMBEDDING:
+                yield ModelType.LLM;
+            }
+            case API_EMBEDDING -> {
                 accessType = ModelAccessType.REMOTE_API;
-                modelType = ModelType.EMBEDDING;
-                break;
-            case SENTENCE_TRANSFORMERS_EMBEDDING:
+                yield ModelType.EMBEDDING;
+            }
+            case SENTENCE_TRANSFORMERS_EMBEDDING -> {
                 accessType = ModelAccessType.LOCAL;
-                modelType = ModelType.EMBEDDING;
-                break;
-            default:
-                throw new BusinessException("不支持的模型调用方式: " + modelCallingType);
-        }
+                yield ModelType.EMBEDDING;
+            }
+            default -> throw new BusinessException("不支持的模型调用方式: " + modelCallingType);
+        };
 
         // 6. 处理 modelConfig，将 JSON 字符串转换为 Map
         Map<String, Object> modelConfig = parseModelConfig(request.getModelConfig());

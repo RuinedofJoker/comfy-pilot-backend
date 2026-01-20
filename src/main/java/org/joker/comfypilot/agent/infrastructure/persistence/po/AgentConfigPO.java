@@ -48,7 +48,7 @@ public class AgentConfigPO extends BasePO {
     private String version;
 
     /**
-     * Agent Scope配置（JSONB类型，对应langchain4j的agentic-scope）
+     * Agent Scope配置（JSONB类型，类似langchain4j的agentic-scope）
      */
     @TableField(typeHandler = JacksonTypeHandler.class)
     private Map<String, Object> agentScopeConfig;

@@ -88,7 +88,7 @@ public class ChatModelFactoryImpl extends AbstractChatModelFactory implements Ch
         }
 
         // 解析模型配置
-        ModelConfig config = parseModelConfig(model.getModelConfig(), agentConfig);
+        ModelConfig config = parseModelConfig(model, provider, model.getModelConfig(), agentConfig);
 
         // 根据提供协议类型创建对应的模型
         ProviderType providerType = provider.getProviderType();
@@ -155,7 +155,7 @@ public class ChatModelFactoryImpl extends AbstractChatModelFactory implements Ch
     private ChatModel createModel(AiModel model, Map<String, Object> agentConfig) {
         log.debug("创建无提供商模型: modelIdentifier={}", model.getModelIdentifier());
 
-        ModelConfig config = parseModelConfig(model.getModelConfig(), agentConfig);
+        ModelConfig config = parseModelConfig(model, null, model.getModelConfig(), agentConfig);
 
         if (config.apiBaseUrl() == null || config.apiBaseUrl().isBlank()) {
             throw new BusinessException("无提供商的模型必须在 model_config 中指定 apiBaseUrl");

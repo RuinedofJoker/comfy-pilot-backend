@@ -39,7 +39,7 @@ public class ApiLLMModelTemplate extends AbstractModelTemplate implements ModelT
         );
     }
 
-    private void init() {
+    private void ensureInit() {
         if (chatModel == null) {
             synchronized (this) {
                 if (chatModel == null) {
@@ -50,7 +50,7 @@ public class ApiLLMModelTemplate extends AbstractModelTemplate implements ModelT
     }
 
     public String chat(String userMessage) {
-        init();
+        ensureInit();
         return chatModel.chat(userMessage);
     }
 

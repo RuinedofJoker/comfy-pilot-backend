@@ -40,16 +40,6 @@ public interface AgentConfigService {
     AgentConfigDTO getAgentByCode(String agentCode);
 
     /**
-     * 更新Agent名称和描述
-     *
-     * @param id          Agent ID
-     * @param name        新名称
-     * @param description 新描述
-     * @return 更新后的Agent配置
-     */
-    AgentConfigDTO updateAgentInfo(Long id, String name, String description);
-
-    /**
      * 启用Agent
      *
      * @param id Agent ID

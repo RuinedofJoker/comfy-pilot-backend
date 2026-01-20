@@ -1,6 +1,10 @@
 package org.joker.comfypilot.agent.application.executor;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionResponse;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
@@ -19,6 +23,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -53,10 +59,23 @@ public class AgentExecutorImpl implements AgentExecutor {
                 .updateTime(LocalDateTime.now())
                 .build();
 
+        Map<String, Object> agentRuntimeConfig = new HashMap<>();
+        ObjectMapper  objectMapper = new ObjectMapper();
+        if (StringUtils.isNotBlank(request.getAgentConfig())) {
+            try {
+                Map<String, Object> requestAgentRuntimeConfig = objectMapper.readValue(request.getAgentConfig(), new TypeReference<>() {
+                });
+                agentRuntimeConfig.putAll(requestAgentRuntimeConfig);
+            } catch (JsonProcessingException e) {
+                log.error("agent运行时配置解析失败", e);
+                throw new BusinessException("agent运行时配置解析失败，" + e.getMessage());
+            }
+        }
+
         return AgentExecutionContext.builder()
                 .agentCode(agentCode)
                 .agent(agent)
-                .agentConfig(Collections.unmodifiableMap(agentConfig.getConfig()))
+                .agentConfig(agentRuntimeConfig)
                 .agentScope(Collections.unmodifiableMap(agentConfig.getAgentScopeConfig()))
                 .userId(request.getUserId())
                 .sessionId(request.getSessionId())

@@ -62,19 +62,6 @@ public class AgentController {
         return Result.success(agent);
     }
 
-    @Operation(summary = "更新Agent信息", description = "更新Agent的名称和描述（仅管理员可编辑）")
-    @PutMapping("/{id}")
-    public Result<AgentConfigDTO> updateAgentInfo(
-            @Parameter(description = "Agent ID", required = true)
-            @PathVariable Long id,
-            @Parameter(description = "新名称", required = true)
-            @RequestParam String name,
-            @Parameter(description = "新描述", required = true)
-            @RequestParam String description) {
-        AgentConfigDTO agent = agentConfigService.updateAgentInfo(id, name, description);
-        return Result.success(agent);
-    }
-
     @Operation(summary = "启用Agent", description = "启用指定的Agent")
     @PostMapping("/{id}/enable")
     public Result<Void> enableAgent(

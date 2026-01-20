@@ -88,7 +88,7 @@ public class StreamingChatModelFactoryImpl extends AbstractChatModelFactory impl
         }
 
         // 解析模型配置
-        ModelConfig config = parseModelConfig(model.getModelConfig(), agentConfig);
+        ModelConfig config = parseModelConfig(model, provider, model.getModelConfig(), agentConfig);
 
         // 根据提供协议类型创建对应的模型
         ProviderType providerType = provider.getProviderType();
@@ -156,7 +156,7 @@ public class StreamingChatModelFactoryImpl extends AbstractChatModelFactory impl
         log.debug("创建本地模型: modelIdentifier={}", model.getModelIdentifier());
 
         // 解析模型配置
-        ModelConfig config = parseModelConfig(model.getModelConfig(), agentConfig);
+        ModelConfig config = parseModelConfig(model, null, model.getModelConfig(), agentConfig);
 
         // 本地模型需要配置本地服务的 URL
         if (config.apiBaseUrl() == null || config.apiBaseUrl().isBlank()) {

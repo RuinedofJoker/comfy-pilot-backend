@@ -2,8 +2,12 @@ package org.joker.comfypilot.model.infrastructure.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.joker.comfypilot.common.exception.BusinessException;
+import org.joker.comfypilot.model.domain.entity.AiModel;
+import org.joker.comfypilot.model.domain.entity.ModelProvider;
 
 import java.util.Map;
 import java.util.Optional;
@@ -33,11 +37,13 @@ public abstract class AbstractChatModelFactory {
      * <p>
      * 从 JSON 字符串中提取模型配置参数，并使用 agentConfig 覆盖
      *
+     * @param model       模型实体
+     * @param provider    模型提供商实体
      * @param modelConfig 模型配置 JSON 字符串
-     * @param agentConfig     Agent配置，用于覆盖模型默认配置
+     * @param agentConfig Agent配置，用于覆盖模型默认配置
      * @return 模型配置对象
      */
-    protected ModelConfig parseModelConfig(Map<String, Object> modelConfig, Map<String, Object> agentConfig) {
+    protected ModelConfig parseModelConfig(AiModel model, @Nullable ModelProvider provider, Map<String, Object> modelConfig, Map<String, Object> agentConfig) {
         try {
             // 1. 解析模型默认配置
             String apiKey = null;
@@ -55,10 +61,38 @@ public abstract class AbstractChatModelFactory {
                 timeoutSeconds = getIntegerValue(modelConfig, "timeout", DEFAULT_TIMEOUT_SECONDS);
                 apiBaseUrl = getStringValue(modelConfig, "apiBaseUrl");
             }
+            if (StringUtils.isBlank(apiBaseUrl) && StringUtils.isNotBlank(model.getApiBaseUrl())) {
+                apiBaseUrl = model.getApiBaseUrl();
+            }
+            if (StringUtils.isBlank(apiBaseUrl) && provider != null && StringUtils.isNotBlank(provider.getApiBaseUrl())) {
+                apiBaseUrl = provider.getApiBaseUrl();
+            }
+            if (StringUtils.isBlank(apiKey) && StringUtils.isNotBlank(model.getApiKey())) {
+                apiKey = model.getApiKey();
+            }
+            if (StringUtils.isBlank(apiKey) && provider != null && StringUtils.isNotBlank(provider.getApiKey())) {
+                apiKey = provider.getApiKey();
+            }
 
             // 2. 使用 agentConfig 覆盖模型配置
             if (agentConfig != null && !agentConfig.isEmpty()) {
                 log.debug("应用 Agent 配置覆盖: {}", agentConfig);
+
+                // 覆盖 apiBaseUrl
+                if (agentConfig.containsKey("apiBaseUrl")) {
+                    String value = getStringValue(agentConfig, "apiBaseUrl");
+                    if (StringUtils.isNotBlank(value)) {
+                        apiBaseUrl = value;
+                    }
+                }
+
+                // 覆盖 apiKey
+                if (agentConfig.containsKey("apiKey")) {
+                    String value = getStringValue(agentConfig, "apiKey");
+                    if (StringUtils.isNotBlank(value)) {
+                        apiKey = value;
+                    }
+                }
 
                 // 覆盖 temperature
                 if (agentConfig.containsKey("temperature")) {

@@ -1,6 +1,5 @@
 package org.joker.comfypilot.agent.infrastructure.registry;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.agent.domain.entity.AgentConfig;
@@ -30,8 +29,6 @@ public class AgentRegistryImpl implements AgentRegistry, ApplicationContextAware
 
     @Autowired
     private AgentConfigRepository agentConfigRepository;
-    @Autowired
-    private ObjectMapper objectMapper;
 
     /**
      * Agent注册表，key为agentCode，value为Agent实例
@@ -103,13 +100,13 @@ public class AgentRegistryImpl implements AgentRegistry, ApplicationContextAware
             String dbVersion = existingConfig.getVersion();
             String codeVersion = agent.getVersion();
 
-            if (compareVersion(codeVersion, dbVersion) > 0) {
-                // 代码版本 > 数据库版本，更新数据库
+            if (compareVersion(codeVersion, dbVersion) >= 0) {
+                // 代码版本 >= 数据库版本，更新数据库
                 updateAgentConfig(existingConfig, agent);
                 log.info("更新Agent配置: code={}, 版本从 {} 升级到 {}",
                         agentCode, dbVersion, codeVersion);
             } else {
-                // 数据库版本 >= 代码版本，保留数据库配置（管理员已修改）
+                // 代码版本 < 数据库版本，保留数据库配置（管理员已修改）
                 log.info("保留数据库Agent配置: code={}, 数据库版本={}, 代码版本={}",
                         agentCode, dbVersion, codeVersion);
             }
@@ -125,7 +122,6 @@ public class AgentRegistryImpl implements AgentRegistry, ApplicationContextAware
                 .agentName(agent.getAgentName())
                 .description(agent.getDescription())
                 .version(agent.getVersion())
-                .config(agent.getAgentConfig())
                 .agentScopeConfig(agent.getAgentScopeConfig())
                 .status(AgentStatus.ENABLED)
                 .createTime(LocalDateTime.now())

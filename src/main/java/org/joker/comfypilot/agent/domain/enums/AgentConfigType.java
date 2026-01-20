@@ -6,7 +6,8 @@ package org.joker.comfypilot.agent.domain.enums;
 public enum AgentConfigType {
 
     STRING("字符串"),
-    NUMBER("数字"),
+    INT("整数"),
+    FLOAT("浮点数"),
     BOOLEAN("布尔"),
     MODEL("模型"),
     ;
