@@ -1,7 +1,5 @@
 package org.joker.comfypilot.cfsvr.infrastructure.client;
 
-import org.joker.comfypilot.cfsvr.infrastructure.client.dto.PromptRequest;
-import org.joker.comfypilot.cfsvr.infrastructure.client.dto.PromptResponse;
 import org.joker.comfypilot.cfsvr.infrastructure.client.dto.QueueStatusResponse;
 import org.joker.comfypilot.cfsvr.infrastructure.client.dto.SystemStatsResponse;
 
@@ -26,14 +24,6 @@ public interface ComfyUIRestClient {
      * @return 队列状态信息
      */
     QueueStatusResponse getQueueStatus();
-
-    /**
-     * 提交工作流执行请求
-     *
-     * @param request 工作流请求
-     * @return 执行响应
-     */
-    PromptResponse submitPrompt(PromptRequest request);
 
     /**
      * 获取模型文件夹列表

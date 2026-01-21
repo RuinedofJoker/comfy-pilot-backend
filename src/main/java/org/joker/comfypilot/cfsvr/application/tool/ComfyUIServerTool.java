@@ -4,23 +4,21 @@ import dev.langchain4j.agent.tool.Tool;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.cfsvr.infrastructure.client.ComfyUIClientFactory;
 import org.joker.comfypilot.cfsvr.infrastructure.client.ComfyUIRestClient;
-import org.joker.comfypilot.cfsvr.infrastructure.client.dto.PromptRequest;
-import org.joker.comfypilot.cfsvr.infrastructure.client.dto.PromptResponse;
 import org.joker.comfypilot.cfsvr.infrastructure.client.dto.QueueStatusResponse;
 import org.joker.comfypilot.cfsvr.infrastructure.client.dto.SystemStatsResponse;
+import org.joker.comfypilot.common.annotation.ToolSet;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * ComfyUI 服务工具类
  * 提供基于 serverKey 的 ComfyUI 服务调用功能
- * 所有 public 方法都会被自动注册为 LangChain4j 工具
  */
 @Slf4j
 @Component
+@ToolSet("comfyui_server_")
 public class ComfyUIServerTool {
 
     @Autowired
@@ -60,27 +58,6 @@ public class ComfyUIServerTool {
             return response != null ? response.toString() : "获取队列状态失败";
         } catch (Exception e) {
             log.error("获取队列状态失败, serverKey: {}", serverKey, e);
-            return "错误: " + e.getMessage();
-        }
-    }
-
-    /**
-     * 提交工作流执行请求
-     *
-     * @param serverKey 服务器唯一标识符
-     * @param promptJson 工作流 JSON 字符串
-     * @return 执行响应信息的 JSON 字符串
-     */
-    @Tool("提交工作流到 ComfyUI 服务器执行，返回任务 ID")
-    public String submitPrompt(String serverKey, String promptJson) {
-        log.info("调用工具: submitPrompt, serverKey: {}", serverKey);
-        try {
-            ComfyUIRestClient client = clientFactory.createRestClient(serverKey);
-            // 这里需要将 JSON 字符串转换为 PromptRequest 对象
-            // 简化处理，直接返回提示信息
-            return "提交工作流功能需要完整的 PromptRequest 对象，请使用 API 接口";
-        } catch (Exception e) {
-            log.error("提交工作流失败, serverKey: {}", serverKey, e);
             return "错误: " + e.getMessage();
         }
     }

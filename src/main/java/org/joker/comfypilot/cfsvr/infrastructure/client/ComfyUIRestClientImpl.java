@@ -1,8 +1,6 @@
 package org.joker.comfypilot.cfsvr.infrastructure.client;
 
 import lombok.extern.slf4j.Slf4j;
-import org.joker.comfypilot.cfsvr.infrastructure.client.dto.PromptRequest;
-import org.joker.comfypilot.cfsvr.infrastructure.client.dto.PromptResponse;
 import org.joker.comfypilot.cfsvr.infrastructure.client.dto.QueueStatusResponse;
 import org.joker.comfypilot.cfsvr.infrastructure.client.dto.SystemStatsResponse;
 import org.springframework.core.ParameterizedTypeReference;
@@ -57,21 +55,6 @@ public class ComfyUIRestClientImpl implements ComfyUIRestClient {
                 .timeout(timeout)
                 .doOnSuccess(response -> log.debug("获取队列状态成功"))
                 .doOnError(error -> log.error("获取队列状态失败", error))
-                .block();
-    }
-
-    @Override
-    public PromptResponse submitPrompt(PromptRequest request) {
-        log.debug("调用ComfyUI接口: POST /prompt");
-
-        return webClient.post()
-                .uri("/prompt")
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(PromptResponse.class)
-                .timeout(timeout)
-                .doOnSuccess(response -> log.debug("提交工作流成功, promptId: {}", response.getPromptId()))
-                .doOnError(error -> log.error("提交工作流失败", error))
                 .block();
     }
 

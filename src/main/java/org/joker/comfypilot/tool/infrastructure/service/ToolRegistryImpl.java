@@ -4,6 +4,7 @@ import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.agent.tool.ToolSpecifications;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.joker.comfypilot.common.annotation.ToolSet;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.tool.domain.service.Tool;
 import org.joker.comfypilot.tool.domain.service.ToolRegistry;
@@ -124,6 +125,9 @@ public class ToolRegistryImpl implements ToolRegistry, ApplicationContextAware {
         Class<?> actualClass = getActualClass(beanClass);
         List<Tool> classTools = new java.util.ArrayList<>();
 
+        // 获取 @ToolSet 注解的前缀
+        String toolPrefix = getToolPrefix(actualClass);
+
         int methodCount = 0;
         Method[] methods = beanClass.getDeclaredMethods();
         for (Method method : methods) {
@@ -131,6 +135,12 @@ public class ToolRegistryImpl implements ToolRegistry, ApplicationContextAware {
             if (method.isAnnotationPresent(dev.langchain4j.agent.tool.Tool.class)) {
                 ToolSpecification toolSpecification = ToolSpecifications.toolSpecificationFrom(method);
                 String toolName = toolSpecification.name();
+
+                // 如果有前缀，则添加到 toolName 前面
+                if (toolPrefix != null && !toolPrefix.isEmpty()) {
+                    toolName = toolPrefix + toolName;
+                }
+
                 if (toolMap.containsKey(toolName)) {
                     throw new BusinessException("注册工具出错:工具名:" + toolName + " 重复！");
                 }
@@ -161,6 +171,32 @@ public class ToolRegistryImpl implements ToolRegistry, ApplicationContextAware {
             return beanClass.getSuperclass();
         }
         return beanClass;
+    }
+
+    /**
+     * 获取工具名称前缀
+     * 从 @ToolSet 注解中获取 toolPrefix 或 value 属性
+     *
+     * @param clazz 工具类的 Class 对象
+     * @return 工具名称前缀，如果没有注解或前缀为空则返回 null
+     */
+    private String getToolPrefix(Class<?> clazz) {
+        if (clazz == null) {
+            return null;
+        }
+
+        ToolSet toolSet = clazz.getAnnotation(ToolSet.class);
+        if (toolSet == null) {
+            return null;
+        }
+
+        // 优先使用 toolPrefix，如果为空则使用 value
+        String prefix = toolSet.toolPrefix();
+        if (prefix == null || prefix.isEmpty()) {
+            prefix = toolSet.value();
+        }
+
+        return (prefix != null && !prefix.isEmpty()) ? prefix : null;
     }
 
     @Override
