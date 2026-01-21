@@ -107,6 +107,7 @@ public class ChatSessionServiceImpl implements ChatSessionService {
 
         // 创建会话实体
         ChatSession chatSession = ChatSession.builder()
+                .id(chatSessionDTO.getId())
                 .agentCode(request.getAgentCode())
                 .agentConfig(getAgentConfig(agent, request.getAgentConfig()))
                 .title(StringUtils.isNotBlank(request.getTitle()) ? request.getTitle() : chatSessionDTO.getTitle())
@@ -276,13 +277,7 @@ public class ChatSessionServiceImpl implements ChatSessionService {
     }
 
     private Map<String, Object> getAgentConfig(AgentConfigDTO agent, String agentConfigJson) {
-        // TODO 根据AgentConfigDefinition动态校验与解析agentConfigJson(这里需要在AgentConfigService里开放接口，这里直接调用接口)
-
-        if (StringUtils.isBlank(agentConfigJson)) {
-            return new HashMap<>();
-        }
-
-
-        return new HashMap<>();
+        // 调用 AgentConfigService 的校验+转换方法
+        return agentConfigService.validateAndParseAgentConfig(agent, agentConfigJson);
     }
 }

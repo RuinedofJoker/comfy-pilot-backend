@@ -37,7 +37,7 @@ public record AgentConfigDefinition(
         Double floatEndScope,
 
         @Schema(description = "模型调用方式")
-        ModelCallingType modelCallingType
+        String modelCallingType
 ) {
 
     /**
@@ -51,7 +51,7 @@ public record AgentConfigDefinition(
      * @return 模型类型配置定义
      */
     public static AgentConfigDefinition modelValue(String name, String description, Boolean require, Boolean userOverride, ModelCallingType modelCallingType) {
-        return new AgentConfigDefinition(name, description, require, userOverride, AgentConfigType.MODEL, null, null, null, null, null, modelCallingType);
+        return new AgentConfigDefinition(name, description, require, userOverride, AgentConfigType.MODEL, null, null, null, null, null, modelCallingType.getCode());
     }
 
     /**
