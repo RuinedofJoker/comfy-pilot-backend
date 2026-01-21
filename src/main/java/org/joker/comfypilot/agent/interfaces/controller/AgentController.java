@@ -5,11 +5,9 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.joker.comfypilot.agent.application.dto.AgentConfigDTO;
 import org.joker.comfypilot.agent.application.dto.AgentRuntimeConfigDTO;
-import org.joker.comfypilot.agent.application.executor.AgentExecutor;
 import org.joker.comfypilot.agent.application.service.AgentConfigService;
 import org.joker.comfypilot.common.interfaces.response.Result;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,9 +22,6 @@ public class AgentController {
 
     @Autowired
     private AgentConfigService agentConfigService;
-    @Lazy
-    @Autowired
-    private AgentExecutor agentExecutor;
 
     @Operation(summary = "获取所有Agent", description = "获取系统中所有Agent配置列表")
     @GetMapping
@@ -35,7 +30,7 @@ public class AgentController {
         return Result.success(agents);
     }
 
-    @Operation(summary = "运行时获取已启用的Agent", description = "获取系统中所有已启用的Agent配置列表，供用户页面使用")
+    @Operation(summary = "运行时获取已启用的Agent列表", description = "获取系统中所有已启用的Agent配置列表，供用户页面使用")
     @GetMapping("/runtime/enabled")
     public Result<List<AgentRuntimeConfigDTO>> getEnabledRuntimeAgents() {
         List<AgentRuntimeConfigDTO> agents = agentConfigService.getEnabledRuntimeAgents();

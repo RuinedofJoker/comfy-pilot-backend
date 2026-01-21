@@ -3,6 +3,7 @@ package org.joker.comfypilot.session.application.service;
 import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
 import org.joker.comfypilot.session.application.dto.ChatSessionDTO;
 import org.joker.comfypilot.session.application.dto.CreateSessionRequest;
+import org.joker.comfypilot.session.application.dto.UpdateSessionRequest;
 import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -15,13 +16,23 @@ import java.util.Map;
 public interface ChatSessionService {
 
     /**
-     * 创建会话（WebSocket版本）
+     * 创建会话
      *
      * @param userId  用户ID
      * @param request 创建会话DTO
      * @return 会话编码
      */
     String createSession(Long userId, CreateSessionRequest request);
+
+    /**
+     * 编辑会话
+     *
+     * @param userId      用户ID
+     * @param sessionCode 会话编码
+     * @param request     编辑会话DTO
+     * @return 会话编码
+     */
+    String updateSession(Long userId, String sessionCode, UpdateSessionRequest request);
 
     /**
      * 根据会话id查询会话

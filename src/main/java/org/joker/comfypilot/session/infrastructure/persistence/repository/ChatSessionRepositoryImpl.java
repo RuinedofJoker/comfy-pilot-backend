@@ -32,6 +32,14 @@ public class ChatSessionRepositoryImpl implements ChatSessionRepository {
     }
 
     @Override
+    public ChatSession updateById(Long id, ChatSession chatSession) {
+        ChatSessionPO po = chatSessionConverter.toPO(chatSession);
+        po.setId(id);
+        chatSessionMapper.updateById(po);
+        return chatSessionConverter.toDomain(po);
+    }
+
+    @Override
     public Optional<ChatSession> findById(Long id) {
         ChatSessionPO po = chatSessionMapper.selectById(id);
         return Optional.ofNullable(po).map(chatSessionConverter::toDomain);
@@ -69,7 +77,7 @@ public class ChatSessionRepositoryImpl implements ChatSessionRepository {
     }
 
     @Override
-    public ChatSession update(ChatSession chatSession) {
+    public ChatSession updateById(ChatSession chatSession) {
         ChatSessionPO po = chatSessionConverter.toPO(chatSession);
         chatSessionMapper.updateById(po);
         return chatSessionConverter.toDomain(po);

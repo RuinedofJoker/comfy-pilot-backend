@@ -19,6 +19,15 @@ public interface ChatSessionRepository {
     ChatSession save(ChatSession chatSession);
 
     /**
+     * 更新会话
+     *
+     * @param id          会话ID
+     * @param chatSession 会话实体
+     * @return 更新后的会话实体
+     */
+    ChatSession updateById(Long id, ChatSession chatSession);
+
+    /**
      * 根据ID查询会话
      *
      * @param id 会话ID
@@ -57,7 +66,7 @@ public interface ChatSessionRepository {
      * @param chatSession 会话实体
      * @return 更新后的会话实体
      */
-    ChatSession update(ChatSession chatSession);
+    ChatSession updateById(ChatSession chatSession);
 
     /**
      * 删除会话（逻辑删除）

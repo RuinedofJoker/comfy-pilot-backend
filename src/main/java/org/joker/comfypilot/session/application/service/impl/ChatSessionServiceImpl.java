@@ -14,6 +14,7 @@ import org.joker.comfypilot.session.application.converter.ChatSessionDTOConverte
 import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
 import org.joker.comfypilot.session.application.dto.ChatSessionDTO;
 import org.joker.comfypilot.session.application.dto.CreateSessionRequest;
+import org.joker.comfypilot.session.application.dto.UpdateSessionRequest;
 import org.joker.comfypilot.session.application.service.ChatSessionService;
 import org.joker.comfypilot.session.domain.constant.WebSocketDataConstants;
 import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
@@ -32,7 +33,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,16 +81,41 @@ public class ChatSessionServiceImpl implements ChatSessionService {
                 .comfyuiServerId(request.getComfyuiServerId())
                 .agentCode(request.getAgentCode())
                 .agentConfig(getAgentConfig(agent, request.getAgentConfig()))
-                .title(request.getTitle() != null ? request.getTitle() : "新会话")
+                .title(StringUtils.isNotBlank(request.getTitle()) ? request.getTitle() : "新会话")
                 .status(SessionStatus.ACTIVE)
-                .createTime(LocalDateTime.now())
-                .updateTime(LocalDateTime.now())
                 .build();
 
         // 保存会话
         chatSessionRepository.save(chatSession);
 
         log.info("会话创建成功: sessionCode={}", sessionCode);
+        return sessionCode;
+    }
+
+    @Override
+    @Transactional
+    public String updateSession(Long userId, String sessionCode, UpdateSessionRequest request) {
+        log.info("编辑会话: userId={}, sessionCode={}", userId, sessionCode);
+
+        ChatSessionDTO chatSessionDTO = getSessionByCode(sessionCode);
+
+        if (!chatSessionDTO.getUserId().equals(userId)) {
+            throw new BusinessException("当前会话不属于该用户，无法编辑");
+        }
+
+        AgentConfigDTO agent = agentConfigService.getAgentByCode(request.getAgentCode());
+
+        // 创建会话实体
+        ChatSession chatSession = ChatSession.builder()
+                .agentCode(request.getAgentCode())
+                .agentConfig(getAgentConfig(agent, request.getAgentConfig()))
+                .title(StringUtils.isNotBlank(request.getTitle()) ? request.getTitle() : chatSessionDTO.getTitle())
+                .build();
+
+        // 保存会话
+        chatSessionRepository.updateById(chatSession);
+
+        log.info("会话更新成功: sessionCode={}", sessionCode);
         return sessionCode;
     }
 
@@ -159,7 +184,7 @@ public class ChatSessionServiceImpl implements ChatSessionService {
 
         // 调用领域行为归档会话
         chatSession.archive();
-        chatSessionRepository.update(chatSession);
+        chatSessionRepository.updateById(chatSession);
 
         log.info("会话已归档: sessionCode={}", sessionCode);
     }

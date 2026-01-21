@@ -27,6 +27,9 @@ public class ChatSessionDTO extends BaseDTO {
     @Schema(description = "用户ID")
     private Long userId;
 
+    @Schema(description = "ComfyUI服务ID")
+    private Long comfyuiServerId;
+
     @Schema(description = "会话使用的agent的agentCode")
     private String agentCode;
 

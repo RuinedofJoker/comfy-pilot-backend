@@ -8,6 +8,7 @@ import org.joker.comfypilot.common.interfaces.response.Result;
 import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
 import org.joker.comfypilot.session.application.dto.ChatSessionDTO;
 import org.joker.comfypilot.session.application.dto.CreateSessionRequest;
+import org.joker.comfypilot.session.application.dto.UpdateSessionRequest;
 import org.joker.comfypilot.session.application.service.ChatSessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -32,6 +33,17 @@ public class ChatSessionController {
     public Result<String> createSession(@RequestBody CreateSessionRequest request) {
         Long userId = UserContextHolder.getCurrentUserId();
         String sessionCode = chatSessionService.createSession(userId, request);
+        return Result.success(sessionCode);
+    }
+
+    @Operation(summary = "编辑会话", description = "编辑对话会话")
+    @PutMapping("/{sessionCode}")
+    public Result<String> updateSession(
+            @Parameter(description = "会话编码", required = true) @PathVariable String sessionCode,
+            @RequestBody UpdateSessionRequest request
+    ) {
+        Long userId = UserContextHolder.getCurrentUserId();
+        sessionCode = chatSessionService.updateSession(userId, sessionCode, request);
         return Result.success(sessionCode);
     }
 
