@@ -9,6 +9,7 @@ import org.joker.comfypilot.cfsvr.infrastructure.client.ComfyUIClientFactory;
 import org.joker.comfypilot.cfsvr.infrastructure.client.ComfyUIRestClient;
 import org.joker.comfypilot.cfsvr.infrastructure.client.dto.SystemStatsResponse;
 import org.joker.comfypilot.common.exception.BusinessException;
+import org.joker.comfypilot.common.util.EmbeddedDatabaseUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,11 @@ public class ComfyuiServerHealthCheckServiceImpl implements ComfyuiServerHealthC
     @Override
     public void checkAllEnabledServers() {
         log.info("开始定时健康检查任务");
+
+        if (!EmbeddedDatabaseUtil.INITIALIZED_EMBEDDED_DATABASE) {
+            log.warn("当前使用内嵌数据库且未初始化用户，请初始化用户后重启系统");
+            return;
+        }
 
         List<ComfyuiServer> servers = repository.findByIsEnabled(true);
         log.info("找到 {} 个启用的服务器", servers.size());

@@ -6,6 +6,7 @@ import org.joker.comfypilot.agent.domain.enums.AgentStatus;
 import org.joker.comfypilot.agent.domain.repository.AgentConfigRepository;
 import org.joker.comfypilot.agent.domain.service.Agent;
 import org.joker.comfypilot.agent.domain.service.AgentRegistry;
+import org.joker.comfypilot.common.util.EmbeddedDatabaseUtil;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -40,6 +41,11 @@ public class AgentRegistryImpl implements CommandLineRunner, AgentRegistry {
     @Override
     public void run(String... args) {
         log.info("开始扫描并注册Agent实现...");
+
+        if (!EmbeddedDatabaseUtil.INITIALIZED_EMBEDDED_DATABASE) {
+            log.warn("当前使用内嵌数据库且未初始化当前使用用户，请初始化用户后重启系统");
+            return;
+        }
 
         // 从Spring容器中获取所有Agent实现
         Map<String, Agent> agentBeans = applicationContext.getBeansOfType(Agent.class);

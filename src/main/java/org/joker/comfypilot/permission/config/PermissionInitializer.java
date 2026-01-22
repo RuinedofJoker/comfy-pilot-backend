@@ -1,6 +1,7 @@
 package org.joker.comfypilot.permission.config;
 
 import lombok.extern.slf4j.Slf4j;
+import org.joker.comfypilot.common.util.EmbeddedDatabaseUtil;
 import org.joker.comfypilot.permission.domain.entity.Role;
 import org.joker.comfypilot.permission.domain.entity.RolePermission;
 import org.joker.comfypilot.permission.domain.entity.UserRole;
@@ -46,6 +47,11 @@ public class PermissionInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         log.info("开始初始化权限模块...");
+
+        if (!EmbeddedDatabaseUtil.INITIALIZED_EMBEDDED_DATABASE) {
+            log.warn("当前使用内嵌数据库且未初始化当前使用用户，请初始化用户后重启系统");
+            return;
+        }
 
         try {
             // 1. 初始化系统角色
