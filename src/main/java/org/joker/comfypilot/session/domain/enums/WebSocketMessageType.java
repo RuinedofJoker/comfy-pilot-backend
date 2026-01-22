@@ -11,7 +11,7 @@ public enum WebSocketMessageType {
     USER_MESSAGE("用户消息"),
 
     /**
-     * 客户端 -> 服务端：用户响应（回答Agent的问题）
+     * 客户端 -> 服务端：用户响应（回答Agent是/否）
      */
     USER_RESPONSE("用户响应"),
 

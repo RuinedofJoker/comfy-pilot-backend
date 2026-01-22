@@ -3,6 +3,8 @@ server:
 
 embedded:
   database: ${USE_EMBEDDED_DB:false}
+  redis: ${USE_EMBEDDED_REDIS:false}
+  redis-storage: ${REDIS_STORAGE:""}
 
 spring:
   application:
@@ -35,7 +37,7 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:""}
+      password: ${REDIS_PASSWORD}
       database: ${REDIS_DB:0}
       timeout: 3000ms
       lettuce:
