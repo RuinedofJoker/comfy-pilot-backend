@@ -1,8 +1,11 @@
 package org.joker.comfypilot.session.domain.enums;
 
+import lombok.Getter;
+
 /**
  * 消息角色枚举
  */
+@Getter
 public enum MessageRole {
 
     /**
@@ -36,7 +39,4 @@ public enum MessageRole {
         this.description = description;
     }
 
-    public String getDescription() {
-        return description;
-    }
 }
