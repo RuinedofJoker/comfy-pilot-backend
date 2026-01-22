@@ -583,9 +583,12 @@ public class EmbeddedDatabaseConfig {
                     CREATE TABLE IF NOT EXISTS chat_message (
                         id BIGINT PRIMARY KEY,
                         session_id BIGINT NOT NULL,
+                        session_code VARCHAR(50) NOT NULL,
+                        request_id VARCHAR(50) NOT NULL,
                         role VARCHAR(20) NOT NULL,
                         status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
                         content CLOB NOT NULL,
+                        content_data CLOB,
                         metadata CLOB,
                         is_deleted BIGINT NOT NULL DEFAULT 0,
                         create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -598,11 +601,14 @@ public class EmbeddedDatabaseConfig {
 
             // 创建索引
             jdbcTemplate.execute("CREATE INDEX idx_chat_message_session_id ON chat_message(session_id)");
+            jdbcTemplate.execute("CREATE INDEX idx_chat_message_session_code ON chat_message(session_code)");
+            jdbcTemplate.execute("CREATE INDEX idx_chat_message_request_id ON chat_message(request_id)");
             jdbcTemplate.execute("CREATE INDEX idx_chat_message_role ON chat_message(role)");
             jdbcTemplate.execute("CREATE INDEX idx_chat_message_status ON chat_message(status)");
             jdbcTemplate.execute("CREATE INDEX idx_chat_message_create_time ON chat_message(create_time)");
             jdbcTemplate.execute("CREATE INDEX idx_chat_message_is_deleted ON chat_message(is_deleted)");
-            jdbcTemplate.execute("CREATE INDEX idx_chat_message_session_create ON chat_message(session_id, create_time)");
+            jdbcTemplate.execute("CREATE INDEX idx_chat_message_session_id_request_create ON chat_message(session_id, request_id, create_time)");
+            jdbcTemplate.execute("CREATE INDEX idx_chat_message_session_code_request_create ON chat_message(session_code, request_id, create_time)");
             jdbcTemplate.execute("CREATE INDEX idx_chat_message_session_role ON chat_message(session_id, role)");
             jdbcTemplate.execute("CREATE INDEX idx_chat_message_session_status ON chat_message(session_id, status)");
 

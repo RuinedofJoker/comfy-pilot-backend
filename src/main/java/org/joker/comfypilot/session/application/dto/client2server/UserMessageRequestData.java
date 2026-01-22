@@ -24,12 +24,6 @@ public class UserMessageRequestData implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 当前请求ID
-     */
-    @Schema(description = "当前请求ID（UUID）")
-    private String requestId;
-
-    /**
      * 工具名称
      */
     @Schema(description = "工作流内容（JSON字符串）", example = "{}")
@@ -41,9 +35,4 @@ public class UserMessageRequestData implements Serializable {
     @Schema(description = "客户端MCP工具schema列表")
     private List<McpSchema.Tool> toolSchemas;
 
-    /**
-     * 是否是客户端工具
-     */
-    @Schema(description = "是否是客户端工具，如果不是只需要返回是否允许执行就行了", example = "true")
-    private Boolean isClientTool;
 }

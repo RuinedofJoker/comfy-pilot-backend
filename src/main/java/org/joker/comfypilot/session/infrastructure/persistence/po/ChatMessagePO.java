@@ -27,7 +27,17 @@ public class ChatMessagePO extends BasePO {
     private Long sessionId;
 
     /**
-     * 消息角色（USER, ASSISTANT, SYSTEM）
+     * 会话编码
+     */
+    private String sessionCode;
+
+    /**
+     * 请求ID（类型应该是时间戳）
+     */
+    private String requestId;
+
+    /**
+     * 消息角色
      */
     private String role;
 
@@ -40,6 +50,11 @@ public class ChatMessagePO extends BasePO {
      * 消息内容
      */
     private String content;
+
+    /**
+     * 消息内容数据
+     */
+    private String contentData;
 
     /**
      * 元数据（JSON类型）

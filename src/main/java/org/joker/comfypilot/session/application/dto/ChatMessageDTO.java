@@ -26,11 +26,20 @@ public class ChatMessageDTO extends BaseDTO {
     @Schema(description = "会话ID")
     private Long sessionId;
 
-    @Schema(description = "消息角色（USER, ASSISTANT, SYSTEM）")
+    @Schema(description = "会话编码")
+    private String sessionCode;
+
+    @Schema(description = "请求ID")
+    private String requestId;
+
+    @Schema(description = "消息角色")
     private String role;
 
     @Schema(description = "消息内容")
     private String content;
+
+    @Schema(description = "消息内容数据")
+    private String contentData;
 
     @Schema(description = "元数据")
     private Map<String, Object> metadata;

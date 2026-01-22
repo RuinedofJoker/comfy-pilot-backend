@@ -45,9 +45,12 @@ COMMENT ON TABLE chat_session IS '聊天会话表';
 CREATE TABLE IF NOT EXISTS chat_message (
     id BIGINT PRIMARY KEY,
     session_id BIGINT NOT NULL,
+    session_code VARCHAR(50) NOT NULL,
+    request_id VARCHAR(50) NOT NULL,
     role VARCHAR(20) NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     content TEXT NOT NULL,
+    content_data TEXT,
     metadata TEXT,
     is_deleted BIGINT NOT NULL DEFAULT 0,
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -58,13 +61,16 @@ CREATE TABLE IF NOT EXISTS chat_message (
 
 -- 创建普通索引
 CREATE INDEX idx_chat_message_session_id ON chat_message(session_id);
+CREATE INDEX idx_chat_message_session_code ON chat_message(session_code);
+CREATE INDEX idx_chat_message_request_id ON chat_message(request_id);
 CREATE INDEX idx_chat_message_role ON chat_message(role);
 CREATE INDEX idx_chat_message_status ON chat_message(status);
 CREATE INDEX idx_chat_message_create_time ON chat_message(create_time);
 CREATE INDEX idx_chat_message_is_deleted ON chat_message(is_deleted);
 
 -- 创建复合索引
-CREATE INDEX idx_chat_message_session_create ON chat_message(session_id, create_time);
+CREATE INDEX idx_chat_message_session_id_request_create ON chat_message(session_id, request_id, create_time);
+CREATE INDEX idx_chat_message_session_code_request_create ON chat_message(session_code, request_id, create_time);
 CREATE INDEX idx_chat_message_session_role ON chat_message(session_id, role);
 CREATE INDEX idx_chat_message_session_status ON chat_message(session_id, status);
 

@@ -33,6 +33,16 @@ public class ChatMessage extends BaseEntity<Long> {
     private Long sessionId;
 
     /**
+     * 会话编码
+     */
+    private String sessionCode;
+
+    /**
+     * 请求ID（类型应该是时间戳）
+     */
+    private String requestId;
+
+    /**
      * 消息角色
      */
     private MessageRole role;
@@ -46,6 +56,11 @@ public class ChatMessage extends BaseEntity<Long> {
      * 消息内容
      */
     private String content;
+
+    /**
+     * 消息内容数据
+     */
+    private String contentData;
 
     /**
      * 元数据（JSON格式）

@@ -35,6 +35,18 @@ public class WebSocketAgentCallback implements AgentCallback {
     }
 
     @Override
+    public void onSummery() {
+        log.info("Agent开始生成摘要: sessionCode={}", sessionCode);
+        sendMessage(WebSocketMessageType.SUMMERY, null);
+    }
+
+    @Override
+    public void onSummeryComplete(String summery) {
+        log.info("Agent摘要生成完成: sessionCode={}", sessionCode);
+        sendMessage(WebSocketMessageType.SUMMERY_COMPLETE, summery);
+    }
+
+    @Override
     public void onStream(String chunk) {
         log.debug("Agent流式输出: sessionCode={}, chunk={}", sessionCode, chunk);
         sendMessage(WebSocketMessageType.AGENT_STREAM, chunk);
@@ -56,12 +68,19 @@ public class WebSocketAgentCallback implements AgentCallback {
         WebSocketMessage<AgentToolCallRequestData> message = WebSocketMessage.<AgentToolCallRequestData>builder()
                 .type(WebSocketMessageType.AGENT_TOOL_CALL_REQUEST.name())
                 .sessionCode(sessionCode)
+                .requestId(requestId)
                 .content(toolName)
                 .data(requestData)
                 .timestamp(System.currentTimeMillis())
                 .build();
 
         sendWebSocketMessage(message);
+    }
+
+    @Override
+    public void onExecutionInterrupted() {
+        log.info("Agent执行中断完成: sessionCode={}", sessionCode);
+        sendMessage(WebSocketMessageType.EXECUTION_INTERRUPTED, null);
     }
 
     @Override
@@ -90,6 +109,7 @@ public class WebSocketAgentCallback implements AgentCallback {
         WebSocketMessage<?> message = WebSocketMessage.builder()
                 .type(WebSocketMessageType.ERROR.name())
                 .sessionCode(sessionCode)
+                .requestId(requestId)
                 .error(error)
                 .timestamp(System.currentTimeMillis())
                 .build();

@@ -5,8 +5,10 @@ import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -22,7 +24,9 @@ public class WebSocketSessionManager {
      * Key: WebSocket Session ID
      * Value: WebSocketSessionContext
      */
-    private final Map<String, WebSocketSessionContext> sessions = new ConcurrentHashMap<>();
+    private final Map<String, WebSocketSessionContext> sessions = new ConcurrentHashMap<>(1024);
+
+    private final Map<String, ConcurrentLinkedQueue<Runnable>> sessionRemoveCallbacks = new ConcurrentHashMap<>(1024);
 
     /**
      * 添加会话
@@ -38,6 +42,7 @@ public class WebSocketSessionManager {
                 .lastActiveTime(System.currentTimeMillis())
                 .build();
 
+        sessionRemoveCallbacks.put(wsSessionId, new ConcurrentLinkedQueue<>());
         sessions.put(wsSessionId, context);
         log.info("WebSocket会话已添加: wsSessionId={}, userId={}", wsSessionId, userId);
     }
@@ -57,16 +62,39 @@ public class WebSocketSessionManager {
         if (context != null) {
             log.info("WebSocket会话已移除: sessionId={}", sessionId);
         }
+        ConcurrentLinkedQueue<Runnable> removedCallbacks = sessionRemoveCallbacks.remove(sessionId);
+        if (removedCallbacks != null) {
+            Runnable polled = removedCallbacks.poll();
+            while (polled != null) {
+                polled.run();
+                polled = removedCallbacks.poll();
+            }
+        }
     }
 
     /**
-     * 更新会话的聊天会话编码
+     * 添加会话移除时触发的回调
      */
-    public void updateSessionCode(String sessionId, String sessionCode) {
-        WebSocketSessionContext context = sessions.get(sessionId);
-        if (context != null) {
-            context.setSessionCode(sessionCode);
-            context.updateActiveTime();
+    public void addRemovedCallback(String sessionId, Runnable callback) {
+        if (sessionId == null || callback == null) {
+            return;
+        }
+        if (!sessions.containsKey(sessionId)) {
+            callback.run();
+            return;
+        }
+        ConcurrentLinkedQueue<Runnable> removedCallbacks = sessionRemoveCallbacks.get(sessionId);
+        if (removedCallbacks == null) {
+            callback.run();
+            return;
+        }
+        removedCallbacks.offer(callback);
+        if (!sessions.containsKey(sessionId)) {
+            callback = removedCallbacks.poll();
+            while (callback != null) {
+                callback.run();
+                callback = removedCallbacks.poll();
+            }
         }
     }
 
@@ -81,10 +109,4 @@ public class WebSocketSessionManager {
         }
     }
 
-    /**
-     * 获取所有活跃会话数量
-     */
-    public int getActiveSessionCount() {
-        return sessions.size();
-    }
 }

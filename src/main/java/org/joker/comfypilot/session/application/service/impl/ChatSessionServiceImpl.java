@@ -190,7 +190,7 @@ public class ChatSessionServiceImpl implements ChatSessionService {
 
     @Override
     @Async
-    public void sendMessageAsync(String sessionCode, WebSocketMessage<?> wsMessage,
+    public void sendMessageAsync(String sessionCode, String requestId, WebSocketMessage<?> wsMessage,
                                  WebSocketSessionContext wsContext,
                                  WebSocketSession webSocketSession) {
         log.info("异步发送消息: sessionCode={}, type={}, content={}", sessionCode, wsMessage.getType(), wsMessage.getContent());
@@ -201,14 +201,17 @@ public class ChatSessionServiceImpl implements ChatSessionService {
 
             String content = userRequestWsMessage.getContent();
 
-            String requestId = userRequestWsMessageData.getRequestId();
-
-            if (requestId == null) {
-                throw new BusinessException("用户请求ID不能为空");
-            }
-
             // 标记开始执行
-            wsContext.startExecution();
+            if (wsContext.canExecute()) {
+                wsContext.startExecution();
+            } else {
+                if (wsContext.isExecuting()) {
+                    throw new BusinessException("会话未结束，请稍后再试");
+                }
+                if (wsContext.isInterrupted()) {
+                    throw new BusinessException("会话正在中断中，请稍后再试");
+                }
+            }
 
             // 查询会话
             ChatSession chatSession = chatSessionRepository.findBySessionCode(sessionCode)
@@ -222,7 +225,9 @@ public class ChatSessionServiceImpl implements ChatSessionService {
             // 保存用户消息
             ChatMessage userMessage = ChatMessage.builder()
                     .sessionId(chatSession.getId())
-                    .role(MessageRole.USER)
+                    .sessionCode(sessionCode)
+                    .requestId(requestId)
+                    .role(content.startsWith("/") ? MessageRole.USER_ORDER : MessageRole.USER)
                     .status(MessageStatus.ACTIVE)
                     .metadata(new HashMap<>())
                     .content(content)
@@ -255,9 +260,9 @@ public class ChatSessionServiceImpl implements ChatSessionService {
             // 8. 执行Agent
             agentExecutor.execute(executionContext);
 
-            log.info("消息发送成功: sessionCode={}", sessionCode);
+            log.info("消息发送成功: sessionCode={}, requestId={}", sessionCode, requestId);
         } catch (Exception e) {
-            log.error("消息发送失败: sessionCode={}, error={}", sessionCode, e.getMessage(), e);
+            log.error("消息发送失败: sessionCode={}, requestId={}, error={}", sessionCode, requestId, e.getMessage(), e);
             wsContext.completeExecution();
             throw new BusinessException("消息发送失败: " + e.getMessage(), e);
         }

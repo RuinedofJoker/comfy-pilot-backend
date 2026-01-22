@@ -79,6 +79,13 @@ public class WebSocketSessionContext {
     }
 
     /**
+     * 检查是否在执行
+     */
+    public boolean isExecuting() {
+        return executing.get();
+    }
+
+    /**
      * 检查是否被中断
      */
     public boolean isInterrupted() {

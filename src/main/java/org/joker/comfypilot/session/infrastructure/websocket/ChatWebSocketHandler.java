@@ -3,9 +3,16 @@ package org.joker.comfypilot.session.infrastructure.websocket;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
+import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.ToolExecutionResultMessage;
+import dev.langchain4j.data.message.UserMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.joker.comfypilot.agent.infrastructure.memory.ChatMemoryChatMemoryStore;
 import org.joker.comfypilot.common.constant.AuthConstants;
+import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
 import org.joker.comfypilot.session.application.dto.WebSocketMessage;
 import org.joker.comfypilot.session.application.dto.client2server.AgentToolCallResponseData;
 import org.joker.comfypilot.session.application.service.ChatSessionService;
@@ -19,7 +26,10 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 聊天WebSocket处理器
@@ -30,6 +40,8 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
     @Autowired
     private WebSocketSessionManager sessionManager;
+    @Autowired
+    private ChatMemoryChatMemoryStore chatMemoryChatMemoryStore;
     @Lazy
     @Autowired
     private ChatSessionService chatSessionService;
@@ -57,6 +69,8 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
         sessionManager.addSession(wsSessionId, session, userId, sessionCode);
 
+        initHistoryChatMemory(wsSessionId, session, userId, sessionCode);
+
         log.info("WebSocket连接已建立: sessionId={}, userId={}", wsSessionId, userId);
     }
 
@@ -71,6 +85,8 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         }
 
         context.updateActiveTime();
+        String sessionCode = null;
+        String requestId = null;
 
         try {
             String payload = message.getPayload();
@@ -80,7 +96,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             JsonNode typeNode = rootNode.get("type");
 
             if (typeNode == null || typeNode.isNull()) {
-                sendErrorMessage(session, "消息类型不能为空");
+                sendErrorMessage(session, "消息类型不能为空", sessionCode, requestId);
                 return;
             }
 
@@ -92,7 +108,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                 messageType = WebSocketMessageType.valueOf(messageTypeStr);
             } catch (IllegalArgumentException e) {
                 log.error("未知的消息类型: {}", messageTypeStr);
-                sendErrorMessage(session, "未知的消息类型: " + messageTypeStr);
+                sendErrorMessage(session, "未知的消息类型: " + messageTypeStr, sessionCode, requestId);
                 return;
             }
 
@@ -101,22 +117,35 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             // 3. 根据枚举的dataClass反序列化WebSocketMessage
             WebSocketMessage<?> wsMessage = deserializeMessage(payload, messageType);
 
+            sessionCode = wsMessage.getSessionCode();
+            requestId = wsMessage.getRequestId();
+            if (sessionCode == null) {
+                sendErrorMessage(session, "会话编码不能为空", sessionCode, requestId);
+                return;
+            }
+            if (requestId == null) {
+                sendErrorMessage(session, "请求ID不能为空", sessionCode, requestId);
+                return;
+            }
+
             // 4. 根据消息类型处理
             if (WebSocketMessageType.USER_MESSAGE.equals(messageType)) {
                 handleUserMessage(session, context, wsMessage);
+            } else if (WebSocketMessageType.USER_ORDER.equals(messageType)) {
+                handleUserOrder(session, context, wsMessage);
             } else if (WebSocketMessageType.AGENT_TOOL_CALL_RESPONSE.equals(messageType)) {
                 handleToolCallResponse(session, context, wsMessage);
             } else if (WebSocketMessageType.INTERRUPT.equals(messageType)) {
                 handleInterrupt(session, context, wsMessage);
             } else if (WebSocketMessageType.PING.equals(messageType)) {
-                handlePing(session);
+                handlePing(session, context, wsMessage);
             } else {
                 log.warn("未处理的消息类型: {}", messageType);
             }
 
         } catch (Exception e) {
             log.error("处理WebSocket消息失败: wsSessionId={}, error={}", wsSessionId, e.getMessage(), e);
-            sendErrorMessage(session, e.getMessage());
+            sendErrorMessage(session, e.getMessage(), sessionCode, requestId);
         }
     }
 
@@ -130,30 +159,56 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
         String sessionId = session.getId();
-        log.error("WebSocket传输错误: sessionId={}, error={}", sessionId, exception.getMessage(), exception);
         sessionManager.removeSession(sessionId);
+        log.error("WebSocket传输错误: sessionId={}, error={}", sessionId, exception.getMessage(), exception);
     }
 
     /**
-     * 处理用户消息
+     * 初始化历史聊天记忆
      */
-    private void handleUserMessage(WebSocketSession session, WebSocketSessionContext context, WebSocketMessage<?> wsMessage) {
-        String sessionCode = wsMessage.getSessionCode();
-        String content = wsMessage.getContent();
-
-        if (sessionCode == null || content == null) {
-            sendErrorMessage(session, "会话编码、消息内容不能为空");
+    private void initHistoryChatMemory(String wsSessionId, WebSocketSession webSocketSession, Long userId, String sessionCode) {
+        List<ChatMessageDTO> messageHistory = chatSessionService.getMessageHistory(sessionCode);
+        if (messageHistory == null || messageHistory.isEmpty()) {
+            chatMemoryChatMemoryStore.updateMessages(wsSessionId, new ArrayList<>());
             return;
         }
 
-        // 检查是否可以执行
-        if (!context.canExecute()) {
-            sendErrorMessage(session, "当前会话正在执行中,请稍后再试");
-            return;
+        List<ChatMessage> historyMessages = new ArrayList<>();
+        for (ChatMessageDTO messageHistoryItem : messageHistory) {
+            switch (messageHistoryItem.getRole()) {
+                case "USER" -> {
+
+                    break;
+                }
+                case "AGENT_PROMPT" -> {
+                    historyMessages.add(UserMessage.from(messageHistoryItem.getContent()));
+                    break;
+                }
+                case "ASSISTANT" -> {
+                    if (!historyMessages.isEmpty() && (historyMessages.getLast() instanceof UserMessage)) {
+//                        historyMessages.add()
+                    }
+                }
+                case "SUMMARY" -> {
+                    if (!historyMessages.isEmpty() && (historyMessages.getLast() instanceof UserMessage)) {
+                        historyMessages.add(AiMessage.from("执行已中断"));
+                    }/* else if (!historyMessages.isEmpty() && (historyMessages.getLast() instanceof AiMessage) && ((AiMessage) historyMessages.getLast()).hasToolExecutionRequests()) {
+                        AiMessage lastAiMessage = (AiMessage) historyMessages.getLast();
+                        List<ToolExecutionRequest> toolExecutionRequests = lastAiMessage.toolExecutionRequests();
+                        for (int i = 0; i < toolExecutionRequests.size(); i++) {
+                            ToolExecutionRequest toolExecutionRequest = toolExecutionRequests.get(i);
+                            historyMessages.add(ToolExecutionResultMessage.toolExecutionResultMessage(toolExecutionRequest.id(), toolExecutionRequest.name(), "执行已中断"));
+                        }
+                    }*/
+                    historyMessages.add(AiMessage.from(messageHistoryItem.getContent()));
+                }
+                case "TOOL_EXECUTION_RESULT" -> {
+
+                }
+            }
         }
 
-        // 异步执行Agent（传递agentCode）
-        chatSessionService.sendMessageAsync(sessionCode, wsMessage, context, session);
+        chatMemoryChatMemoryStore.updateMessages(wsSessionId, historyMessages);
     }
 
     /**
@@ -168,61 +223,14 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
         if (dataClass == null || dataClass == Map.class) {
             // 如果dataClass为null或Map，使用默认反序列化
-            return objectMapper.readValue(payload, new TypeReference<WebSocketMessage<Object>>() {});
+            return objectMapper.readValue(payload, new TypeReference<WebSocketMessage<Object>>() {
+            });
         } else {
             // 根据具体的dataClass类型反序列化
             // 使用JavaType来构建泛型类型
             return objectMapper.readValue(payload,
                     objectMapper.getTypeFactory().constructParametricType(WebSocketMessage.class, dataClass));
         }
-    }
-
-    /**
-     * 处理中断消息
-     */
-    private void handleInterrupt(WebSocketSession session, WebSocketSessionContext context, WebSocketMessage<?> wsMessage) {
-        sessionManager.requestInterrupt(session.getId());
-        log.info("执行申请中断: sessionId={}", session.getId());
-    }
-
-    /**
-     * 处理工具调用响应消息
-     */
-    private void handleToolCallResponse(WebSocketSession session, WebSocketSessionContext context, WebSocketMessage<?> wsMessage) {
-        try {
-            // 将data转换为AgentToolCallResponseData
-            Object dataObj = wsMessage.getData();
-            if (dataObj == null) {
-                sendErrorMessage(session, "工具调用响应数据不能为空");
-                return;
-            }
-
-            // 使用ObjectMapper转换data
-            AgentToolCallResponseData responseData = objectMapper.convertValue(dataObj, AgentToolCallResponseData.class);
-
-            log.info("收到工具调用响应: sessionId={}, toolName={}, success={}",
-                    session.getId(), responseData.getToolName(), responseData.getSuccess());
-
-            // TODO: 将工具调用结果传递给Agent继续执行
-            // 这里需要根据实际的Agent执行流程来实现
-            // 可能需要在WebSocketSessionContext中添加相应的方法来处理工具调用结果
-
-        } catch (Exception e) {
-            log.error("处理工具调用响应失败: sessionId={}, error={}", session.getId(), e.getMessage(), e);
-            sendErrorMessage(session, "处理工具调用响应失败: " + e.getMessage());
-        }
-    }
-
-    /**
-     * 处理心跳消息
-     */
-    private void handlePing(WebSocketSession session) {
-        WebSocketMessage<?> response = WebSocketMessage.builder()
-                .type(WebSocketMessageType.PONG.name())
-                .timestamp(System.currentTimeMillis())
-                .build();
-
-        sendMessage(session, response);
     }
 
     /**
@@ -242,13 +250,108 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     /**
      * 发送错误消息
      */
-    private void sendErrorMessage(WebSocketSession session, String error) {
+    private void sendErrorMessage(WebSocketSession session, String error, String sessionCode, String requestId) {
         WebSocketMessage<?> message = WebSocketMessage.builder()
                 .type(WebSocketMessageType.ERROR.name())
+                .sessionCode(sessionCode)
+                .requestId(requestId)
                 .error(error)
                 .timestamp(System.currentTimeMillis())
                 .build();
 
         sendMessage(session, message);
     }
+
+    /**
+     * 处理用户消息
+     */
+    private void handleUserMessage(WebSocketSession session, WebSocketSessionContext context, WebSocketMessage<?> wsMessage) {
+        String content = wsMessage.getContent();
+
+        if (content == null) {
+            sendErrorMessage(session, "消息内容不能为空", wsMessage.getSessionCode(), wsMessage.getRequestId());
+            return;
+        }
+
+        // 检查是否可以执行
+        if (!context.canExecute()) {
+            context.requestInterrupt();
+            return;
+        }
+
+        // 异步执行Agent（传递agentCode）
+        chatSessionService.sendMessageAsync(wsMessage.getSessionCode(), wsMessage.getRequestId(), wsMessage, context, session);
+    }
+
+    /**
+     * 处理用户命令
+     */
+    private void handleUserOrder(WebSocketSession session, WebSocketSessionContext context, WebSocketMessage<?> wsMessage) {
+        Set<String> allowOrders = Set.of("/compact");
+        String content = wsMessage.getContent();
+        if (!allowOrders.contains(content)) {
+            sendErrorMessage(session, "命令格式不合法", wsMessage.getSessionCode(), wsMessage.getRequestId());
+            return;
+        }
+
+        // 检查是否可以执行
+        if (!context.canExecute()) {
+            context.requestInterrupt();
+            return;
+        }
+
+        // 异步执行Agent（传递agentCode）
+        chatSessionService.sendMessageAsync(wsMessage.getSessionCode(), wsMessage.getRequestId(), wsMessage, context, session);
+    }
+
+    /**
+     * 处理工具调用响应消息
+     */
+    private void handleToolCallResponse(WebSocketSession session, WebSocketSessionContext context, WebSocketMessage<?> wsMessage) {
+        try {
+            // 将data转换为AgentToolCallResponseData
+            Object dataObj = wsMessage.getData();
+            if (dataObj == null) {
+                sendErrorMessage(session, "工具调用响应数据不能为空", wsMessage.getSessionCode(), wsMessage.getRequestId());
+                return;
+            }
+
+            // 使用ObjectMapper转换data
+            AgentToolCallResponseData responseData = objectMapper.convertValue(dataObj, AgentToolCallResponseData.class);
+
+            log.info("收到工具调用响应: sessionId={}, toolName={}, success={}",
+                    session.getId(), responseData.getToolName(), responseData.getSuccess());
+
+            // TODO: 将工具调用结果传递给Agent继续执行
+            // 这里需要根据实际的Agent执行流程来实现
+            // 可能需要在WebSocketSessionContext中添加相应的方法来处理工具调用结果
+
+        } catch (Exception e) {
+            log.error("处理工具调用响应失败: sessionId={}, error={}", session.getId(), e.getMessage(), e);
+            sendErrorMessage(session, "处理工具调用响应失败: " + e.getMessage(), wsMessage.getSessionCode(), wsMessage.getRequestId());
+        }
+    }
+
+    /**
+     * 处理中断消息
+     */
+    private void handleInterrupt(WebSocketSession session, WebSocketSessionContext context, WebSocketMessage<?> wsMessage) {
+        sessionManager.requestInterrupt(session.getId());
+        log.info("执行申请中断: sessionId={}", session.getId());
+    }
+
+    /**
+     * 处理心跳消息
+     */
+    private void handlePing(WebSocketSession session, WebSocketSessionContext context, WebSocketMessage<?> wsMessage) {
+        WebSocketMessage<?> response = WebSocketMessage.builder()
+                .type(WebSocketMessageType.PONG.name())
+                .sessionCode(wsMessage.getSessionCode())
+                .requestId(wsMessage.getRequestId())
+                .timestamp(System.currentTimeMillis())
+                .build();
+
+        sendMessage(session, response);
+    }
+
 }

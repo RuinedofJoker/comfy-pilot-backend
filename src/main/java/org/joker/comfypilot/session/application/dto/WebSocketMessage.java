@@ -32,7 +32,7 @@ public class WebSocketMessage<T> implements Serializable {
     private String sessionCode;
 
     /**
-     * 请求编号
+     * 请求ID，时间戳
      */
     private String requestId;
 

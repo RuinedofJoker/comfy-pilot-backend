@@ -42,7 +42,7 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
     public List<ChatMessage> findBySessionId(Long sessionId) {
         LambdaQueryWrapper<ChatMessagePO> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ChatMessagePO::getSessionId, sessionId)
-                .orderByAsc(ChatMessagePO::getCreateTime);
+                .orderByAsc(ChatMessagePO::getRequestId, ChatMessagePO::getCreateTime);
         return chatMessageMapper.selectList(wrapper).stream()
                 .map(chatMessageConverter::toDomain)
                 .collect(Collectors.toList());

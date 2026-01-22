@@ -5,7 +5,6 @@ import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * 会话服务接口
@@ -68,11 +67,12 @@ public interface ChatSessionService {
      * 异步发送消息（WebSocket版本，支持流式输出）
      *
      * @param sessionCode 会话编码
+     * @param requestId   请求ID
      * @param wsMessage   消息内容
      * @param context     WebSocket会话上下文
      * @param session     WebSocket会话
      */
-    void sendMessageAsync(String sessionCode, WebSocketMessage<?> wsMessage, WebSocketSessionContext context, WebSocketSession session);
+    void sendMessageAsync(String sessionCode, String requestId, WebSocketMessage<?> wsMessage, WebSocketSessionContext context, WebSocketSession session);
 
     /**
      * 查询会话消息历史

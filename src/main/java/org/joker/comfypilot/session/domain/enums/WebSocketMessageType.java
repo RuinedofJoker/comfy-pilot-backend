@@ -20,6 +20,11 @@ public enum WebSocketMessageType {
     USER_MESSAGE("用户消息", UserMessageRequestData.class),
 
     /**
+     * 客户端 -> 服务端：发送用户命令
+     */
+    USER_ORDER("用户命令", UserMessageRequestData.class),
+
+    /**
      * 客户端 -> 服务端：Agent调用Tool响应
      */
     AGENT_TOOL_CALL_RESPONSE("Agent调用工具响应", AgentToolCallResponseData.class),
@@ -33,11 +38,6 @@ public enum WebSocketMessageType {
      * 客户端 -> 服务端：心跳
      */
     PING("心跳", Map.class),
-
-    /**
-     * 服务端 -> 客户端：会话已创建
-     */
-    SESSION_CREATED("会话已创建", Map.class),
 
     /**
      * 服务端 -> 客户端：Agent开始思考
@@ -72,7 +72,7 @@ public enum WebSocketMessageType {
     /**
      * 服务端 -> 客户端：执行被中断
      */
-    EXECUTION_INTERRUPTED("执行中断", Map.class),
+    EXECUTION_INTERRUPTED("执行中断完成", Map.class),
 
     /**
      * 服务端 -> 客户端：执行错误
