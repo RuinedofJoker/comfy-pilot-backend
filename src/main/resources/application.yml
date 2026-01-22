@@ -1,6 +1,9 @@
 server:
   port: 8080
 
+embedded:
+  database: ${USE_EMBEDDED_DB:false}
+
 spring:
   application:
     name: comfy-pilot-backend
@@ -9,8 +12,8 @@ spring:
 
   # PostgreSQL 数据源配置
   datasource:
-    driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:comfy_pilot}?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    driver-class-name: ${DB_DRIVER:org.postgresql.Driver}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/comfy_pilot?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
     hikari:
@@ -19,6 +22,14 @@ spring:
       idle-timeout: 600000
       connection-timeout: 30000
       max-lifetime: 1800000
+  h2:
+    console:
+      enabled: ${embedded.database}
+      path: /h2-console
+      settings:
+        trace: true
+        web-admin-password: ${spring.datasource.password}
+        web-allow-others: ${embedded.database}
 
   # Redis 配置
   data:
@@ -68,7 +79,7 @@ mybatis-plus:
       # 逻辑删除字段（使用时间戳标记删除时间，0表示未删除，非0表示删除时的毫秒时间戳）
       logic-delete-field: isDeleted
       logic-not-delete-value: 0
-      logic-delete-value: (EXTRACT(EPOCH FROM NOW()) * 1000)::BIGINT
+      logic-delete-value: ${LOGIC_DELETE_VALUE:(EXTRACT(EPOCH FROM NOW()) * 1000)::BIGINT}
 
 # 日志配置
 logging:

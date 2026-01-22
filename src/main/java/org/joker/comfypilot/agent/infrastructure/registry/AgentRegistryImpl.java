@@ -10,6 +10,8 @@ import org.joker.comfypilot.agent.domain.service.AgentRegistry;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -23,8 +25,10 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Slf4j
 @Component
-public class AgentRegistryImpl implements AgentRegistry, ApplicationContextAware {
+@Order(Ordered.LOWEST_PRECEDENCE)
+public class AgentRegistryImpl implements AgentRegistry {
 
+    @Autowired
     private ApplicationContext applicationContext;
 
     @Autowired
@@ -34,11 +38,6 @@ public class AgentRegistryImpl implements AgentRegistry, ApplicationContextAware
      * Agent注册表，key为agentCode，value为Agent实例
      */
     private final Map<String, Agent> agentMap = new ConcurrentHashMap<>();
-
-    @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
-    }
 
     /**
      * 应用启动后自动注册所有Agent并同步到数据库

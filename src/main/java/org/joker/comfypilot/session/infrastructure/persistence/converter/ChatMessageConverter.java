@@ -1,5 +1,9 @@
 package org.joker.comfypilot.session.infrastructure.persistence.converter;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.session.domain.entity.ChatMessage;
 import org.joker.comfypilot.session.domain.enums.MessageRole;
 import org.joker.comfypilot.session.domain.enums.MessageStatus;
@@ -7,6 +11,8 @@ import org.joker.comfypilot.session.infrastructure.persistence.po.ChatMessagePO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
+
+import java.util.Map;
 
 /**
  * 消息 PO 转换器
@@ -19,6 +25,7 @@ public interface ChatMessageConverter {
      */
     @Mapping(target = "role", source = "role", qualifiedByName = "messageRoleStringToEnum")
     @Mapping(target = "status", source = "status", qualifiedByName = "messageStatusStringToEnum")
+    @Mapping(target = "metadata", source = "metadata", qualifiedByName = "stringToMap")
     ChatMessage toDomain(ChatMessagePO po);
 
     /**
@@ -26,6 +33,7 @@ public interface ChatMessageConverter {
      */
     @Mapping(target = "role", source = "role", qualifiedByName = "messageRoleEnumToString")
     @Mapping(target = "status", source = "status", qualifiedByName = "messageStatusEnumToString")
+    @Mapping(target = "metadata", source = "metadata", qualifiedByName = "mapToString")
     ChatMessagePO toPO(ChatMessage domain);
 
     /**
@@ -58,5 +66,34 @@ public interface ChatMessageConverter {
     @Named("messageStatusEnumToString")
     default String messageStatusEnumToString(MessageStatus status) {
         return status != null ? status.name() : null;
+    }
+
+    @Named("stringToMap")
+    default Map<String, Object> stringToMap(String json) {
+        if (json == null || json.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.findAndRegisterModules();
+            return objectMapper.readValue(json, new TypeReference<>() {
+            });
+        } catch (JsonProcessingException e) {
+            throw new BusinessException("Failed to deserialize advancedFeatures", e);
+        }
+    }
+
+    @Named("mapToString")
+    default String mapToString(Map<String, Object> map) {
+        if (map == null || map.isEmpty()) {
+            return "";
+        }
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.findAndRegisterModules();
+            return objectMapper.writeValueAsString(map);
+        } catch (JsonProcessingException e) {
+            throw new BusinessException("Failed to deserialize advancedFeatures", e);
+        }
     }
 }

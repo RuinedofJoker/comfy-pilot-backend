@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS comfyui_server (
     last_health_check_time TIMESTAMP,
     health_status VARCHAR(20),
     advanced_features_enabled BOOLEAN DEFAULT FALSE,
-    advanced_features JSONB,
+    advanced_features TEXT,
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by BIGINT NOT NULL,
     update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

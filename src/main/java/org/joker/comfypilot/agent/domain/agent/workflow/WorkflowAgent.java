@@ -62,7 +62,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
     @Override
     public List<AgentConfigDefinition> getConfigDefinitions() {
         return List.of(
-                AgentConfigDefinition.modelValue("modelIdentifier", "使用LLM模型", true, true, ModelCallingType.API_LLM),
+                AgentConfigDefinition.modelValue("模型名称", "使用LLM模型", true, true, ModelCallingType.API_LLM),
                 AgentConfigDefinition.stringValue("apiKey", "模型调用apiKey", false, true, "")
         );
     }

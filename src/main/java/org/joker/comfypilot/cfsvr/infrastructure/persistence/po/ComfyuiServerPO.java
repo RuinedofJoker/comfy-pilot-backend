@@ -1,6 +1,5 @@
 package org.joker.comfypilot.cfsvr.infrastructure.persistence.po;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,7 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.joker.comfypilot.common.infrastructure.persistence.annotation.UniqueKey;
 import org.joker.comfypilot.common.infrastructure.persistence.po.BasePO;
-import org.joker.comfypilot.common.infrastructure.persistence.typehandler.PostgresJsonbTypeHandler;
 
 import java.time.LocalDateTime;
 
@@ -88,8 +86,7 @@ public class ComfyuiServerPO extends BasePO {
     private Boolean advancedFeaturesEnabled;
 
     /**
-     * 高级功能配置（JSONB类型）
+     * 高级功能配置（JSON类型）
      */
-    @TableField(typeHandler = PostgresJsonbTypeHandler.class)
     private String advancedFeatures;
 }
