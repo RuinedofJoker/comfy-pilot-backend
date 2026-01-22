@@ -84,7 +84,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
 
     protected void executeWithStreaming(AgentExecutionContext executionContext) throws Exception {
         // 发送ai思考中消息
-        executionContext.getStreamCallback().onThinking();
+        executionContext.getAgentCallback().onThinking();
 
         AgentExecutionRequest request = executionContext.getRequest();
 

@@ -6,10 +6,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionResponse;
-import org.joker.comfypilot.agent.domain.callback.StreamCallback;
+import org.joker.comfypilot.agent.domain.callback.AgentCallback;
 import org.joker.comfypilot.agent.domain.entity.AgentExecutionLog;
 import org.joker.comfypilot.agent.domain.service.Agent;
+import org.joker.comfypilot.tool.domain.service.Tool;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -27,6 +29,8 @@ public class AgentExecutionContext {
 
     private Long sessionId;
 
+    private String requestId;
+
     private Long userId;
 
     private AgentExecutionRequest request;
@@ -39,13 +43,15 @@ public class AgentExecutionContext {
 
     private Map<String, Object> agentScope;
 
-    private StreamCallback streamCallback;
+    private List<? extends Tool> clientTools;
+
+    private AgentCallback agentCallback;
 
     /**
      * 检查是否被中断
      */
     public boolean isInterrupted() {
-        return streamCallback != null && streamCallback.isInterrupted();
+        return agentCallback != null && agentCallback.isInterrupted();
     }
 
 }

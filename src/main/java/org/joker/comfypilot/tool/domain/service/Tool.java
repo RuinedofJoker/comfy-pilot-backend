@@ -1,6 +1,8 @@
 package org.joker.comfypilot.tool.domain.service;
 
 import dev.langchain4j.agent.tool.ToolSpecification;
+import org.joker.comfypilot.tool.infrastructure.service.ClientTool;
+import org.joker.comfypilot.tool.infrastructure.service.ServerTool;
 
 import java.lang.reflect.Method;
 
@@ -34,10 +36,12 @@ import java.lang.reflect.Method;
  * // 返回: "30"
  * }</pre>
  *
- * @see org.joker.comfypilot.tool.infrastructure.service.ExecutableTool
+ * @see ServerTool
  * @see org.joker.comfypilot.tool.infrastructure.service.ToolRegistryImpl
  */
 public interface Tool {
+
+    String SERVER_TOOL_PREFIX = "comfy_pilot_server_tool_";
 
     /**
      * 获取工具名称
@@ -48,24 +52,6 @@ public interface Tool {
      * @return 工具名称
      */
     String toolName();
-
-    /**
-     * 获取工具对应的反射方法
-     * <p>
-     * 用于通过反射调用工具的实际执行逻辑。
-     *
-     * @return 反射方法对象
-     */
-    Method method();
-
-    /**
-     * 获取工具所属的 Bean 实例
-     * <p>
-     * 工具方法需要通过 Bean 实例调用（非静态方法）。
-     *
-     * @return Spring Bean 实例
-     */
-    Object instance();
 
     /**
      * 获取工具的 LangChain4j 规范
@@ -109,4 +95,13 @@ public interface Tool {
      * @throws org.joker.comfypilot.common.exception.BusinessException 工具执行失败时抛出
      */
     String executeTool(String name, String arguments);
+
+    default boolean isServerTool() {
+        return ServerTool.class.equals(getClass());
+    }
+
+    default boolean isClientTool() {
+        return ClientTool.class.equals(getClass());
+    }
+
 }

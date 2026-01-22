@@ -1,6 +1,7 @@
 package org.joker.comfypilot.agent.application.executor;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionResponse;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
@@ -13,15 +14,13 @@ import org.joker.comfypilot.agent.domain.service.Agent;
 import org.joker.comfypilot.agent.domain.service.AgentRegistry;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.util.TraceIdUtil;
+import org.joker.comfypilot.tool.infrastructure.service.ClientTool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Agent执行器实现
@@ -60,14 +59,28 @@ public class AgentExecutorImpl implements AgentExecutor {
             agentRuntimeConfig.putAll(request.getAgentConfig());
         }
 
+        // 将ClientTool收集起来
+        List<ClientTool> clientTools = Optional.ofNullable(request.getToolSchemas()).orElse(Collections.emptyList()).stream().map(ClientTool::new).toList();
+        Set<String> clientToolNames = new HashSet<>(clientTools.size());
+        for (ClientTool clientTool : clientTools) {
+            if (StringUtils.isBlank(clientTool.toolName())) {
+                throw new BusinessException("客户端工具名" + clientTool.toolName() + "为空");
+            }
+            if (!clientToolNames.add(clientTool.toolName())) {
+                throw new BusinessException("客户端工具名" + clientTool.toolName() + "重复");
+            }
+        }
+
         return AgentExecutionContext.builder()
                 .agentCode(agentCode)
                 .agent(agent)
                 .agentConfig(agentRuntimeConfig)
                 .agentScope(Collections.unmodifiableMap(agentConfig.getAgentScopeConfig()))
                 .userId(request.getUserId())
+                .requestId(request.getRequestId())
                 .sessionId(request.getSessionId())
                 .request(request)
+                .clientTools(clientTools)
                 .executionLog(executionLog)
                 .build();
     }
@@ -137,8 +150,8 @@ public class AgentExecutorImpl implements AgentExecutor {
             log.error("Agent执行失败: code={}, error={}", agentCode, e.getMessage(), e);
 
             // 如果有流式回调，通知错误
-            if (executionContext.getStreamCallback() != null) {
-                executionContext.getStreamCallback().onError(e.getMessage());
+            if (executionContext.getAgentCallback() != null) {
+                executionContext.getAgentCallback().onError(e.getMessage());
             }
 
             return AgentExecutionResponse.builder()

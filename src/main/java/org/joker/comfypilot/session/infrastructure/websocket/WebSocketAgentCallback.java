@@ -3,31 +3,34 @@ package org.joker.comfypilot.session.infrastructure.websocket;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.joker.comfypilot.agent.domain.callback.StreamCallback;
+import org.joker.comfypilot.agent.domain.callback.AgentCallback;
+import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
+import org.joker.comfypilot.common.util.SpringContextUtil;
 import org.joker.comfypilot.session.application.dto.WebSocketMessage;
+import org.joker.comfypilot.session.application.dto.server2client.AgentToolCallRequestData;
 import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
 import org.joker.comfypilot.session.domain.enums.WebSocketMessageType;
+import org.joker.comfypilot.tool.domain.service.ToolRegistry;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
-
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * WebSocket流式输出回调实现
  */
 @Slf4j
 @RequiredArgsConstructor
-public class WebSocketStreamCallback implements StreamCallback {
+public class WebSocketAgentCallback implements AgentCallback {
 
     private final WebSocketSession webSocketSession;
     private final WebSocketSessionContext sessionContext;
+    private final AgentExecutionContext agentExecutionContext;
     private final String sessionCode;
+    private final String requestId;
     private final ObjectMapper objectMapper;
 
     @Override
     public void onThinking() {
-        log.debug("Agent开始思考: sessionCode={}", sessionCode);
+        log.debug("Agent开始思考: sessionCode={}, requestId={}", sessionCode, requestId);
         sendMessage(WebSocketMessageType.AGENT_THINKING, "Agent正在思考中...");
     }
 
@@ -41,11 +44,20 @@ public class WebSocketStreamCallback implements StreamCallback {
     public void onToolCall(String toolName, String toolArgs) {
         log.info("Agent调用工具: sessionCode={}, tool={}, args={}", sessionCode, toolName, toolArgs);
 
-        WebSocketMessage message = WebSocketMessage.builder()
-                .type(WebSocketMessageType.AGENT_TOOL_CALL.name())
+        // 构建工具调用请求数据
+        AgentToolCallRequestData requestData = AgentToolCallRequestData.builder()
+                .toolName(toolName)
+                .toolArgs(toolArgs)
+                .build();
+
+        ToolRegistry toolRegistry = SpringContextUtil.getBean(ToolRegistry.class);
+
+
+        WebSocketMessage<AgentToolCallRequestData> message = WebSocketMessage.<AgentToolCallRequestData>builder()
+                .type(WebSocketMessageType.AGENT_TOOL_CALL_REQUEST.name())
                 .sessionCode(sessionCode)
                 .content(toolName)
-                .data(Map.of("toolName", toolName, "toolArgs", toolArgs))
+                .data(requestData)
                 .timestamp(System.currentTimeMillis())
                 .build();
 
@@ -53,18 +65,19 @@ public class WebSocketStreamCallback implements StreamCallback {
     }
 
     @Override
-    public CompletableFuture<String> onRequestInput(String prompt) {
-        log.info("Agent请求用户输入: sessionCode={}, prompt={}", sessionCode, prompt);
-        sendMessage(WebSocketMessageType.AGENT_REQUEST_INPUT, prompt);
+    public void onComplete(String fullContent) {
+        log.info("Agent执行完成: sessionCode={}", sessionCode);
 
-        // 创建并返回等待用户响应的Future
-        return sessionContext.requestUserInput();
+        // 非流式调用需要返回
+        sendMessage(WebSocketMessageType.AGENT_COMPLETE, fullContent);
     }
 
     @Override
-    public void onComplete(String fullContent) {
-        log.info("Agent执行完成: sessionCode={}", sessionCode);
-        sendMessage(WebSocketMessageType.AGENT_COMPLETE, fullContent);
+    public void onStreamComplete(String fullContent) {
+        log.info("Agent流式执行完成: sessionCode={}", sessionCode);
+
+        // 流式调用不需要返回
+        sendMessage(WebSocketMessageType.AGENT_COMPLETE, null);
 
         // 标记执行完成
         sessionContext.completeExecution();
@@ -74,7 +87,7 @@ public class WebSocketStreamCallback implements StreamCallback {
     public void onError(String error) {
         log.error("Agent执行错误: sessionCode={}, error={}", sessionCode, error);
 
-        WebSocketMessage message = WebSocketMessage.builder()
+        WebSocketMessage<?> message = WebSocketMessage.builder()
                 .type(WebSocketMessageType.ERROR.name())
                 .sessionCode(sessionCode)
                 .error(error)
@@ -89,6 +102,7 @@ public class WebSocketStreamCallback implements StreamCallback {
 
     @Override
     public boolean isInterrupted() {
+        sendMessage(WebSocketMessageType.EXECUTION_INTERRUPTED, "执行已中断");
         return sessionContext.isInterrupted();
     }
 
@@ -96,9 +110,10 @@ public class WebSocketStreamCallback implements StreamCallback {
      * 发送简单消息
      */
     private void sendMessage(WebSocketMessageType type, String content) {
-        WebSocketMessage message = WebSocketMessage.builder()
+        WebSocketMessage<?> message = WebSocketMessage.builder()
                 .type(type.name())
                 .sessionCode(sessionCode)
+                .requestId(requestId)
                 .content(content)
                 .timestamp(System.currentTimeMillis())
                 .build();
@@ -109,7 +124,7 @@ public class WebSocketStreamCallback implements StreamCallback {
     /**
      * 发送WebSocket消息
      */
-    private void sendWebSocketMessage(WebSocketMessage message) {
+    private void sendWebSocketMessage(WebSocketMessage<?> message) {
         try {
             if (webSocketSession.isOpen()) {
                 String json = objectMapper.writeValueAsString(message);

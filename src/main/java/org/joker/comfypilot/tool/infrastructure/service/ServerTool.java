@@ -13,7 +13,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
 /**
- * 可执行工具实现类
+ * 服务端工具实现类
  * <p>
  * {@link Tool} 接口的默认实现，封装了工具的反射调用逻辑。
  * 通过 Jackson 进行 JSON 参数解析和结果序列化，支持复杂对象类型。
@@ -70,7 +70,7 @@ import java.lang.reflect.Parameter;
 @Slf4j
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
-public class ExecutableTool implements Tool {
+public class ServerTool implements Tool {
 
     /**
      * JSON 序列化/反序列化工具
@@ -117,22 +117,6 @@ public class ExecutableTool implements Tool {
     @Override
     public String toolName() {
         return toolName;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Method method() {
-        return method;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Object instance() {
-        return instance;
     }
 
     /**

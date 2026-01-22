@@ -1,6 +1,7 @@
 package org.joker.comfypilot.session.application.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.langchain4j.agent.tool.ToolSpecification;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.joker.comfypilot.agent.application.dto.AgentConfigDTO;
@@ -11,12 +12,9 @@ import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.joker.comfypilot.cfsvr.application.service.ComfyuiServerService;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.session.application.converter.ChatSessionDTOConverter;
-import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
-import org.joker.comfypilot.session.application.dto.ChatSessionDTO;
-import org.joker.comfypilot.session.application.dto.CreateSessionRequest;
-import org.joker.comfypilot.session.application.dto.UpdateSessionRequest;
+import org.joker.comfypilot.session.application.dto.*;
+import org.joker.comfypilot.session.application.dto.client2server.UserMessageRequestData;
 import org.joker.comfypilot.session.application.service.ChatSessionService;
-import org.joker.comfypilot.session.domain.constant.WebSocketDataConstants;
 import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
 import org.joker.comfypilot.session.domain.entity.ChatMessage;
 import org.joker.comfypilot.session.domain.entity.ChatSession;
@@ -25,7 +23,7 @@ import org.joker.comfypilot.session.domain.enums.MessageStatus;
 import org.joker.comfypilot.session.domain.enums.SessionStatus;
 import org.joker.comfypilot.session.domain.repository.ChatMessageRepository;
 import org.joker.comfypilot.session.domain.repository.ChatSessionRepository;
-import org.joker.comfypilot.session.infrastructure.websocket.WebSocketStreamCallback;
+import org.joker.comfypilot.session.infrastructure.websocket.WebSocketAgentCallback;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
@@ -192,49 +190,36 @@ public class ChatSessionServiceImpl implements ChatSessionService {
 
     @Override
     @Async
-    public void sendMessageAsync(String sessionCode, String content, Map<String, Object> data,
-                                  WebSocketSessionContext wsContext,
-                                  WebSocketSession webSocketSession) {
-        log.info("异步发送消息: sessionCode={}, content={}", sessionCode, content);
+    public void sendMessageAsync(String sessionCode, WebSocketMessage<?> wsMessage,
+                                 WebSocketSessionContext wsContext,
+                                 WebSocketSession webSocketSession) {
+        log.info("异步发送消息: sessionCode={}, type={}, content={}", sessionCode, wsMessage.getType(), wsMessage.getContent());
 
         try {
+            WebSocketMessage<UserMessageRequestData> userRequestWsMessage = (WebSocketMessage<UserMessageRequestData>) wsMessage;
+            UserMessageRequestData userRequestWsMessageData = userRequestWsMessage.getData();
+
+            String content = userRequestWsMessage.getContent();
+
+            String requestId = userRequestWsMessageData.getRequestId();
+
+            if (requestId == null) {
+                throw new BusinessException("用户请求ID不能为空");
+            }
+
             // 标记开始执行
             wsContext.startExecution();
 
-            // 1. 查询会话
+            // 查询会话
             ChatSession chatSession = chatSessionRepository.findBySessionCode(sessionCode)
                     .orElseThrow(() -> new BusinessException("会话不存在: " + sessionCode));
 
-            // 2. 验证会话状态
+            // 验证会话状态
             if (!chatSession.isActive()) {
                 throw new BusinessException("会话已关闭,无法发送消息");
             }
-            if (data == null) {
-                throw new BusinessException("用户消息未提供额外数据");
-            }
 
-            // 3.验证额外数据 data
-
-            // 工作流内容
-            String workflowContent = null;
-            if (data.get(WebSocketDataConstants.WORKFLOW_CONTENT) != null) {
-                Object workflowContentObj = data.get(WebSocketDataConstants.WORKFLOW_CONTENT);
-                if (!(workflowContentObj instanceof String)) {
-                    throw new BusinessException("工作流内容必须是字符串");
-                }
-                workflowContent = (String) workflowContentObj;
-            }
-
-            // 多模态列表 TODO 目前还不确定一定得是 List<String>
-            List<String> multimodalList = null;
-            if (data.get(WebSocketDataConstants.MULTIMODAL_LIST) != null) {
-                Object multimodalListObj = data.get(WebSocketDataConstants.MULTIMODAL_LIST);
-                if (multimodalListObj instanceof String) {
-                    // todo
-                }
-            }
-
-            // 4. 保存用户消息
+            // 保存用户消息
             ChatMessage userMessage = ChatMessage.builder()
                     .sessionId(chatSession.getId())
                     .role(MessageRole.USER)
@@ -244,26 +229,28 @@ public class ChatSessionServiceImpl implements ChatSessionService {
                     .build();
             chatMessageRepository.save(userMessage);
 
-            // 5. 创建流式回调
-            WebSocketStreamCallback streamCallback = new WebSocketStreamCallback(
-                    webSocketSession, wsContext, sessionCode, objectMapper);
-
-            // 6. 构建Agent执行请求
+            // 构建Agent执行请求
             AgentExecutionRequest agentRequest = AgentExecutionRequest.builder()
                     .sessionId(chatSession.getId())
                     .userId(wsContext.getUserId())
-                    .workflowContent(workflowContent)
-                    .multimodalList(multimodalList)
+                    .requestId(requestId)
+                    .workflowContent(userRequestWsMessageData.getWorkflowContent())
+                    .toolSchemas(userRequestWsMessageData.getToolSchemas())
                     .userMessage(content)
                     .agentConfig(chatSession.getAgentConfig())
                     .isStreamable(true)
                     .build();
 
-            // 7. 获取Agent执行上下文（直接使用传入的agentCode）
+            // 获取Agent执行上下文（直接使用传入的agentCode）
             AgentExecutionContext executionContext = agentExecutor.getExecutionContext(chatSession.getAgentCode(), agentRequest);
 
-            // 设置流式回调
-            executionContext.setStreamCallback(streamCallback);
+            // 创建流式回调
+            WebSocketAgentCallback agentCallback = new WebSocketAgentCallback(
+                    webSocketSession, wsContext, executionContext, sessionCode, requestId, objectMapper
+            );
+
+            // 设置agent回调
+            executionContext.setAgentCallback(agentCallback);
 
             // 8. 执行Agent
             agentExecutor.execute(executionContext);

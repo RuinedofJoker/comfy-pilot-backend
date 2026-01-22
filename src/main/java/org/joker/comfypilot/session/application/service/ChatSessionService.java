@@ -1,9 +1,6 @@
 package org.joker.comfypilot.session.application.service;
 
-import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
-import org.joker.comfypilot.session.application.dto.ChatSessionDTO;
-import org.joker.comfypilot.session.application.dto.CreateSessionRequest;
-import org.joker.comfypilot.session.application.dto.UpdateSessionRequest;
+import org.joker.comfypilot.session.application.dto.*;
 import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -71,12 +68,11 @@ public interface ChatSessionService {
      * 异步发送消息（WebSocket版本，支持流式输出）
      *
      * @param sessionCode 会话编码
-     * @param content     消息内容
-     * @param data        额外数据
+     * @param wsMessage   消息内容
      * @param context     WebSocket会话上下文
      * @param session     WebSocket会话
      */
-    void sendMessageAsync(String sessionCode, String content, Map<String, Object> data, WebSocketSessionContext context, WebSocketSession session);
+    void sendMessageAsync(String sessionCode, WebSocketMessage<?> wsMessage, WebSocketSessionContext context, WebSocketSession session);
 
     /**
      * 查询会话消息历史

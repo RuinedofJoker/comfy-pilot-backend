@@ -1,5 +1,6 @@
 package org.joker.comfypilot.agent.application.dto;
 
+import io.modelcontextprotocol.spec.McpSchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,6 +32,9 @@ public class AgentExecutionRequest implements Serializable {
     @Schema(description = "用户ID")
     private Long userId;
 
+    @Schema(description = "请求ID")
+    private String requestId;
+
     @Schema(description = "是否流式执行")
     private Boolean isStreamable;
 
@@ -40,6 +44,9 @@ public class AgentExecutionRequest implements Serializable {
     @Schema(description = "工作流内容（一般是json格式，comfyui规定的格式）")
     private String workflowContent;
 
-    @Schema(description = "多模态列表")
-    private List<String> multimodalList;
+    /**
+     * 客户端MCP工具列表
+     */
+    @Schema(description = "客户端MCP工具schema列表")
+    private List<McpSchema.Tool> toolSchemas;
 }

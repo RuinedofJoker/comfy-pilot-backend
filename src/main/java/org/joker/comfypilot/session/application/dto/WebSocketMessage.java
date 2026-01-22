@@ -7,17 +7,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.Map;
 
 /**
  * WebSocket消息DTO
+ * @param <T> 附加数据类型
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class WebSocketMessage implements Serializable {
+public class WebSocketMessage<T> implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -32,14 +32,22 @@ public class WebSocketMessage implements Serializable {
     private String sessionCode;
 
     /**
+     * 请求编号
+     */
+    private String requestId;
+
+    /**
      * 消息内容
      */
     private String content;
 
     /**
-     * 附加数据
+     * 附加数据（泛型）
+     * 根据消息类型使用不同的数据类型：
+     * - 服务端->客户端：使用 server2client 包下的数据类型
+     * - 客户端->服务端：使用 client2server 包下的数据类型
      */
-    private Map<String, Object> data;
+    private T data;
 
     /**
      * 错误信息

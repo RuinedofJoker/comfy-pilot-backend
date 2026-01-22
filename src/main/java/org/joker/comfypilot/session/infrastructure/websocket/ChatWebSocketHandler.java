@@ -1,10 +1,13 @@
 package org.joker.comfypilot.session.infrastructure.websocket;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.joker.comfypilot.common.constant.AuthConstants;
 import org.joker.comfypilot.session.application.dto.WebSocketMessage;
+import org.joker.comfypilot.session.application.dto.client2server.AgentToolCallResponseData;
 import org.joker.comfypilot.session.application.service.ChatSessionService;
 import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
 import org.joker.comfypilot.session.domain.enums.WebSocketMessageType;
@@ -70,28 +73,50 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         context.updateActiveTime();
 
         try {
-            // 解析消息
-            WebSocketMessage wsMessage = objectMapper.readValue(message.getPayload(), WebSocketMessage.class);
-            String messageType = wsMessage.getType();
+            String payload = message.getPayload();
+
+            // 1. 先解析获取type字段
+            JsonNode rootNode = objectMapper.readTree(payload);
+            JsonNode typeNode = rootNode.get("type");
+
+            if (typeNode == null || typeNode.isNull()) {
+                sendErrorMessage(session, "消息类型不能为空");
+                return;
+            }
+
+            String messageTypeStr = typeNode.asText();
+
+            // 2. 将type转换为枚举，如果不存在则报错
+            WebSocketMessageType messageType;
+            try {
+                messageType = WebSocketMessageType.valueOf(messageTypeStr);
+            } catch (IllegalArgumentException e) {
+                log.error("未知的消息类型: {}", messageTypeStr);
+                sendErrorMessage(session, "未知的消息类型: " + messageTypeStr);
+                return;
+            }
 
             log.info("收到WebSocket消息: wsSessionId={}, type={}", wsSessionId, messageType);
 
-            // 根据消息类型处理
-            if (WebSocketMessageType.USER_MESSAGE.name().equals(messageType)) {
+            // 3. 根据枚举的dataClass反序列化WebSocketMessage
+            WebSocketMessage<?> wsMessage = deserializeMessage(payload, messageType);
+
+            // 4. 根据消息类型处理
+            if (WebSocketMessageType.USER_MESSAGE.equals(messageType)) {
                 handleUserMessage(session, context, wsMessage);
-            } else if (WebSocketMessageType.USER_RESPONSE.name().equals(messageType)) {
-                handleUserResponse(session, context, wsMessage);
-            } else if (WebSocketMessageType.INTERRUPT.name().equals(messageType)) {
+            } else if (WebSocketMessageType.AGENT_TOOL_CALL_RESPONSE.equals(messageType)) {
+                handleToolCallResponse(session, context, wsMessage);
+            } else if (WebSocketMessageType.INTERRUPT.equals(messageType)) {
                 handleInterrupt(session, context, wsMessage);
-            } else if (WebSocketMessageType.PING.name().equals(messageType)) {
+            } else if (WebSocketMessageType.PING.equals(messageType)) {
                 handlePing(session);
             } else {
-                log.warn("未知的消息类型: {}", messageType);
+                log.warn("未处理的消息类型: {}", messageType);
             }
 
         } catch (Exception e) {
             log.error("处理WebSocket消息失败: wsSessionId={}, error={}", wsSessionId, e.getMessage(), e);
-            sendErrorMessage(session, "处理消息失败: " + e.getMessage());
+            sendErrorMessage(session, e.getMessage());
         }
     }
 
@@ -112,10 +137,9 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     /**
      * 处理用户消息
      */
-    private void handleUserMessage(WebSocketSession session, WebSocketSessionContext context, WebSocketMessage wsMessage) {
+    private void handleUserMessage(WebSocketSession session, WebSocketSessionContext context, WebSocketMessage<?> wsMessage) {
         String sessionCode = wsMessage.getSessionCode();
         String content = wsMessage.getContent();
-        Map<String, Object> data = wsMessage.getData();
 
         if (sessionCode == null || content == null) {
             sendErrorMessage(session, "会话编码、消息内容不能为空");
@@ -129,53 +153,71 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         }
 
         // 异步执行Agent（传递agentCode）
-        chatSessionService.sendMessageAsync(sessionCode, content, data, context, session);
+        chatSessionService.sendMessageAsync(sessionCode, wsMessage, context, session);
+    }
+
+    /**
+     * 根据消息类型反序列化WebSocketMessage
+     *
+     * @param payload     JSON字符串
+     * @param messageType 消息类型枚举
+     * @return 反序列化后的WebSocketMessage
+     */
+    private WebSocketMessage<?> deserializeMessage(String payload, WebSocketMessageType messageType) throws Exception {
+        Class<?> dataClass = messageType.getDataClass();
+
+        if (dataClass == null || dataClass == Map.class) {
+            // 如果dataClass为null或Map，使用默认反序列化
+            return objectMapper.readValue(payload, new TypeReference<WebSocketMessage<Object>>() {});
+        } else {
+            // 根据具体的dataClass类型反序列化
+            // 使用JavaType来构建泛型类型
+            return objectMapper.readValue(payload,
+                    objectMapper.getTypeFactory().constructParametricType(WebSocketMessage.class, dataClass));
+        }
     }
 
     /**
      * 处理中断消息
      */
-    private void handleInterrupt(WebSocketSession session, WebSocketSessionContext context, WebSocketMessage wsMessage) {
+    private void handleInterrupt(WebSocketSession session, WebSocketSessionContext context, WebSocketMessage<?> wsMessage) {
         sessionManager.requestInterrupt(session.getId());
-
-        WebSocketMessage response = WebSocketMessage.builder()
-                .type(WebSocketMessageType.EXECUTION_INTERRUPTED.name())
-                .content("执行已中断")
-                .timestamp(System.currentTimeMillis())
-                .build();
-
-        sendMessage(session, response);
-        log.info("执行已中断: sessionId={}", session.getId());
+        log.info("执行申请中断: sessionId={}", session.getId());
     }
 
     /**
-     * 处理用户响应消息
+     * 处理工具调用响应消息
      */
-    private void handleUserResponse(WebSocketSession session, WebSocketSessionContext context, WebSocketMessage wsMessage) {
-        String content = wsMessage.getContent();
+    private void handleToolCallResponse(WebSocketSession session, WebSocketSessionContext context, WebSocketMessage<?> wsMessage) {
+        try {
+            // 将data转换为AgentToolCallResponseData
+            Object dataObj = wsMessage.getData();
+            if (dataObj == null) {
+                sendErrorMessage(session, "工具调用响应数据不能为空");
+                return;
+            }
 
-        if (content == null || content.isEmpty()) {
-            sendErrorMessage(session, "用户响应内容不能为空");
-            return;
+            // 使用ObjectMapper转换data
+            AgentToolCallResponseData responseData = objectMapper.convertValue(dataObj, AgentToolCallResponseData.class);
+
+            log.info("收到工具调用响应: sessionId={}, toolName={}, success={}",
+                    session.getId(), responseData.getToolName(), responseData.getSuccess());
+
+            // TODO: 将工具调用结果传递给Agent继续执行
+            // 这里需要根据实际的Agent执行流程来实现
+            // 可能需要在WebSocketSessionContext中添加相应的方法来处理工具调用结果
+
+        } catch (Exception e) {
+            log.error("处理工具调用响应失败: sessionId={}, error={}", session.getId(), e.getMessage(), e);
+            sendErrorMessage(session, "处理工具调用响应失败: " + e.getMessage());
         }
-
-        // 检查是否正在等待用户输入
-        if (!context.isWaitingForUserInput()) {
-            log.warn("收到用户响应但未在等待状态: sessionId={}", session.getId());
-            sendErrorMessage(session, "当前不在等待用户输入状态");
-            return;
-        }
-
-        // 提供用户响应，完成Future
-        context.provideUserResponse(content);
-        log.info("已接收用户响应: sessionId={}, content={}", session.getId(), content);
     }
 
     /**
      * 处理心跳消息
      */
     private void handlePing(WebSocketSession session) {
-        WebSocketMessage response = WebSocketMessage.builder()
+        WebSocketMessage<?> response = WebSocketMessage.builder()
                 .type(WebSocketMessageType.PONG.name())
                 .timestamp(System.currentTimeMillis())
                 .build();
@@ -186,7 +228,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     /**
      * 发送消息
      */
-    public void sendMessage(WebSocketSession session, WebSocketMessage message) {
+    public void sendMessage(WebSocketSession session, WebSocketMessage<?> message) {
         try {
             if (session.isOpen()) {
                 String json = objectMapper.writeValueAsString(message);
@@ -201,7 +243,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
      * 发送错误消息
      */
     private void sendErrorMessage(WebSocketSession session, String error) {
-        WebSocketMessage message = WebSocketMessage.builder()
+        WebSocketMessage<?> message = WebSocketMessage.builder()
                 .type(WebSocketMessageType.ERROR.name())
                 .error(error)
                 .timestamp(System.currentTimeMillis())
