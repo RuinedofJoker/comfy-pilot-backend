@@ -1,17 +1,13 @@
 package org.joker.comfypilot.agent.infrastructure.registry;
 
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.agent.domain.entity.AgentConfig;
 import org.joker.comfypilot.agent.domain.enums.AgentStatus;
 import org.joker.comfypilot.agent.domain.repository.AgentConfigRepository;
 import org.joker.comfypilot.agent.domain.service.Agent;
 import org.joker.comfypilot.agent.domain.service.AgentRegistry;
-import org.springframework.beans.BeansException;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -25,8 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Slf4j
 @Component
-@Order(Ordered.LOWEST_PRECEDENCE)
-public class AgentRegistryImpl implements AgentRegistry {
+public class AgentRegistryImpl implements CommandLineRunner, AgentRegistry {
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -42,8 +37,8 @@ public class AgentRegistryImpl implements AgentRegistry {
     /**
      * 应用启动后自动注册所有Agent并同步到数据库
      */
-    @PostConstruct
-    public void registerAllAgents() {
+    @Override
+    public void run(String... args) {
         log.info("开始扫描并注册Agent实现...");
 
         // 从Spring容器中获取所有Agent实现

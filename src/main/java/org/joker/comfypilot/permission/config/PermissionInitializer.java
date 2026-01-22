@@ -1,11 +1,9 @@
 package org.joker.comfypilot.permission.config;
 
 import lombok.extern.slf4j.Slf4j;
-import org.joker.comfypilot.permission.domain.entity.Permission;
 import org.joker.comfypilot.permission.domain.entity.Role;
 import org.joker.comfypilot.permission.domain.entity.RolePermission;
 import org.joker.comfypilot.permission.domain.entity.UserRole;
-import org.joker.comfypilot.permission.domain.repository.PermissionRepository;
 import org.joker.comfypilot.permission.domain.repository.RolePermissionRepository;
 import org.joker.comfypilot.permission.domain.repository.RoleRepository;
 import org.joker.comfypilot.permission.domain.repository.UserRoleRepository;
@@ -15,6 +13,7 @@ import org.joker.comfypilot.user.domain.enums.UserStatus;
 import org.joker.comfypilot.user.domain.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -28,12 +27,11 @@ import java.util.List;
  */
 @Slf4j
 @Component
+@DependsOn("embeddedDatabaseConfig")
 public class PermissionInitializer implements CommandLineRunner {
 
     @Autowired
     private RoleRepository roleRepository;
-    @Autowired
-    private PermissionRepository permissionRepository;
     @Autowired
     private RolePermissionRepository rolePermissionRepository;
     @Autowired
