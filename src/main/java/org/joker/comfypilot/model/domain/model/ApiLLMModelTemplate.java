@@ -8,6 +8,7 @@ import org.joker.comfypilot.model.domain.service.AbstractModelTemplate;
 import org.joker.comfypilot.model.domain.service.ChatModelFactory;
 import org.joker.comfypilot.model.domain.service.ModelTemplate;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class ApiLLMModelTemplate extends AbstractModelTemplate implements ModelTemplate {
@@ -25,7 +26,7 @@ public class ApiLLMModelTemplate extends AbstractModelTemplate implements ModelT
 
     @Override
     public Map<String, Object> configFormat() {
-        return Map.of(
+        Map<String, Object> parameters = new HashMap<>(Map.of(
                 "apiKey", "skuxxxx",
                 "$apiKey", "第三方apiKey，可选，没填用模型上的",
                 "temperature", 0.8,
@@ -36,7 +37,10 @@ public class ApiLLMModelTemplate extends AbstractModelTemplate implements ModelT
                 "$topP", "",
                 "timeout", 200,
                 "$timeout", "超时时间"
-        );
+        ));
+        parameters.put("supportMultimodal", false);
+        parameters.put("$supportMultimodal", "是否支持多模态");
+        return parameters;
     }
 
     private void ensureInit() {

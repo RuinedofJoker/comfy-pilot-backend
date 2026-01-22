@@ -1,6 +1,7 @@
 package org.joker.comfypilot.agent.aiservice;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.memory.chat.TokenWindowChatMemory;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiTokenCountEstimator;
@@ -54,8 +55,6 @@ public class AiServiceTest extends BaseTest {
         System.out.println(chatMemoryStore.getMessages("12345").size());
 
         System.out.println();
-
-
 
         /*AiMessage aiMessage = AiMessage.builder()
                 .text("xxx")

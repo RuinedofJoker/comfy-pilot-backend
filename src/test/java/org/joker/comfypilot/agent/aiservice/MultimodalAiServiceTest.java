@@ -1,5 +1,6 @@
 package org.joker.comfypilot.agent.aiservice;
 
+import com.alibaba.fastjson2.JSON;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.langchain4j.data.message.*;
@@ -47,12 +48,12 @@ public class MultimodalAiServiceTest extends BaseTest {
                 .build();
 
         UserMessage userMessage = UserMessage.from(List.of(
-                TextContent.from("帮我总结一下这个音频的内容"),
-                AudioContent.from(FileContentUtil.toBase64("C:\\Users\\61640\\Desktop\\mlk.flac"), FileContentUtil.getMimeType("C:\\Users\\61640\\Desktop\\mlk.flac"))
+                TextContent.from("帮我生成一张和这个图片风格一样的图片"),
+//                AudioContent.from(FileContentUtil.toBase64("C:\\Users\\61640\\Desktop\\mlk.flac"), FileContentUtil.getMimeType("C:\\Users\\61640\\Desktop\\mlk.flac"))
 //                ImageContent.from("https://ir78450cc343.vicp.fun/微信图片_20260103154248_7584_34.jpg")
 //                VideoContent.from("https://ir78450cc343.vicp.fun/35507798632-1-192.mp4")
 //                ImageContent.from("https://cdn.pixabay.com/photo/2020/04/13/19/40/sun-5039871_1280.jpg")
-//                ImageContent.from(FileContentUtil.toBase64("C:\\Users\\61640\\Desktop\\微信图片_20260103154248_7584_34.jpg"), "image/jpeg")
+                ImageContent.from(FileContentUtil.toBase64("C:\\Users\\61640\\Desktop\\微信图片_20260103154248_7584_34.jpg"), "image/jpeg")
 
         ));
         chatMemory.add(userMessage);
@@ -77,9 +78,7 @@ public class MultimodalAiServiceTest extends BaseTest {
                 VideoContent.from("https://ir78450cc343.vicp.fun/35507798632-1-192.mp4"),
                 ImageContent.from(FileContentUtil.toBase64("C:\\Users\\61640\\Desktop\\微信图片_20260103154248_7584_34.jpg"), "image/jpeg")
         ));
-        ObjectMapper objectMapper = new ObjectMapper();
-        String json = objectMapper.writeValueAsString(userMessage);
-        System.out.println(json);
+        System.out.println(JSON.toJSONString(TextContent.from("帮我总结一下这个音频的内容")));
     }
 
 }
