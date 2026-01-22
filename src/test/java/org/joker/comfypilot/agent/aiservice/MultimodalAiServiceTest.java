@@ -14,6 +14,7 @@ import dev.langchain4j.model.openai.OpenAiTokenCountEstimator;
 import dev.langchain4j.store.memory.chat.ChatMemoryStore;
 import dev.langchain4j.store.memory.chat.InMemoryChatMemoryStore;
 import org.joker.comfypilot.BaseTest;
+import org.joker.comfypilot.common.domain.message.PersistableChatMessage;
 import org.joker.comfypilot.common.util.FileContentUtil;
 import org.junit.jupiter.api.Test;
 
@@ -71,6 +72,10 @@ public class MultimodalAiServiceTest extends BaseTest {
 
     @Test
     public void testJson() throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+
+        // 1. 演示 UserMessage 的序列化和反序列化
+        System.out.println("========== 1. UserMessage 序列化演示 ==========");
         UserMessage userMessage = UserMessage.from(List.of(
                 TextContent.from("帮我总结一下这个音频的内容"),
                 AudioContent.from(FileContentUtil.toBase64("C:\\Users\\61640\\Desktop\\mlk.flac"), FileContentUtil.getMimeType("C:\\Users\\61640\\Desktop\\mlk.flac")),
@@ -78,7 +83,22 @@ public class MultimodalAiServiceTest extends BaseTest {
                 VideoContent.from("https://ir78450cc343.vicp.fun/35507798632-1-192.mp4"),
                 ImageContent.from(FileContentUtil.toBase64("C:\\Users\\61640\\Desktop\\微信图片_20260103154248_7584_34.jpg"), "image/jpeg")
         ));
-        System.out.println(JSON.toJSONString(TextContent.from("帮我总结一下这个音频的内容")));
+
+        // 转换为 PersistableChatMessage
+        PersistableChatMessage persistableMsg =
+            PersistableChatMessage.from(userMessage);
+
+        // 序列化为 JSON
+        String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(persistableMsg);
+        System.out.println("序列化结果：");
+        System.out.println(json);
+        System.out.println();
+
+        // 反序列化
+        PersistableChatMessage restored =
+            mapper.readValue(json, PersistableChatMessage.class);
+        System.out.println("反序列化成功，类型：" + restored.getClass().getSimpleName());
+        System.out.println();
     }
 
 }

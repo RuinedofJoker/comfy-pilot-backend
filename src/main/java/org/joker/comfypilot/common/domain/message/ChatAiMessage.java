@@ -1,50 +1,65 @@
 package org.joker.comfypilot.common.domain.message;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import dev.langchain4j.data.message.AiMessage;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * AI消息
+ * 包含AI的回复内容和可能的工具调用请求
+ */
 @Data
-public class ChatAiMessage implements ChatMessage {
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonTypeName("ai")
+public class ChatAiMessage implements PersistableChatMessage {
 
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * AI回复的文本内容
+     */
     private String content;
 
-    private List<String> toolRequests;
+    /**
+     * 工具调用请求列表
+     */
+    private List<ToolRequest> toolRequests;
 
+    /**
+     * 转换为LangChain4j的AiMessage
+     */
     public AiMessage toAiMessage() {
-        AiMessage.Builder builder = AiMessage.builder()
-                .text(content);
+        AiMessage.Builder builder = AiMessage.builder().text(content);
+
         if (toolRequests != null && !toolRequests.isEmpty()) {
-            List<ToolExecutionRequest> toolExecutionRequests = new ArrayList<>(toolRequests.size() / 3);
-            for (int i = 0; i < toolRequests.size(); i+=3) {
-                ToolExecutionRequest toolExecutionRequest = ToolExecutionRequest.builder()
-                        .id(toolRequests.get(i))
-                        .name(toolRequests.get(i + 1))
-                        .arguments(toolRequests.get(i + 2))
-                        .build();
-                toolExecutionRequests.add(toolExecutionRequest);
-            }
-            builder.toolExecutionRequests(toolExecutionRequests);
+            builder.toolExecutionRequests(
+                toolRequests.stream()
+                    .map(ToolRequest::toToolExecutionRequest)
+                    .toList()
+            );
         }
+
         return builder.build();
     }
 
-    public static ChatAiMessage fromAiMessage(AiMessage aiMessage) {
-        ChatAiMessage chatAiMessage = new ChatAiMessage();
-        chatAiMessage.content = aiMessage.text();
+    /**
+     * 从LangChain4j的AiMessage创建ChatAiMessage
+     */
+    public static ChatAiMessage from(AiMessage aiMessage) {
+        List<ToolRequest> requests = null;
+
         if (aiMessage.hasToolExecutionRequests()) {
-            List<String> toolExecutionRequests = new ArrayList<>(aiMessage.toolExecutionRequests().size() * 3);
-            aiMessage.toolExecutionRequests().forEach(toolExecutionRequest -> {
-                toolExecutionRequests.add(toolExecutionRequest.id());
-                toolExecutionRequests.add(toolExecutionRequest.name());
-                toolExecutionRequests.add(toolExecutionRequest.arguments());
-            });
-            chatAiMessage.toolRequests = toolExecutionRequests;
+            requests = aiMessage.toolExecutionRequests().stream()
+                    .map(ToolRequest::from)
+                    .toList();
         }
-        return chatAiMessage;
+
+        return new ChatAiMessage(aiMessage.text(), requests);
     }
 
 }

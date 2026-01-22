@@ -1,57 +1,44 @@
 package org.joker.comfypilot.common.domain.content;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import dev.langchain4j.data.message.*;
-import lombok.Data;
 
-@Data
-public class ChatContent {
+/**
+ * 聊天内容接口
+ * 用于在持久化格式和LangChain4j格式之间转换
+ */
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = TextChatContent.class, name = "text"),
+        @JsonSubTypes.Type(value = ImageChatContent.class, name = "image"),
+        @JsonSubTypes.Type(value = AudioChatContent.class, name = "audio"),
+        @JsonSubTypes.Type(value = VideoChatContent.class, name = "video"),
+        @JsonSubTypes.Type(value = PdfChatContent.class, name = "pdfFile")
+})
+public interface ChatContent {
 
-    private String type;
+    /**
+     * 转换为LangChain4j的Content对象
+     */
+    Content toContent();
 
-    private String text;
-
-    private Boolean isUseBase64;
-
-    private String url;
-
-    private String base64Data;
-
-    private String mimeType;
-
-    public Content toContent() {
-        switch (type) {
-            case "image" -> {
-                if (isUseBase64) {
-                    return new ImageContent(base64Data, mimeType);
-                } else {
-                    return new ImageContent(url);
-                }
-            }
-            case "audio" -> {
-                if (isUseBase64) {
-                    return new AudioContent(base64Data, mimeType);
-                } else {
-                    return new AudioContent(url);
-                }
-            }
-            case "video" -> {
-                if (isUseBase64) {
-                    return new VideoContent(base64Data, mimeType);
-                } else {
-                    return new VideoContent(url);
-                }
-            }
-            case "pdfFile" -> {
-                if (isUseBase64) {
-                    return new PdfFileContent(base64Data, mimeType);
-                } else {
-                    return new PdfFileContent(url);
-                }
-            }
-            default -> {
-                return TextContent.from(text);
-            }
-        }
+    /**
+     * 从LangChain4j的Content对象创建ChatContent
+     */
+    static ChatContent from(Content content) {
+        return switch (content) {
+            case ImageContent imageContent -> ImageChatContent.from(imageContent);
+            case AudioContent audioContent -> AudioChatContent.from(audioContent);
+            case VideoContent videoContent -> VideoChatContent.from(videoContent);
+            case PdfFileContent pdfFileContent -> PdfChatContent.from(pdfFileContent);
+            case TextContent textContent -> TextChatContent.from(textContent);
+            default -> throw new IllegalArgumentException("不支持的Content类型: " + content.getClass());
+        };
     }
 
 }
