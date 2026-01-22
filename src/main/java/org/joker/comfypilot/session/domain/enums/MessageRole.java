@@ -11,9 +11,19 @@ public enum MessageRole {
     USER("用户"),
 
     /**
+     * Agent提示词消息，构建消息历史时与USER消息一致
+     */
+    AGENT_PROMPT("Agent提示词"),
+
+    /**
      * AI助手消息
      */
     ASSISTANT("助手"),
+
+    /**
+     * 工具执行结果消息
+     */
+    TOOL_EXECUTION_RESULT("工具执行结果消息"),
 
     /**
      * 系统消息

@@ -62,24 +62,4 @@ public class ChatMessage extends BaseEntity<Long> {
      */
     private LocalDateTime updateTime;
 
-    /**
-     * 领域行为：检查是否为用户消息
-     */
-    public boolean isUserMessage() {
-        return MessageRole.USER.equals(this.role);
-    }
-
-    /**
-     * 领域行为：检查是否为助手消息
-     */
-    public boolean isAssistantMessage() {
-        return MessageRole.ASSISTANT.equals(this.role);
-    }
-
-    /**
-     * 领域行为：检查是否为系统消息
-     */
-    public boolean isSystemMessage() {
-        return MessageRole.SYSTEM.equals(this.role);
-    }
 }
