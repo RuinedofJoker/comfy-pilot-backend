@@ -1,4 +1,4 @@
-package org.joker.comfypilot.embedded.domain.config;
+package org.joker.comfypilot.embedded.infrastructure.config;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
 import jakarta.annotation.PostConstruct;
@@ -24,12 +24,6 @@ public class EmbeddedDatabaseConfig {
 
     @Value("${embedded.database}")
     private boolean enableEmbeddedDatabase;
-
-    @Value("${spring.datasource.username}")
-    private String username;
-
-    @Value("${spring.datasource.password}")
-    private String password;
 
     @PostConstruct
     public void init() {
