@@ -24,6 +24,11 @@ public enum MessageRole {
     ASSISTANT("助手"),
 
     /**
+     * 摘要，AI助手消息一致
+     */
+    SUMMARY("摘要"),
+
+    /**
      * 工具执行结果消息
      */
     TOOL_EXECUTION_RESULT("工具执行结果消息"),
@@ -31,7 +36,9 @@ public enum MessageRole {
     /**
      * 系统消息
      */
-    SYSTEM("系统");
+    SYSTEM("系统"),
+
+    ;
 
     private final String description;
 

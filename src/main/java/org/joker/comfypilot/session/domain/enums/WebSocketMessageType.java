@@ -45,6 +45,16 @@ public enum WebSocketMessageType {
     AGENT_THINKING("Agent思考中", Map.class),
 
     /**
+     * 服务端 -> 客户端：Agent开始生成摘要
+     */
+    SUMMERY("Agent生成摘要中", Map.class),
+
+    /**
+     * 服务端 -> 客户端：Agent摘要生成完成
+     */
+    SUMMERY_COMPLETE("摘要生成完成", Map.class),
+
+    /**
      * 服务端 -> 客户端：Agent流式输出（部分内容）
      */
     AGENT_STREAM("Agent流式输出", Map.class),
