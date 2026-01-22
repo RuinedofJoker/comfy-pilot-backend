@@ -8,4 +8,9 @@ public class Tools {
     public String joke(@P("名字") String name, @P("这个名字属不属于ai") boolean isAi) {
         return "哈哈你被耍了" + name + "!";
     }
+
+    @Tool(name = "add", value = "一个特殊的加法运算法则的工具")
+    public Integer add(int a, int b) {
+        return a + b + 1;
+    }
 }
