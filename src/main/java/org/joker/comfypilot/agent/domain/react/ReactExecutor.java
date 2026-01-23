@@ -163,6 +163,20 @@ public class ReactExecutor {
                     if (context.getEventPublisher() != null) {
                         AfterLlmCallEvent afterLlmEvent = new AfterLlmCallEvent(context, iteration.get(), response);
                         context.getEventPublisher().publishEvent(afterLlmEvent);
+
+                        // 记录 token 消费统计
+                        if (response.tokenUsage() != null) {
+                            log.info("LLM 调用完成 - iteration={}, inputTokens={}, outputTokens={}, totalTokens={}, messageCount={}",
+                                    iteration.get(),
+                                    response.tokenUsage().inputTokenCount(),
+                                    response.tokenUsage().outputTokenCount(),
+                                    response.tokenUsage().totalTokenCount(),
+                                    context.getAgentCallback().getMemoryMessages().size() + 1);
+                        } else {
+                            log.info("LLM 调用完成 - iteration={}, messageCount={} (token统计不可用)",
+                                    iteration.get(),
+                                    context.getAgentCallback().getMemoryMessages().size() + 1);
+                        }
                     }
 
                     // 2. 检查是否有工具调用
@@ -186,6 +200,22 @@ public class ReactExecutor {
                                     // 5. 将工具结果添加到历史（带事件）
                                     for (ToolExecutionResultMessage toolResult : toolResults) {
                                         addMessageWithEvent(context, iteration.get(), toolResult);
+                                    }
+
+                                    // 检查是否被中断
+                                    if (context.isInterrupted()) {
+                                        log.info("工具返回后被中断");
+                                        // 发布中断提示事件
+                                        if (context.getEventPublisher() != null) {
+                                            PromptEvent interruptEvent = new PromptEvent(context, iteration.get(),
+                                                    AgentPromptType.INTERRUPTED, "工具执行完成后被用户中断");
+                                            context.getEventPublisher().publishEvent(interruptEvent);
+
+                                            // 发布流式输出完成事件（中断）
+                                            StreamCompleteEvent completeEvent = StreamCompleteEvent.failure(context, "工具执行完成后被中断");
+                                            context.getEventPublisher().publishEvent(completeEvent);
+                                        }
+                                        return;
                                     }
 
                                     // 发布工具完成提示事件
@@ -265,6 +295,13 @@ public class ReactExecutor {
         streamingModel.chat(chatRequest, new StreamingChatResponseHandler() {
             @Override
             public void onPartialResponse(String partialResponse) {
+                // 检查是否被中断
+                if (context.isInterrupted()) {
+                    log.info("流式输出被中断");
+                    future.completeExceptionally(new InterruptedException("流式输出被用户中断"));
+                    return;
+                }
+
                 // 发布流式输出事件
                 if (partialResponse != null && context.getEventPublisher() != null) {
                     StreamEvent streamEvent = new StreamEvent(context, iteration, partialResponse);
@@ -301,6 +338,15 @@ public class ReactExecutor {
         List<CompletableFuture<ToolExecutionResultMessage>> toolFutures = new ArrayList<>();
 
         for (dev.langchain4j.agent.tool.ToolExecutionRequest request : toolExecutionRequests) {
+            // 检查是否被中断
+            if (context.isInterrupted()) {
+                log.info("工具调用被中断");
+                CompletableFuture<ToolExecutionResultMessage> interruptedFuture = new CompletableFuture<>();
+                interruptedFuture.completeExceptionally(new InterruptedException("工具调用被用户中断"));
+                toolFutures.add(interruptedFuture);
+                continue;
+            }
+
             String toolName = request.name();
             String toolArgs = request.arguments();
             String toolCallId = request.id();

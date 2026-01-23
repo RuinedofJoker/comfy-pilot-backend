@@ -41,4 +41,25 @@ public class AfterLlmCallEvent extends AgentEvent {
         this.aiMessage = response.aiMessage();
         this.hasToolCalls = aiMessage.hasToolExecutionRequests();
     }
+
+    /**
+     * 获取输入 token 数量
+     */
+    public Integer getInputTokenCount() {
+        return response.tokenUsage() != null ? response.tokenUsage().inputTokenCount() : null;
+    }
+
+    /**
+     * 获取输出 token 数量
+     */
+    public Integer getOutputTokenCount() {
+        return response.tokenUsage() != null ? response.tokenUsage().outputTokenCount() : null;
+    }
+
+    /**
+     * 获取总 token 数量
+     */
+    public Integer getTotalTokenCount() {
+        return response.tokenUsage() != null ? response.tokenUsage().totalTokenCount() : null;
+    }
 }
