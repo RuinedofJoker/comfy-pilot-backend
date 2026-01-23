@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS chat_message (
     role VARCHAR(20) NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     content TEXT NOT NULL,
-    content_data TEXT,
+    chat_content TEXT,
     metadata TEXT,
     is_deleted BIGINT NOT NULL DEFAULT 0,
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

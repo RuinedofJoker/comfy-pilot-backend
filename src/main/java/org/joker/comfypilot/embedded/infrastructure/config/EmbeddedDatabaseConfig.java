@@ -588,7 +588,7 @@ public class EmbeddedDatabaseConfig {
                         role VARCHAR(20) NOT NULL,
                         status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
                         content CLOB NOT NULL,
-                        content_data CLOB,
+                        chat_content CLOB,
                         metadata CLOB,
                         is_deleted BIGINT NOT NULL DEFAULT 0,
                         create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

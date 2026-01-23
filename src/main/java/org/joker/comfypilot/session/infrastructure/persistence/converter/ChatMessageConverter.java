@@ -5,7 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.session.domain.entity.ChatMessage;
-import org.joker.comfypilot.session.domain.enums.MessageRole;
+import org.joker.comfypilot.common.enums.MessageRole;
 import org.joker.comfypilot.session.domain.enums.MessageStatus;
 import org.joker.comfypilot.session.infrastructure.persistence.po.ChatMessagePO;
 import org.mapstruct.Mapper;

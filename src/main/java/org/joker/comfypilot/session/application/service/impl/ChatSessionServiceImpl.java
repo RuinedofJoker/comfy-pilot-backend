@@ -1,7 +1,6 @@
 package org.joker.comfypilot.session.application.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.langchain4j.agent.tool.ToolSpecification;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.joker.comfypilot.agent.application.dto.AgentConfigDTO;
@@ -18,7 +17,7 @@ import org.joker.comfypilot.session.application.service.ChatSessionService;
 import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
 import org.joker.comfypilot.session.domain.entity.ChatMessage;
 import org.joker.comfypilot.session.domain.entity.ChatSession;
-import org.joker.comfypilot.session.domain.enums.MessageRole;
+import org.joker.comfypilot.common.enums.MessageRole;
 import org.joker.comfypilot.session.domain.enums.MessageStatus;
 import org.joker.comfypilot.session.domain.enums.SessionStatus;
 import org.joker.comfypilot.session.domain.repository.ChatMessageRepository;

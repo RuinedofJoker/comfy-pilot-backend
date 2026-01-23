@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.joker.comfypilot.common.domain.BaseEntity;
-import org.joker.comfypilot.session.domain.enums.MessageRole;
+import org.joker.comfypilot.common.enums.MessageRole;
 import org.joker.comfypilot.session.domain.enums.MessageStatus;
 
 import java.time.LocalDateTime;
@@ -60,7 +60,7 @@ public class ChatMessage extends BaseEntity<Long> {
     /**
      * 消息内容数据
      */
-    private String contentData;
+    private String chatContent;
 
     /**
      * 元数据（JSON格式）

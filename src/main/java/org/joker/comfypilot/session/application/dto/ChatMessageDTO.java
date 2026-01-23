@@ -39,7 +39,7 @@ public class ChatMessageDTO extends BaseDTO {
     private String content;
 
     @Schema(description = "消息内容数据")
-    private String contentData;
+    private String chatContent;
 
     @Schema(description = "元数据")
     private Map<String, Object> metadata;

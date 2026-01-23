@@ -54,7 +54,7 @@ public class ChatMessagePO extends BasePO {
     /**
      * 消息内容数据
      */
-    private String contentData;
+    private String chatContent;
 
     /**
      * 元数据（JSON类型）

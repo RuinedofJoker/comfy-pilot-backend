@@ -1,17 +1,17 @@
 package org.joker.comfypilot.session.infrastructure.websocket;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.data.message.AiMessage;
-import dev.langchain4j.data.message.ChatMessage;
-import dev.langchain4j.data.message.ToolExecutionResultMessage;
-import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.data.message.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.joker.comfypilot.agent.infrastructure.memory.ChatMemoryChatMemoryStore;
 import org.joker.comfypilot.common.constant.AuthConstants;
+import org.joker.comfypilot.common.domain.message.PersistableChatMessage;
+import org.joker.comfypilot.common.enums.MessageRole;
 import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
 import org.joker.comfypilot.session.application.dto.WebSocketMessage;
 import org.joker.comfypilot.session.application.dto.client2server.AgentToolCallResponseData;
@@ -166,44 +166,38 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     /**
      * 初始化历史聊天记忆
      */
-    private void initHistoryChatMemory(String wsSessionId, WebSocketSession webSocketSession, Long userId, String sessionCode) {
+    private void initHistoryChatMemory(String wsSessionId, WebSocketSession webSocketSession, Long userId, String sessionCode) throws JsonProcessingException {
         List<ChatMessageDTO> messageHistory = chatSessionService.getMessageHistory(sessionCode);
         if (messageHistory == null || messageHistory.isEmpty()) {
             chatMemoryChatMemoryStore.updateMessages(wsSessionId, new ArrayList<>());
             return;
         }
 
+        ObjectMapper mapper = new ObjectMapper();
         List<ChatMessage> historyMessages = new ArrayList<>();
         for (ChatMessageDTO messageHistoryItem : messageHistory) {
-            switch (messageHistoryItem.getRole()) {
-                case "USER" -> {
+            PersistableChatMessage persistableChatMessage = null;
+            ChatMessage chatMessage = null;
+            if (StringUtils.isNotBlank(messageHistoryItem.getChatContent())) {
+                persistableChatMessage = mapper.readValue(messageHistoryItem.getChatContent(), PersistableChatMessage.class);
+            }
+            if (persistableChatMessage != null) {
+                chatMessage = PersistableChatMessage.toLangChain4j(persistableChatMessage);
+            }
 
-                    break;
-                }
-                case "AGENT_PROMPT" -> {
-                    historyMessages.add(UserMessage.from(messageHistoryItem.getContent()));
-                    break;
-                }
-                case "ASSISTANT" -> {
-                    if (!historyMessages.isEmpty() && (historyMessages.getLast() instanceof UserMessage)) {
-//                        historyMessages.add()
-                    }
-                }
-                case "SUMMARY" -> {
-                    if (!historyMessages.isEmpty() && (historyMessages.getLast() instanceof UserMessage)) {
-                        historyMessages.add(AiMessage.from("执行已中断"));
-                    }/* else if (!historyMessages.isEmpty() && (historyMessages.getLast() instanceof AiMessage) && ((AiMessage) historyMessages.getLast()).hasToolExecutionRequests()) {
-                        AiMessage lastAiMessage = (AiMessage) historyMessages.getLast();
-                        List<ToolExecutionRequest> toolExecutionRequests = lastAiMessage.toolExecutionRequests();
-                        for (int i = 0; i < toolExecutionRequests.size(); i++) {
-                            ToolExecutionRequest toolExecutionRequest = toolExecutionRequests.get(i);
-                            historyMessages.add(ToolExecutionResultMessage.toolExecutionResultMessage(toolExecutionRequest.id(), toolExecutionRequest.name(), "执行已中断"));
-                        }
-                    }*/
-                    historyMessages.add(AiMessage.from(messageHistoryItem.getContent()));
-                }
-                case "TOOL_EXECUTION_RESULT" -> {
-
+            Set<String> canBeHistoryRoles = Set.of(
+                    MessageRole.USER.name(),
+                    MessageRole.AGENT_PROMPT.name(),
+                    MessageRole.ASSISTANT.name(),
+                    MessageRole.SUMMARY.name(),
+                    MessageRole.TOOL_EXECUTION_RESULT.name(),
+                    MessageRole.AGENT_PLAN.name()
+            );
+            if (canBeHistoryRoles.contains(messageHistoryItem.getRole())) {
+                if (chatMessage != null) {
+                    historyMessages.add(chatMessage);
+                } else {
+                    log.warn("消息有存入历史的角色{}但没有内容,id={}", messageHistoryItem.getRole(), messageHistoryItem.getId());
                 }
             }
         }

@@ -1,4 +1,4 @@
-package org.joker.comfypilot.session.domain.enums;
+package org.joker.comfypilot.common.enums;
 
 import lombok.Getter;
 
@@ -42,6 +42,11 @@ public enum MessageRole {
      * 用户命令，不计入模型记忆，只用作页面回显
      */
     USER_ORDER("用户命令"),
+
+    /**
+     * Agent计划，构建消息历史时与AI助手消息一致，页面上不回显
+     */
+    AGENT_PLAN("Agent计划"),
 
     ;
 
