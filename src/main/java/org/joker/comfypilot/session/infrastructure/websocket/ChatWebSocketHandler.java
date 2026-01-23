@@ -2,9 +2,7 @@ package org.joker.comfypilot.session.infrastructure.websocket;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -14,6 +12,7 @@ import org.joker.comfypilot.common.domain.message.PersistableChatMessage;
 import org.joker.comfypilot.common.enums.MessageRole;
 import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
 import org.joker.comfypilot.session.application.dto.WebSocketMessage;
+import org.joker.comfypilot.session.application.dto.WebSocketMessageData;
 import org.joker.comfypilot.session.application.dto.client2server.AgentToolCallResponseData;
 import org.joker.comfypilot.session.application.service.ChatSessionService;
 import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
@@ -28,7 +27,6 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -91,31 +89,26 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         try {
             String payload = message.getPayload();
 
-            // 1. 先解析获取type字段
-            JsonNode rootNode = objectMapper.readTree(payload);
-            JsonNode typeNode = rootNode.get("type");
+            // 直接反序列化为 WebSocketMessage，Jackson会根据type字段自动选择正确的data类型
+            WebSocketMessage<? extends WebSocketMessageData> wsMessage =
+                objectMapper.readValue(payload, new TypeReference<WebSocketMessage<WebSocketMessageData>>() {});
 
-            if (typeNode == null || typeNode.isNull()) {
+            // 验证消息类型
+            if (wsMessage.getType() == null) {
                 sendErrorMessage(session, "消息类型不能为空", sessionCode, requestId);
                 return;
             }
 
-            String messageTypeStr = typeNode.asText();
-
-            // 2. 将type转换为枚举，如果不存在则报错
             WebSocketMessageType messageType;
             try {
-                messageType = WebSocketMessageType.valueOf(messageTypeStr);
+                messageType = WebSocketMessageType.valueOf(wsMessage.getType());
             } catch (IllegalArgumentException e) {
-                log.error("未知的消息类型: {}", messageTypeStr);
-                sendErrorMessage(session, "未知的消息类型: " + messageTypeStr, sessionCode, requestId);
+                log.error("未知的消息类型: {}", wsMessage.getType());
+                sendErrorMessage(session, "未知的消息类型: " + wsMessage.getType(), sessionCode, requestId);
                 return;
             }
 
             log.info("收到WebSocket消息: wsSessionId={}, type={}", wsSessionId, messageType);
-
-            // 3. 根据枚举的dataClass反序列化WebSocketMessage
-            WebSocketMessage<?> wsMessage = deserializeMessage(payload, messageType);
 
             sessionCode = wsMessage.getSessionCode();
             requestId = wsMessage.getRequestId();
@@ -128,19 +121,14 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                 return;
             }
 
-            // 4. 根据消息类型处理
-            if (WebSocketMessageType.USER_MESSAGE.equals(messageType)) {
-                handleUserMessage(session, context, wsMessage);
-            } else if (WebSocketMessageType.USER_ORDER.equals(messageType)) {
-                handleUserOrder(session, context, wsMessage);
-            } else if (WebSocketMessageType.AGENT_TOOL_CALL_RESPONSE.equals(messageType)) {
-                handleToolCallResponse(session, context, wsMessage);
-            } else if (WebSocketMessageType.INTERRUPT.equals(messageType)) {
-                handleInterrupt(session, context, wsMessage);
-            } else if (WebSocketMessageType.PING.equals(messageType)) {
-                handlePing(session, context, wsMessage);
-            } else {
-                log.warn("未处理的消息类型: {}", messageType);
+            // 根据消息类型处理
+            switch (messageType) {
+                case USER_MESSAGE -> handleUserMessage(session, context, wsMessage);
+                case USER_ORDER -> handleUserOrder(session, context, wsMessage);
+                case AGENT_TOOL_CALL_RESPONSE -> handleToolCallResponse(session, context, wsMessage);
+                case INTERRUPT -> handleInterrupt(session, context, wsMessage);
+                case PING -> handlePing(session, context, wsMessage);
+                default -> log.warn("未处理的消息类型: {}", messageType);
             }
 
         } catch (Exception e) {
@@ -203,28 +191,6 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         }
 
         chatMemoryChatMemoryStore.updateMessages(wsSessionId, historyMessages);
-    }
-
-    /**
-     * 根据消息类型反序列化WebSocketMessage
-     *
-     * @param payload     JSON字符串
-     * @param messageType 消息类型枚举
-     * @return 反序列化后的WebSocketMessage
-     */
-    private WebSocketMessage<?> deserializeMessage(String payload, WebSocketMessageType messageType) throws Exception {
-        Class<?> dataClass = messageType.getDataClass();
-
-        if (dataClass == null || dataClass == Map.class) {
-            // 如果dataClass为null或Map，使用默认反序列化
-            return objectMapper.readValue(payload, new TypeReference<WebSocketMessage<Object>>() {
-            });
-        } else {
-            // 根据具体的dataClass类型反序列化
-            // 使用JavaType来构建泛型类型
-            return objectMapper.readValue(payload,
-                    objectMapper.getTypeFactory().constructParametricType(WebSocketMessage.class, dataClass));
-        }
     }
 
     /**
@@ -303,15 +269,20 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
      */
     private void handleToolCallResponse(WebSocketSession session, WebSocketSessionContext context, WebSocketMessage<?> wsMessage) {
         try {
-            // 将data转换为AgentToolCallResponseData
+            // Jackson已经自动将data反序列化为AgentToolCallResponseData类型
             Object dataObj = wsMessage.getData();
             if (dataObj == null) {
                 sendErrorMessage(session, "工具调用响应数据不能为空", wsMessage.getSessionCode(), wsMessage.getRequestId());
                 return;
             }
 
-            // 使用ObjectMapper转换data
-            AgentToolCallResponseData responseData = objectMapper.convertValue(dataObj, AgentToolCallResponseData.class);
+            // 直接类型转换，无需使用ObjectMapper
+            if (!(dataObj instanceof AgentToolCallResponseData)) {
+                sendErrorMessage(session, "工具调用响应数据类型错误", wsMessage.getSessionCode(), wsMessage.getRequestId());
+                return;
+            }
+
+            AgentToolCallResponseData responseData = (AgentToolCallResponseData) dataObj;
 
             log.info("收到工具调用响应: sessionId={}, toolName={}, success={}",
                     session.getId(), responseData.getToolName(), responseData.getSuccess());

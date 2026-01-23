@@ -4,8 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.io.Serializable;
+import org.joker.comfypilot.session.application.dto.ServerToClientMessage;
 
 /**
  * Agent完成响应数据
@@ -15,7 +14,7 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @Schema(description = "Agent完成响应数据")
-public class AgentCompleteResponseData implements Serializable {
+public class AgentCompleteResponseData implements ServerToClientMessage {
 
     private static final long serialVersionUID = 1L;
 

@@ -1,12 +1,11 @@
 package org.joker.comfypilot.session.domain.enums;
 
 import lombok.Getter;
+import org.joker.comfypilot.session.application.dto.VoidWebSocketMessageData;
 import org.joker.comfypilot.session.application.dto.client2server.AgentToolCallResponseData;
 import org.joker.comfypilot.session.application.dto.client2server.UserMessageRequestData;
 import org.joker.comfypilot.session.application.dto.server2client.AgentCompleteResponseData;
 import org.joker.comfypilot.session.application.dto.server2client.AgentToolCallRequestData;
-
-import java.util.Map;
 
 /**
  * WebSocket消息类型枚举
@@ -32,32 +31,32 @@ public enum WebSocketMessageType {
     /**
      * 客户端 -> 服务端：中断执行
      */
-    INTERRUPT("中断执行", Map.class),
+    INTERRUPT("中断执行", VoidWebSocketMessageData.class),
 
     /**
      * 客户端 -> 服务端：心跳
      */
-    PING("心跳", Map.class),
+    PING("心跳", VoidWebSocketMessageData.class),
 
     /**
      * 服务端 -> 客户端：Agent开始思考
      */
-    AGENT_THINKING("Agent思考中", Map.class),
+    AGENT_THINKING("Agent思考中", VoidWebSocketMessageData.class),
 
     /**
      * 服务端 -> 客户端：Agent开始生成摘要
      */
-    SUMMERY("Agent生成摘要中", Map.class),
+    SUMMERY("Agent生成摘要中", VoidWebSocketMessageData.class),
 
     /**
      * 服务端 -> 客户端：Agent摘要生成完成
      */
-    SUMMERY_COMPLETE("摘要生成完成", Map.class),
+    SUMMERY_COMPLETE("摘要生成完成", VoidWebSocketMessageData.class),
 
     /**
      * 服务端 -> 客户端：Agent流式输出（部分内容）
      */
-    AGENT_STREAM("Agent流式输出", Map.class),
+    AGENT_STREAM("Agent流式输出", VoidWebSocketMessageData.class),
 
     /**
      * 服务端 -> 客户端：Agent完成输出
@@ -72,17 +71,17 @@ public enum WebSocketMessageType {
     /**
      * 服务端 -> 客户端：执行被中断
      */
-    EXECUTION_INTERRUPTED("执行中断完成", Map.class),
+    EXECUTION_INTERRUPTED("执行中断完成", VoidWebSocketMessageData.class),
 
     /**
      * 服务端 -> 客户端：执行错误
      */
-    ERROR("错误", Map.class),
+    ERROR("错误", VoidWebSocketMessageData.class),
 
     /**
      * 服务端 -> 客户端：心跳响应
      */
-    PONG("心跳响应", Map.class);
+    PONG("心跳响应", VoidWebSocketMessageData.class);
 
     private final String description;
 

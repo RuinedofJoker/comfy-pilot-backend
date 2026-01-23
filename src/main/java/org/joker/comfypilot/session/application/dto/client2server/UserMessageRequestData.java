@@ -6,8 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.joker.comfypilot.session.application.dto.ClientToServerMessage;
 
-import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -19,7 +19,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "用户消息请求数据")
-public class UserMessageRequestData implements Serializable {
+public class UserMessageRequestData implements ClientToServerMessage {
 
     private static final long serialVersionUID = 1L;
 

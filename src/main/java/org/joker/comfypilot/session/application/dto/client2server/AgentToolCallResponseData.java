@@ -5,8 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.io.Serializable;
+import org.joker.comfypilot.session.application.dto.ClientToServerMessage;
 
 /**
  * Agent工具调用响应数据
@@ -17,7 +16,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "Agent工具调用响应数据")
-public class AgentToolCallResponseData implements Serializable {
+public class AgentToolCallResponseData implements ClientToServerMessage {
 
     private static final long serialVersionUID = 1L;
 
