@@ -2,6 +2,7 @@ package org.joker.comfypilot.agent.domain.callback;
 
 import dev.langchain4j.data.message.ChatMessage;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -78,4 +79,9 @@ public interface AgentCallback {
      * 添加消息
      */
     void addMemoryMessage(ChatMessage message, Consumer<ChatMessage> successCallback, Consumer<ChatMessage> failCallback);
+
+    /**
+     * 获取历史消息
+     */
+    List<ChatMessage> getMemoryMessages();
 }

@@ -52,6 +52,8 @@ public class AgentExecutionContext {
 
     private List<? extends Tool> clientTools;
 
+    private List<? extends Tool> allTools;
+
     private AgentCallback agentCallback;
 
     /**

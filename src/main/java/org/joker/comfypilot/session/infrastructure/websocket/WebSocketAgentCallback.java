@@ -17,6 +17,7 @@ import org.joker.comfypilot.tool.domain.service.ToolRegistry;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -155,6 +156,15 @@ public class WebSocketAgentCallback implements AgentCallback {
             }
             throw new BusinessException("当前会话已关闭");
         }
+    }
+
+    @Override
+    public List<ChatMessage> getMemoryMessages() {
+        List<ChatMessage> messages = chatMemoryChatMemoryStore.getMessages(agentExecutionContext.getWsSessionId());
+        if (messages == null) {
+            throw new BusinessException("当前会话已关闭");
+        }
+        return messages;
     }
 
     /**
