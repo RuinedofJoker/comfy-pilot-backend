@@ -14,8 +14,10 @@ import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
 import org.joker.comfypilot.session.application.dto.WebSocketMessage;
 import org.joker.comfypilot.session.application.dto.WebSocketMessageData;
 import org.joker.comfypilot.session.application.dto.client2server.AgentToolCallResponseData;
+import org.joker.comfypilot.session.application.dto.server2client.AgentPromptData;
 import org.joker.comfypilot.session.application.service.ChatSessionService;
 import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
+import org.joker.comfypilot.session.domain.enums.AgentPromptType;
 import org.joker.comfypilot.session.domain.enums.WebSocketMessageType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -212,10 +214,10 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
      */
     private void sendErrorMessage(WebSocketSession session, String error, String sessionCode, String requestId) {
         WebSocketMessage<?> message = WebSocketMessage.builder()
-                .type(WebSocketMessageType.ERROR.name())
+                .type(WebSocketMessageType.AGENT_PROMPT.name())
                 .sessionCode(sessionCode)
                 .requestId(requestId)
-                .error(error)
+                .data(AgentPromptData.builder().promptType(AgentPromptType.ERROR).message(error).build())
                 .timestamp(System.currentTimeMillis())
                 .build();
 

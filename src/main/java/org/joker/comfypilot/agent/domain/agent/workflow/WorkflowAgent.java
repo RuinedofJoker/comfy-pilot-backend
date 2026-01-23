@@ -121,6 +121,10 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                 agentConfig
         );
 
+        if (userMessage.startsWith("/")) {
+            // TODO 命令执行
+        }
+
         // 构建用户消息+Agent提示词
         StringBuilder userMessageBuilder = new StringBuilder();
         userMessageBuilder.append(WorkflowAgentPrompts.USER_QUERY_START_TOKEN).append(userMessage).append(WorkflowAgentPrompts.USER_QUERY_END_TOKEN).append("\n");

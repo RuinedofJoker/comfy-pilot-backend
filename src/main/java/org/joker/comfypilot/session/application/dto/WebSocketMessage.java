@@ -50,11 +50,6 @@ public class WebSocketMessage<T extends WebSocketMessageData> implements Seriali
     private T data;
 
     /**
-     * 错误信息
-     */
-    private String error;
-
-    /**
      * 时间戳
      */
     private Long timestamp;
