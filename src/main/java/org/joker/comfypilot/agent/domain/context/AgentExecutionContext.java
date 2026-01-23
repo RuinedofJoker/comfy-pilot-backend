@@ -1,5 +1,6 @@
 package org.joker.comfypilot.agent.domain.context;
 
+import dev.langchain4j.data.message.ChatMessage;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -8,6 +9,7 @@ import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionResponse;
 import org.joker.comfypilot.agent.domain.callback.AgentCallback;
 import org.joker.comfypilot.agent.domain.entity.AgentExecutionLog;
+import org.joker.comfypilot.agent.domain.event.AgentEventPublisher;
 import org.joker.comfypilot.agent.domain.service.Agent;
 import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
 import org.joker.comfypilot.tool.domain.service.Tool;
@@ -15,6 +17,7 @@ import org.joker.comfypilot.tool.domain.service.Tool;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * Agent执行上下文
@@ -54,6 +57,25 @@ public class AgentExecutionContext {
     private List<? extends Tool> clientTools;
 
     private AgentCallback agentCallback;
+
+    /**
+     * 事件发布器（用于发布和监听 Agent 执行过程中的事件）
+     */
+    private AgentEventPublisher eventPublisher;
+
+    /**
+     * 消息添加成功回调（用于保存到数据库等业务逻辑）
+     * @deprecated 建议使用事件监听器机制 {@link AgentEventPublisher}
+     */
+    @Deprecated
+    private Consumer<ChatMessage> onMessageAdded;
+
+    /**
+     * 消息添加失败回调
+     * @deprecated 建议使用事件监听器机制 {@link AgentEventPublisher}
+     */
+    @Deprecated
+    private Consumer<ChatMessage> onMessageAddFailed;
 
     /**
      * 检查是否被中断

@@ -15,6 +15,16 @@ public enum AgentPromptType {
     THINKING("思考中", "Agent正在分析问题..."),
 
     /**
+     * Agent正在调用工具
+     */
+    TOOL_CALLING("工具调用中", "Agent正在调用工具..."),
+
+    /**
+     * 工具调用完成，准备下一轮思考
+     */
+    TOOL_COMPLETE("工具完成", "工具调用已完成，继续分析..."),
+
+    /**
      * Agent开始生成摘要
      */
     SUMMARY("生成摘要中", "Agent正在生成摘要..."),

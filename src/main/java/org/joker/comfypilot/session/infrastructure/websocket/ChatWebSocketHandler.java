@@ -19,6 +19,7 @@ import org.joker.comfypilot.session.application.service.ChatSessionService;
 import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
 import org.joker.comfypilot.session.domain.enums.AgentPromptType;
 import org.joker.comfypilot.session.domain.enums.WebSocketMessageType;
+import org.joker.comfypilot.agent.domain.toolcall.ToolCallWaitManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -47,6 +48,8 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private ChatSessionService chatSessionService;
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private ToolCallWaitManager toolCallWaitManager;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -289,9 +292,18 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             log.info("收到工具调用响应: sessionId={}, toolName={}, success={}",
                     session.getId(), responseData.getToolName(), responseData.getSuccess());
 
-            // TODO: 将工具调用结果传递给Agent继续执行
-            // 这里需要根据实际的Agent执行流程来实现
-            // 可能需要在WebSocketSessionContext中添加相应的方法来处理工具调用结果
+            // 完成工具调用等待，唤醒等待的Agent线程
+            boolean completed = toolCallWaitManager.completeWait(
+                    wsMessage.getSessionCode(),
+                    wsMessage.getRequestId(),
+                    responseData.getToolName(),
+                    responseData
+            );
+
+            if (!completed) {
+                log.warn("未找到对应的工具调用等待: sessionCode={}, requestId={}, toolName={}",
+                        wsMessage.getSessionCode(), wsMessage.getRequestId(), responseData.getToolName());
+            }
 
         } catch (Exception e) {
             log.error("处理工具调用响应失败: sessionId={}, error={}", session.getId(), e.getMessage(), e);

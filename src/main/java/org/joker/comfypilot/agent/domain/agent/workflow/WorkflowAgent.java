@@ -5,10 +5,12 @@ import dev.langchain4j.data.message.TextContent;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
+import dev.langchain4j.model.chat.request.ToolChoice;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
 import org.joker.comfypilot.agent.domain.callback.AgentCallback;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
+import org.joker.comfypilot.agent.domain.event.*;
 import org.joker.comfypilot.agent.domain.service.AbstractAgent;
 import org.joker.comfypilot.agent.domain.service.Agent;
 import org.joker.comfypilot.agent.domain.service.AgentConfigDefinition;
@@ -27,8 +29,9 @@ import org.joker.comfypilot.session.application.service.ChatSessionService;
 import org.joker.comfypilot.session.domain.enums.MessageStatus;
 import org.joker.comfypilot.session.domain.repository.ChatMessageRepository;
 import org.joker.comfypilot.tool.domain.service.Tool;
-import org.joker.comfypilot.session.domain.enums.AgentPromptType;
 import org.joker.comfypilot.tool.domain.service.ToolRegistry;
+import org.joker.comfypilot.agent.domain.react.ReactExecutor;
+import dev.langchain4j.agent.tool.ToolSpecification;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -54,6 +57,8 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
     private ChatSessionService chatSessionService;
     @Autowired
     private ComfyuiServerService comfyuiServerService;
+    @Autowired
+    private ReactExecutor reactExecutor;
 
     @Override
     public String getAgentCode() {
@@ -105,6 +110,38 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
     protected void executeWithStreaming(AgentExecutionContext executionContext) throws Exception {
         AgentCallback agentCallback = executionContext.getAgentCallback();
 
+        // 初始化事件发布器
+        AgentEventPublisher eventPublisher = new AgentEventPublisher();
+        executionContext.setEventPublisher(eventPublisher);
+
+        // 注册消息添加后事件监听器（用于保存到数据库）
+        eventPublisher.addEventListener(AgentEventType.AFTER_MESSAGE_ADD, (AfterMessageAddEvent event) -> {
+            if (!event.isSuccess()) {
+                log.error("消息添加到内存失败: sessionCode={}, messageType={}",
+                    event.getContext().getSessionCode(), event.getMessageType());
+                return;
+            }
+
+            try {
+                // 保存 AI 消息到数据库
+                org.joker.comfypilot.session.domain.entity.ChatMessage dbMessage =
+                    org.joker.comfypilot.session.domain.entity.ChatMessage.builder()
+                        .sessionId(event.getContext().getSessionId())
+                        .sessionCode(event.getContext().getSessionCode())
+                        .requestId(event.getContext().getRequestId())
+                        .role(MessageRole.ASSISTANT)
+                        .status(MessageStatus.ACTIVE)
+                        .metadata(new HashMap<>())
+                        .chatContent(PersistableChatMessage.toJsonString(event.getMessage()))
+                        .build();
+                chatMessageRepository.save(dbMessage);
+                log.debug("消息已保存到数据库: sessionCode={}, messageType={}, iteration={}",
+                    event.getContext().getSessionCode(), event.getMessageType(), event.getIteration());
+            } catch (Exception e) {
+                log.error("保存消息到数据库失败: sessionCode={}", event.getContext().getSessionCode(), e);
+            }
+        });
+
         AgentExecutionRequest request = executionContext.getRequest();
         String userMessage = request.getUserMessage();
         UserMessageRequestData userMessageData = request.getUserMessageData();
@@ -131,7 +168,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
         String workflowContent = userMessageData.getWorkflowContent();
         userMessageBuilder.append(WorkflowAgentPrompts.USER_WORKFLOW_PROMPT.formatted(workflowContent)).append("\n");
 
-        // Agent构建ComfyUI服务高级功能
+        // Agent构建ComfyUI服务高级功能提示词和补充工具
         ChatSessionDTO chatSessionDTO = chatSessionService.getSessionByCode(executionContext.getSessionCode());
         ComfyuiServerDTO comfyuiServerDTO = comfyuiServerService.getById(chatSessionDTO.getComfyuiServerId());
         if (Boolean.TRUE.equals(comfyuiServerDTO.getAdvancedFeaturesEnabled()) && comfyuiServerDTO.getAdvancedFeatures() != null) {
@@ -161,17 +198,29 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             chatMessageRepository.save(systemChatMessage);
         }, null);
 
-        // TODO 工具加载放到AgentExecutionContext里用allTools加载
+        // 准备工具规范
+        List<ToolSpecification> toolSpecs = new ArrayList<>();
 
+        // 添加内置工具
+        toolSpecs.addAll(todoTools.stream().map(Tool::toolSpecification).toList());
+        toolSpecs.addAll(statusTools.stream().map(Tool::toolSpecification).toList());
+
+        // 添加用户提供的 MCP 工具
+        if (userMessageData.getToolSchemas() != null && !userMessageData.getToolSchemas().isEmpty()) {
+            toolSpecs.addAll(executionContext.getClientTools().stream().map(Tool::toolSpecification).toList());
+        }
+
+        // 构建 ChatRequest
         ChatRequest chatRequest = ChatRequest.builder()
                 .messages(agentCallback.getMemoryMessages())
+                .toolSpecifications(toolSpecs)
+                .toolChoice(ToolChoice.AUTO)
                 .build();
 
-        // TODO 设计一套ReAct的执行流程
+        // 执行 ReAct 循环（响应式，非阻塞）
+        reactExecutor.executeReactLoop(streamingModel, chatRequest, executionContext);
 
-        // 发送ai思考中消息
-        agentCallback.onPrompt(AgentPromptType.THINKING, null);
-
+        // 注意：不再需要手动调用 onStreamComplete，ReactExecutor 会在完成时自动调用
     }
 
     private Map<String, Object> getRuntimeAgentConfig(AgentExecutionContext executionContext) {
