@@ -1,6 +1,5 @@
 package org.joker.comfypilot.embedded.infrastructure.config;
 
-import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,7 +14,7 @@ import java.io.File;
 import java.io.IOException;
 
 @Configuration
-@ConditionalOnProperty(value = "embedded.redis", havingValue="true")
+@ConditionalOnProperty(value = "embedded.redis", havingValue = "true")
 @Slf4j
 public class EmbeddedRedisConfig {
 
@@ -49,21 +48,35 @@ public class EmbeddedRedisConfig {
                     .setting("aof-use-rdb-preamble yes")
                     // AOF 写入策略：每秒刷盘
                     .setting("appendfsync everysec")
-                    .build();
+            ;
             log.info("Embedded redis use storage, path: {}", redisStorageDir.getAbsolutePath());
         }
+
+        redisServerBuilder
+                .setting("bind 0.0.0.0")
+                .setting("protected-mode no")
+        ;
+        if (StringUtils.isBlank(redisProperties.getPassword())) {
+            redisProperties.setPassword(null);
+        } else {
+            redisServerBuilder.setting("requirepass " + redisProperties.getPassword());
+        }
+
         this.redisServer = redisServerBuilder.build();
         this.redisServer.start();
-        return this.redisServer;
-    }
 
-    @PreDestroy
-    public void destroy() throws IOException {
-        log.info("Stopping embedded redis");
-        if (this.redisServer != null && redisServer.isActive()) {
-            this.redisServer.stop();
-            log.info("Stopped embedded redis");
-        }
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (redisServer != null && redisServer.isActive()) {
+                try {
+                    redisServer.stop();
+                    log.info("Embedded redis server stopped successfully");
+                } catch (IOException e) {
+                    log.error("Error stopping embedded redis", e);
+                }
+            }
+        }));
+
+        return this.redisServer;
     }
 
 }

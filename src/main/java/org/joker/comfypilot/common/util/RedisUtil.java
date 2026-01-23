@@ -1,11 +1,11 @@
 package org.joker.comfypilot.common.util;
 
+import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
  * 封装常用的 Redis 操作
  */
 @Component
+@Slf4j
 public class RedisUtil {
 
     @Autowired
@@ -37,6 +38,7 @@ public class RedisUtil {
             }
             return true;
         } catch (Exception e) {
+            log.error("Redis操作失败", e);
             return false;
         }
     }
@@ -62,6 +64,7 @@ public class RedisUtil {
         try {
             return Boolean.TRUE.equals(redisTemplate.hasKey(key));
         } catch (Exception e) {
+            log.error("Redis操作失败", e);
             return false;
         }
     }
@@ -105,6 +108,7 @@ public class RedisUtil {
             redisTemplate.opsForValue().set(key, value);
             return true;
         } catch (Exception e) {
+            log.error("Redis操作失败", e);
             return false;
         }
     }
@@ -127,6 +131,7 @@ public class RedisUtil {
             }
             return true;
         } catch (Exception e) {
+            log.error("Redis操作失败", e);
             return false;
         }
     }
@@ -193,6 +198,7 @@ public class RedisUtil {
             redisTemplate.opsForHash().putAll(key, map);
             return true;
         } catch (Exception e) {
+            log.error("Redis操作失败", e);
             return false;
         }
     }
@@ -214,6 +220,7 @@ public class RedisUtil {
             }
             return true;
         } catch (Exception e) {
+            log.error("Redis操作失败", e);
             return false;
         }
     }
@@ -231,6 +238,7 @@ public class RedisUtil {
             redisTemplate.opsForHash().put(key, item, value);
             return true;
         } catch (Exception e) {
+            log.error("Redis操作失败", e);
             return false;
         }
     }
@@ -253,6 +261,7 @@ public class RedisUtil {
             }
             return true;
         } catch (Exception e) {
+            log.error("Redis操作失败", e);
             return false;
         }
     }
@@ -311,6 +320,7 @@ public class RedisUtil {
         try {
             return redisTemplate.opsForSet().members(key);
         } catch (Exception e) {
+            log.error("Redis操作失败", e);
             return null;
         }
     }
@@ -326,6 +336,7 @@ public class RedisUtil {
         try {
             return Boolean.TRUE.equals(redisTemplate.opsForSet().isMember(key, value));
         } catch (Exception e) {
+            log.error("Redis操作失败", e);
             return false;
         }
     }
@@ -342,6 +353,7 @@ public class RedisUtil {
             Long count = redisTemplate.opsForSet().add(key, values);
             return count != null ? count : 0;
         } catch (Exception e) {
+            log.error("Redis操作失败", e);
             return 0;
         }
     }
@@ -363,6 +375,7 @@ public class RedisUtil {
             }
             return count != null ? count : 0;
         } catch (Exception e) {
+            log.error("Redis操作失败", e);
             return 0;
         }
     }
@@ -377,6 +390,7 @@ public class RedisUtil {
             Long size = redisTemplate.opsForSet().size(key);
             return size != null ? size : 0;
         } catch (Exception e) {
+            log.error("Redis操作失败", e);
             return 0;
         }
     }
@@ -393,6 +407,7 @@ public class RedisUtil {
             Long count = redisTemplate.opsForSet().remove(key, values);
             return count != null ? count : 0;
         } catch (Exception e) {
+            log.error("Redis操作失败", e);
             return 0;
         }
     }
@@ -410,6 +425,7 @@ public class RedisUtil {
         try {
             return redisTemplate.opsForList().range(key, start, end);
         } catch (Exception e) {
+            log.error("Redis操作失败", e);
             return null;
         }
     }
@@ -424,6 +440,7 @@ public class RedisUtil {
             Long size = redisTemplate.opsForList().size(key);
             return size != null ? size : 0;
         } catch (Exception e) {
+            log.error("Redis操作失败", e);
             return 0;
         }
     }
@@ -438,6 +455,7 @@ public class RedisUtil {
         try {
             return redisTemplate.opsForList().index(key, index);
         } catch (Exception e) {
+            log.error("Redis操作失败", e);
             return null;
         }
     }
@@ -453,6 +471,7 @@ public class RedisUtil {
             redisTemplate.opsForList().rightPush(key, value);
             return true;
         } catch (Exception e) {
+            log.error("Redis操作失败", e);
             return false;
         }
     }
@@ -473,6 +492,7 @@ public class RedisUtil {
             }
             return true;
         } catch (Exception e) {
+            log.error("Redis操作失败", e);
             return false;
         }
     }
@@ -488,6 +508,7 @@ public class RedisUtil {
             redisTemplate.opsForList().rightPushAll(key, value);
             return true;
         } catch (Exception e) {
+            log.error("Redis操作失败", e);
             return false;
         }
     }
@@ -508,6 +529,7 @@ public class RedisUtil {
             }
             return true;
         } catch (Exception e) {
+            log.error("Redis操作失败", e);
             return false;
         }
     }
@@ -524,6 +546,7 @@ public class RedisUtil {
             redisTemplate.opsForList().set(key, index, value);
             return true;
         } catch (Exception e) {
+            log.error("Redis操作失败", e);
             return false;
         }
     }
@@ -541,6 +564,7 @@ public class RedisUtil {
             Long remove = redisTemplate.opsForList().remove(key, count, value);
             return remove != null ? remove : 0;
         } catch (Exception e) {
+            log.error("Redis操作失败", e);
             return 0;
         }
     }

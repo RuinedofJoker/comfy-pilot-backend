@@ -11,7 +11,9 @@ import org.joker.comfypilot.agent.application.service.AgentConfigService;
 import org.joker.comfypilot.agent.domain.entity.AgentConfig;
 import org.joker.comfypilot.agent.domain.enums.AgentConfigType;
 import org.joker.comfypilot.agent.domain.repository.AgentConfigRepository;
+import org.joker.comfypilot.agent.domain.service.Agent;
 import org.joker.comfypilot.agent.domain.service.AgentConfigDefinition;
+import org.joker.comfypilot.agent.domain.service.AgentRegistry;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.exception.ValidationException;
 import org.springframework.stereotype.Service;
@@ -38,6 +40,8 @@ public class AgentConfigServiceImpl implements AgentConfigService {
     private AgentConfigDTOConverter dtoConverter;
     @Autowired
     private AgentRuntimeConfigDTOConverter runtimeDTOConverter;
+    @Autowired
+    private AgentRegistry agentRegistry;
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -110,10 +114,16 @@ public class AgentConfigServiceImpl implements AgentConfigService {
             return new HashMap<>();
         }
 
+        Agent agent = agentRegistry.getAgentByCode(agentConfigDTO.getAgentCode());
+        if (agent == null) {
+            throw new BusinessException(agentConfigDTO.getAgentCode() + "对应的Agent不存在");
+        }
+
         // 解析JSON字符串为Map
         Map<String, Object> configMap;
         try {
-            configMap = objectMapper.readValue(agentConfigJson, new TypeReference<Map<String, Object>>() {});
+            configMap = objectMapper.readValue(agentConfigJson, new TypeReference<>() {
+            });
         } catch (Exception e) {
             throw new ValidationException("Agent配置JSON格式错误: " + e.getMessage());
         }
@@ -124,13 +134,15 @@ public class AgentConfigServiceImpl implements AgentConfigService {
             return configMap;
         }
 
+        Map<String, Object> defaultAgentConfig = agent.getAgentConfig();
+
         // 校验每个配置项
         for (AgentConfigDefinition definition : definitions) {
             String configName = definition.name();
             Object configValue = configMap.get(configName);
 
             // 校验必填项
-            if (Boolean.TRUE.equals(definition.require()) && configValue == null) {
+            if (Boolean.TRUE.equals(definition.require()) && configValue == null && defaultAgentConfig.get(configName) == null) {
                 throw new ValidationException("配置项 [" + configName + "] 是必填项，不能为空");
             }
 

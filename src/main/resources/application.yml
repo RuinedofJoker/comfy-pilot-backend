@@ -4,7 +4,7 @@ server:
 embedded:
   database: ${USE_EMBEDDED_DB:false}
   redis: ${USE_EMBEDDED_REDIS:false}
-  redis-storage: ${REDIS_STORAGE:""}
+  redis-storage: ${REDIS_STORAGE:}
 
 spring:
   application:

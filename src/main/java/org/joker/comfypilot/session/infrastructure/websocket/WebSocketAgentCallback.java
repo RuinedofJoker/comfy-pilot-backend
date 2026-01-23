@@ -104,7 +104,7 @@ public class WebSocketAgentCallback implements AgentCallback {
         log.info("Agent执行完成: sessionCode={}", sessionCode);
 
         // 非流式调用需要返回
-        sendMessage(WebSocketMessageType.AGENT_COMPLETE, fullContent);
+        throw new BusinessException("暂不支持非流式调用");
     }
 
     @Override
