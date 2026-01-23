@@ -2,7 +2,6 @@ package org.joker.comfypilot.session.infrastructure.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.langchain4j.data.message.ChatMessage;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.agent.domain.callback.AgentCallback;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
@@ -15,7 +14,7 @@ import org.joker.comfypilot.session.application.dto.server2client.AgentToolCallR
 import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
 import org.joker.comfypilot.session.domain.enums.AgentPromptType;
 import org.joker.comfypilot.session.domain.enums.WebSocketMessageType;
-import org.joker.comfypilot.tool.domain.service.ToolRegistry;
+import org.joker.comfypilot.tool.domain.service.Tool;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -79,14 +78,14 @@ public class WebSocketAgentCallback implements AgentCallback {
     public void onToolCall(String toolName, String toolArgs) {
         log.info("Agent调用工具: sessionCode={}, tool={}, args={}", sessionCode, toolName, toolArgs);
 
+        boolean isClientTool = !toolName.startsWith(Tool.SERVER_TOOL_PREFIX);
+
         // 构建工具调用请求数据
         AgentToolCallRequestData requestData = AgentToolCallRequestData.builder()
                 .toolName(toolName)
                 .toolArgs(toolArgs)
+                .isClientTool(isClientTool)
                 .build();
-
-        ToolRegistry toolRegistry = SpringContextUtil.getBean(ToolRegistry.class);
-
 
         WebSocketMessage<AgentToolCallRequestData> message = WebSocketMessage.<AgentToolCallRequestData>builder()
                 .type(WebSocketMessageType.AGENT_TOOL_CALL_REQUEST.name())

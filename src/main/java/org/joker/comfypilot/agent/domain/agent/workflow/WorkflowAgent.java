@@ -1,8 +1,6 @@
 package org.joker.comfypilot.agent.domain.agent.workflow;
 
-import dev.langchain4j.data.message.SystemMessage;
-import dev.langchain4j.data.message.TextContent;
-import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.data.message.*;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.request.ToolChoice;
@@ -21,6 +19,7 @@ import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerDTO;
 import org.joker.comfypilot.cfsvr.application.service.ComfyuiServerService;
 import org.joker.comfypilot.common.domain.message.PersistableChatMessage;
 import org.joker.comfypilot.common.enums.MessageRole;
+import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.model.domain.enums.ModelCallingType;
 import org.joker.comfypilot.model.domain.service.StreamingChatModelFactory;
 import org.joker.comfypilot.session.application.dto.ChatSessionDTO;
@@ -110,38 +109,6 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
     protected void executeWithStreaming(AgentExecutionContext executionContext) throws Exception {
         AgentCallback agentCallback = executionContext.getAgentCallback();
 
-        // 初始化事件发布器
-        AgentEventPublisher eventPublisher = new AgentEventPublisher();
-        executionContext.setEventPublisher(eventPublisher);
-
-        // 注册消息添加后事件监听器（用于保存到数据库）
-        eventPublisher.addEventListener(AgentEventType.AFTER_MESSAGE_ADD, (AfterMessageAddEvent event) -> {
-            if (!event.isSuccess()) {
-                log.error("消息添加到内存失败: sessionCode={}, messageType={}",
-                    event.getContext().getSessionCode(), event.getMessageType());
-                return;
-            }
-
-            try {
-                // 保存 AI 消息到数据库
-                org.joker.comfypilot.session.domain.entity.ChatMessage dbMessage =
-                    org.joker.comfypilot.session.domain.entity.ChatMessage.builder()
-                        .sessionId(event.getContext().getSessionId())
-                        .sessionCode(event.getContext().getSessionCode())
-                        .requestId(event.getContext().getRequestId())
-                        .role(MessageRole.ASSISTANT)
-                        .status(MessageStatus.ACTIVE)
-                        .metadata(new HashMap<>())
-                        .chatContent(PersistableChatMessage.toJsonString(event.getMessage()))
-                        .build();
-                chatMessageRepository.save(dbMessage);
-                log.debug("消息已保存到数据库: sessionCode={}, messageType={}, iteration={}",
-                    event.getContext().getSessionCode(), event.getMessageType(), event.getIteration());
-            } catch (Exception e) {
-                log.error("保存消息到数据库失败: sessionCode={}", event.getContext().getSessionCode(), e);
-            }
-        });
-
         AgentExecutionRequest request = executionContext.getRequest();
         String userMessage = request.getUserMessage();
         UserMessageRequestData userMessageData = request.getUserMessageData();
@@ -160,67 +127,134 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
 
         if (userMessage.startsWith("/")) {
             // TODO 命令执行
-        }
+        } else {
+            // Agent执行
 
-        // 构建用户消息+Agent提示词
-        StringBuilder userMessageBuilder = new StringBuilder();
-        userMessageBuilder.append(WorkflowAgentPrompts.USER_QUERY_START_TOKEN).append(userMessage).append(WorkflowAgentPrompts.USER_QUERY_END_TOKEN).append("\n");
-        String workflowContent = userMessageData.getWorkflowContent();
-        userMessageBuilder.append(WorkflowAgentPrompts.USER_WORKFLOW_PROMPT.formatted(workflowContent)).append("\n");
+            // 构建用户消息+Agent提示词
+            StringBuilder userMessageBuilder = new StringBuilder();
+            userMessageBuilder.append(WorkflowAgentPrompts.USER_QUERY_START_TOKEN).append(userMessage).append(WorkflowAgentPrompts.USER_QUERY_END_TOKEN).append("\n");
+            String workflowContent = userMessageData.getWorkflowContent();
+            userMessageBuilder.append(WorkflowAgentPrompts.USER_WORKFLOW_PROMPT.formatted(workflowContent)).append("\n");
 
-        // Agent构建ComfyUI服务高级功能提示词和补充工具
-        ChatSessionDTO chatSessionDTO = chatSessionService.getSessionByCode(executionContext.getSessionCode());
-        ComfyuiServerDTO comfyuiServerDTO = comfyuiServerService.getById(chatSessionDTO.getComfyuiServerId());
-        if (Boolean.TRUE.equals(comfyuiServerDTO.getAdvancedFeaturesEnabled()) && comfyuiServerDTO.getAdvancedFeatures() != null) {
-            ComfyuiServerAdvancedFeaturesDTO advancedFeatures = comfyuiServerDTO.getAdvancedFeatures();
+            // Agent构建ComfyUI服务高级功能提示词和补充工具
+            ChatSessionDTO chatSessionDTO = chatSessionService.getSessionByCode(executionContext.getSessionCode());
+            ComfyuiServerDTO comfyuiServerDTO = comfyuiServerService.getById(chatSessionDTO.getComfyuiServerId());
+            if (Boolean.TRUE.equals(comfyuiServerDTO.getAdvancedFeaturesEnabled()) && comfyuiServerDTO.getAdvancedFeatures() != null) {
+                ComfyuiServerAdvancedFeaturesDTO advancedFeatures = comfyuiServerDTO.getAdvancedFeatures();
 
-            //
-        }
+                //
+            }
 
-        // 添加系统提示词
-        agentCallback.addMemoryMessage(SystemMessage.from(agentScope.get("SystemPrompt").toString()), null, null);
+            // 添加系统提示词
+            agentCallback.addMemoryMessage(SystemMessage.from(agentScope.get("SystemPrompt").toString()), null, null);
 
-        // 添加用户提示词
-        agentCallback.addMemoryMessage(UserMessage.from(
-                List.of(TextContent.from(userMessageBuilder.toString()))
-        ), (chatMessage) -> {
-            // 保存用户消息
-            org.joker.comfypilot.session.domain.entity.ChatMessage systemChatMessage = org.joker.comfypilot.session.domain.entity.ChatMessage.builder()
-                    .sessionId(executionContext.getSessionId())
-                    .sessionCode(executionContext.getSessionCode())
-                    .requestId(executionContext.getRequestId())
-                    .role(userMessage.startsWith("/") ? MessageRole.USER_ORDER : MessageRole.USER)
-                    .status(MessageStatus.ACTIVE)
-                    .metadata(new HashMap<>())
-                    .content(userMessage)
-                    .chatContent(PersistableChatMessage.toJsonString(chatMessage))
+            // 添加用户提示词
+            agentCallback.addMemoryMessage(UserMessage.from(
+                    List.of(TextContent.from(userMessageBuilder.toString()))
+            ), (chatMessage) -> {
+                // 保存用户消息
+                org.joker.comfypilot.session.domain.entity.ChatMessage systemChatMessage = org.joker.comfypilot.session.domain.entity.ChatMessage.builder()
+                        .sessionId(executionContext.getSessionId())
+                        .sessionCode(executionContext.getSessionCode())
+                        .requestId(executionContext.getRequestId())
+                        .role(userMessage.startsWith("/") ? MessageRole.USER_ORDER : MessageRole.USER)
+                        .status(MessageStatus.ACTIVE)
+                        .metadata(new HashMap<>())
+                        .content(userMessage)
+                        .chatContent(PersistableChatMessage.toJsonString(chatMessage))
+                        .build();
+                chatMessageRepository.save(systemChatMessage);
+            }, null);
+
+            // 准备工具规范
+            List<ToolSpecification> toolSpecs = new ArrayList<>();
+
+            // 添加内置工具
+            toolSpecs.addAll(todoTools.stream().map(Tool::toolSpecification).toList());
+            toolSpecs.addAll(statusTools.stream().map(Tool::toolSpecification).toList());
+
+            // 添加用户提供的 MCP 工具
+            if (userMessageData.getToolSchemas() != null && !userMessageData.getToolSchemas().isEmpty()) {
+                toolSpecs.addAll(executionContext.getClientTools().stream().map(Tool::toolSpecification).toList());
+            }
+
+            // 构建 ChatRequest
+            ChatRequest chatRequest = ChatRequest.builder()
+                    .messages(agentCallback.getMemoryMessages())
+                    .toolSpecifications(toolSpecs)
+                    .toolChoice(ToolChoice.AUTO)
                     .build();
-            chatMessageRepository.save(systemChatMessage);
-        }, null);
 
-        // 准备工具规范
-        List<ToolSpecification> toolSpecs = new ArrayList<>();
+            // 初始化事件发布器
+            AgentEventPublisher eventPublisher = new AgentEventPublisher();
+            executionContext.setEventPublisher(eventPublisher);
 
-        // 添加内置工具
-        toolSpecs.addAll(todoTools.stream().map(Tool::toolSpecification).toList());
-        toolSpecs.addAll(statusTools.stream().map(Tool::toolSpecification).toList());
+            // ==================== 注册事件监听器 ====================
 
-        // 添加用户提供的 MCP 工具
-        if (userMessageData.getToolSchemas() != null && !userMessageData.getToolSchemas().isEmpty()) {
-            toolSpecs.addAll(executionContext.getClientTools().stream().map(Tool::toolSpecification).toList());
+            // 1. 流式输出事件 -> AgentCallback.onStream()
+            eventPublisher.addEventListener(AgentEventType.STREAM, (StreamEvent event) -> {
+                agentCallback.onStream(event.getChunk());
+            });
+
+            // 2. 流式输出完成事件 -> AgentCallback.onStreamComplete()
+            eventPublisher.addEventListener(AgentEventType.STREAM_COMPLETE, (StreamCompleteEvent event) -> {
+                if (event.isSuccess()) {
+                    agentCallback.onStreamComplete(event.getFullContent());
+                } else {
+                    log.error("流式输出失败: sessionCode={}, error={}",
+                            event.getContext().getSessionCode(), event.getErrorMessage());
+                    agentCallback.onStreamComplete(null);
+                }
+            });
+
+            // 3. 提示消息事件 -> AgentCallback.onPrompt()
+            eventPublisher.addEventListener(AgentEventType.PROMPT, (PromptEvent event) -> {
+                agentCallback.onPrompt(event.getPromptType(), event.getMessage());
+            });
+
+            // 4. 工具调用通知事件 -> AgentCallback.onToolCall()
+            eventPublisher.addEventListener(AgentEventType.TOOL_CALL_NOTIFY, (ToolCallNotifyEvent event) -> {
+                agentCallback.onToolCall(event.getToolName(), event.getToolArgs());
+            });
+
+            // 5. 消息添加后事件 -> 保存到数据库
+            eventPublisher.addEventListener(AgentEventType.AFTER_MESSAGE_ADD, (AfterMessageAddEvent event) -> {
+                if (!event.isSuccess()) {
+                    log.error("消息添加到内存失败: sessionCode={}, messageType={}",
+                            event.getContext().getSessionCode(), event.getMessageType());
+                    return;
+                }
+
+                try {
+                    // 保存消息到数据库（仅保存 AI/Tool 消息，User 消息已在其他地方保存）
+                    MessageRole messageRole = switch (event.getMessage()) {
+                        case AiMessage aiMessage -> MessageRole.ASSISTANT;
+                        case UserMessage message -> MessageRole.AGENT_PROMPT;
+                        case ToolExecutionResultMessage toolExecutionResultMessage -> MessageRole.TOOL_EXECUTION_RESULT;
+                        default -> throw new BusinessException("未知的消息类型：" + event.getMessage().getClass());
+                    };
+                    org.joker.comfypilot.session.domain.entity.ChatMessage dbMessage =
+                            org.joker.comfypilot.session.domain.entity.ChatMessage.builder()
+                                    .sessionId(event.getContext().getSessionId())
+                                    .sessionCode(event.getContext().getSessionCode())
+                                    .requestId(event.getContext().getRequestId())
+                                    .role(messageRole)
+                                    .status(MessageStatus.ACTIVE)
+                                    .metadata(new HashMap<>())
+                                    .content("")
+                                    .chatContent(PersistableChatMessage.toJsonString(event.getMessage()))
+                                    .build();
+                    chatMessageRepository.save(dbMessage);
+                    log.debug("消息已保存到数据库: sessionCode={}, messageType={}, iteration={}",
+                            event.getContext().getSessionCode(), event.getMessageType(), event.getIteration());
+                } catch (Exception e) {
+                    log.error("保存消息到数据库失败: sessionCode={}", event.getContext().getSessionCode(), e);
+                }
+            });
+
+            // 执行 ReAct 循环（响应式，非阻塞）
+            reactExecutor.executeReactLoop(streamingModel, chatRequest, executionContext, 10);
         }
-
-        // 构建 ChatRequest
-        ChatRequest chatRequest = ChatRequest.builder()
-                .messages(agentCallback.getMemoryMessages())
-                .toolSpecifications(toolSpecs)
-                .toolChoice(ToolChoice.AUTO)
-                .build();
-
-        // 执行 ReAct 循环（响应式，非阻塞）
-        reactExecutor.executeReactLoop(streamingModel, chatRequest, executionContext, 10);
-
-        // 注意：不再需要手动调用 onStreamComplete，ReactExecutor 会在完成时自动调用
     }
 
     private Map<String, Object> getRuntimeAgentConfig(AgentExecutionContext executionContext) {

@@ -133,7 +133,7 @@ public class ClientTool implements Tool {
 
     @Override
     public String executeTool(String name, String arguments) {
-        return "";
+        throw new BusinessException("客户端工具" + name + "不应该由服务端执行");
     }
 
 }

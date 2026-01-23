@@ -27,6 +27,18 @@ public class AgentToolCallResponseData implements ClientToServerMessage {
     private String toolName;
 
     /**
+     * 是否是客户端工具
+     */
+    @Schema(description = "是否是客户端工具", example = "true")
+    private Boolean isClientTool;
+
+    /**
+     * 工具参数
+     */
+    @Schema(description = "工具参数", example = "{\"name\": \"张三\"}")
+    private String toolArgs;
+
+    /**
      * 工具执行结果（JSON字符串或文本）
      */
     @Schema(description = "工具执行结果", example = "{\"content\": \"file content\"}")

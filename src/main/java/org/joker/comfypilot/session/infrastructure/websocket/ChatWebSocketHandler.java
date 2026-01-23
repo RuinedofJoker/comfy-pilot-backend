@@ -10,6 +10,7 @@ import org.joker.comfypilot.agent.infrastructure.memory.ChatMemoryChatMemoryStor
 import org.joker.comfypilot.common.constant.AuthConstants;
 import org.joker.comfypilot.common.domain.message.PersistableChatMessage;
 import org.joker.comfypilot.common.enums.MessageRole;
+import org.joker.comfypilot.common.util.SpringContextUtil;
 import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
 import org.joker.comfypilot.session.application.dto.WebSocketMessage;
 import org.joker.comfypilot.session.application.dto.WebSocketMessageData;
@@ -20,6 +21,8 @@ import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
 import org.joker.comfypilot.session.domain.enums.AgentPromptType;
 import org.joker.comfypilot.session.domain.enums.WebSocketMessageType;
 import org.joker.comfypilot.agent.domain.toolcall.ToolCallWaitManager;
+import org.joker.comfypilot.tool.domain.service.Tool;
+import org.joker.comfypilot.tool.domain.service.ToolRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -288,9 +291,26 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             }
 
             AgentToolCallResponseData responseData = (AgentToolCallResponseData) dataObj;
+            if (Boolean.TRUE.equals(responseData.getIsAllow()) && Boolean.FALSE.equals(responseData.getIsClientTool())) {
+                Tool serverTool = SpringContextUtil.getBean(ToolRegistry.class).getToolByName(responseData.getToolName());
+                if (serverTool != null) {
+                    try {
+                        String executeResult = serverTool.executeTool(responseData.getToolName(), responseData.getToolArgs());
+                        responseData.setSuccess(true);
+                        responseData.setResult(executeResult);
+                    } catch (Exception e) {
+                        log.error("服务端工具执行失败", e);
+                        responseData.setSuccess(false);
+                        responseData.setError(e.getMessage());
+                    }
+                } else {
+                    responseData.setSuccess(false);
+                    responseData.setError("找不到该工具");
+                }
+            }
 
-            log.info("收到工具调用响应: sessionId={}, toolName={}, success={}",
-                    session.getId(), responseData.getToolName(), responseData.getSuccess());
+            log.info("收到工具调用响应: sessionId={}, toolName={}, isAllow={}, success={}",
+                    session.getId(), responseData.getToolName(), responseData.getIsAllow(), responseData.getSuccess());
 
             // 完成工具调用等待，唤醒等待的Agent线程
             boolean completed = toolCallWaitManager.completeWait(
