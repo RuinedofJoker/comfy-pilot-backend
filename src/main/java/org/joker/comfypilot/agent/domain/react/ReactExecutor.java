@@ -1,6 +1,5 @@
 package org.joker.comfypilot.agent.domain.react;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
@@ -9,15 +8,11 @@ import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.request.ToolChoice;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
-import dev.langchain4j.model.output.Response;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.joker.comfypilot.agent.domain.callback.AgentCallback;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.joker.comfypilot.agent.domain.event.*;
-import org.joker.comfypilot.agent.domain.toolcall.ToolCallRequest;
-import org.joker.comfypilot.agent.domain.toolcall.ToolCallResult;
 import org.joker.comfypilot.agent.domain.toolcall.ToolCallWaitManager;
 import org.joker.comfypilot.session.application.dto.client2server.AgentToolCallResponseData;
 import org.joker.comfypilot.session.domain.enums.AgentPromptType;
@@ -38,12 +33,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ReactExecutor {
 
     private final ToolCallWaitManager toolCallWaitManager;
-    private final ObjectMapper objectMapper;
-
-    /**
-     * 最大迭代次数
-     */
-    private static final int MAX_ITERATIONS = 10;
 
     /**
      * 执行 ReAct 循环（响应式，非阻塞）
@@ -51,20 +40,24 @@ public class ReactExecutor {
      * @param streamingModel 流式聊天模型
      * @param chatRequest    初始聊天请求
      * @param context        执行上下文
+     * @param maxIterations  最大迭代次数
      */
     public void executeReactLoop(
             StreamingChatModel streamingModel,
             ChatRequest chatRequest,
-            AgentExecutionContext context
+            AgentExecutionContext context,
+            final int maxIterations
     ) {
-        AgentCallback callback = context.getAgentCallback();
         AtomicInteger iteration = new AtomicInteger(0);
 
-        // 发送思考中提示
-        callback.onPrompt(AgentPromptType.THINKING, null);
+        // 发布思考中提示事件
+        if (context.getEventPublisher() != null) {
+            PromptEvent promptEvent = new PromptEvent(context, 0, AgentPromptType.THINKING, null);
+            context.getEventPublisher().publishEvent(promptEvent);
+        }
 
         // 启动第一轮迭代
-        executeNextIteration(streamingModel, chatRequest, context, iteration);
+        executeNextIteration(streamingModel, chatRequest, context, iteration, maxIterations);
     }
 
     /**
@@ -74,23 +67,39 @@ public class ReactExecutor {
             StreamingChatModel streamingModel,
             ChatRequest chatRequest,
             AgentExecutionContext context,
-            AtomicInteger iteration
+            AtomicInteger iteration,
+            final int maxIterations
     ) {
-        AgentCallback callback = context.getAgentCallback();
-
         // 检查终止条件
-        if (iteration.get() >= MAX_ITERATIONS) {
-            log.warn("ReAct 循环达到最大迭代次数: {}", MAX_ITERATIONS);
-            callback.onPrompt(AgentPromptType.ERROR,
-                    "达到最大迭代次数 " + MAX_ITERATIONS + "，执行终止");
-            callback.onStreamComplete(null);
+        if (iteration.get() >= maxIterations) {
+            log.warn("ReAct 循环达到最大迭代次数: {}", maxIterations);
+            // 发布错误提示事件
+            if (context.getEventPublisher() != null) {
+                PromptEvent errorEvent = new PromptEvent(context, iteration.get(),
+                        AgentPromptType.ERROR, "达到最大迭代次数 " + maxIterations + "，执行终止");
+                context.getEventPublisher().publishEvent(errorEvent);
+
+                // 发布流式输出完成事件（失败）
+                StreamCompleteEvent completeEvent = StreamCompleteEvent.failure(context,
+                        "达到最大迭代次数");
+                context.getEventPublisher().publishEvent(completeEvent);
+            }
             return;
         }
 
-        if (callback.isInterrupted()) {
+        // 检查是否被中断（通过 AgentCallback 查询）
+        if (context.getAgentCallback() != null && context.getAgentCallback().isInterrupted()) {
             log.info("ReAct 循环被中断");
-            callback.onPrompt(AgentPromptType.INTERRUPTED, "执行已被用户中断");
-            callback.onStreamComplete(null);
+            // 发布中断提示事件
+            if (context.getEventPublisher() != null) {
+                PromptEvent interruptEvent = new PromptEvent(context, iteration.get(),
+                        AgentPromptType.INTERRUPTED, "执行已被用户中断");
+                context.getEventPublisher().publishEvent(interruptEvent);
+
+                // 发布流式输出完成事件（中断）
+                StreamCompleteEvent completeEvent = StreamCompleteEvent.failure(context, "执行被中断");
+                context.getEventPublisher().publishEvent(completeEvent);
+            }
             return;
         }
 
@@ -99,11 +108,13 @@ public class ReactExecutor {
 
         // 发布迭代开始事件
         if (context.getEventPublisher() != null) {
-            IterationStartEvent startEvent = new IterationStartEvent(context, iteration.get(), MAX_ITERATIONS);
+            IterationStartEvent startEvent = new IterationStartEvent(context, iteration.get(), maxIterations);
             context.getEventPublisher().publishEvent(startEvent);
             if (startEvent.isCancelled()) {
                 log.info("迭代被事件监听器取消");
-                callback.onStreamComplete(null);
+                // 发布流式输出完成事件（取消）
+                StreamCompleteEvent completeEvent = StreamCompleteEvent.failure(context, "迭代被取消");
+                context.getEventPublisher().publishEvent(completeEvent);
                 return;
             }
         }
@@ -119,7 +130,9 @@ public class ReactExecutor {
             context.getEventPublisher().publishEvent(beforeLlmEvent);
             if (beforeLlmEvent.isCancelled()) {
                 log.info("LLM 调用被事件监听器取消");
-                callback.onStreamComplete(null);
+                // 发布流式输出完成事件（取消）
+                StreamCompleteEvent completeEvent = StreamCompleteEvent.failure(context, "LLM 调用被取消");
+                context.getEventPublisher().publishEvent(completeEvent);
                 return;
             }
             // 使用修改后的请求
@@ -127,12 +140,20 @@ public class ReactExecutor {
         }
 
         // 1. 异步调用 LLM
-        callLlmStreamingAsync(streamingModel, finalRequest, callback)
+        callLlmStreamingAsync(streamingModel, finalRequest, context, iteration.get())
                 .thenAccept(response -> {
                     if (response == null) {
                         log.warn("LLM 返回空响应");
-                        callback.onPrompt(AgentPromptType.ERROR, "LLM 返回空响应");
-                        callback.onStreamComplete(null);
+                        // 发布错误提示事件
+                        if (context.getEventPublisher() != null) {
+                            PromptEvent errorEvent = new PromptEvent(context, iteration.get(),
+                                    AgentPromptType.ERROR, "LLM 返回空响应");
+                            context.getEventPublisher().publishEvent(errorEvent);
+
+                            // 发布流式输出完成事件（失败）
+                            StreamCompleteEvent completeEvent = StreamCompleteEvent.failure(context, "LLM 返回空响应");
+                            context.getEventPublisher().publishEvent(completeEvent);
+                        }
                         return;
                     }
 
@@ -148,53 +169,84 @@ public class ReactExecutor {
                     if (aiMessage.hasToolExecutionRequests()) {
                         log.info("检测到工具调用请求: count={}", aiMessage.toolExecutionRequests().size());
 
-                        // 发送工具调用中提示
-                        callback.onPrompt(AgentPromptType.TOOL_CALLING,
-                                String.format("检测到 %d 个工具调用", aiMessage.toolExecutionRequests().size()));
+                        // 发布工具调用中提示事件
+                        if (context.getEventPublisher() != null) {
+                            PromptEvent toolCallingEvent = new PromptEvent(context, iteration.get(),
+                                    AgentPromptType.TOOL_CALLING,
+                                    String.format("检测到 %d 个工具调用", aiMessage.toolExecutionRequests().size()));
+                            context.getEventPublisher().publishEvent(toolCallingEvent);
+                        }
 
                         // 3. 将 AI 消息添加到历史（带事件）
-                        addMessageWithEvent(callback, context, iteration.get(), aiMessage);
+                        addMessageWithEvent(context, iteration.get(), aiMessage);
 
                         // 4. 异步处理工具调用
-                        handleToolCallsAsync(aiMessage.toolExecutionRequests(), context)
+                        handleToolCallsAsync(aiMessage.toolExecutionRequests(), context, iteration.get())
                                 .thenAccept(toolResults -> {
                                     // 5. 将工具结果添加到历史（带事件）
                                     for (ToolExecutionResultMessage toolResult : toolResults) {
-                                        addMessageWithEvent(callback, context, iteration.get(), toolResult);
+                                        addMessageWithEvent(context, iteration.get(), toolResult);
                                     }
 
-                                    // 发送工具完成提示
-                                    callback.onPrompt(AgentPromptType.TOOL_COMPLETE,
-                                            String.format("已完成 %d 个工具调用，继续分析...", toolResults.size()));
+                                    // 发布工具完成提示事件
+                                    if (context.getEventPublisher() != null) {
+                                        PromptEvent toolCompleteEvent = new PromptEvent(context, iteration.get(),
+                                                AgentPromptType.TOOL_COMPLETE,
+                                                String.format("已完成 %d 个工具调用，继续分析...", toolResults.size()));
+                                        context.getEventPublisher().publishEvent(toolCompleteEvent);
+                                    }
 
                                     // 6. 构建下一轮请求
                                     ChatRequest nextRequest = ChatRequest.builder()
-                                            .messages(callback.getMemoryMessages())
+                                            .messages(context.getAgentCallback().getMemoryMessages())
                                             .toolSpecifications(chatRequest.toolSpecifications())
                                             .toolChoice(ToolChoice.AUTO)
                                             .build();
 
                                     // 7. 递归执行下一轮迭代
                                     iteration.incrementAndGet();
-                                    executeNextIteration(streamingModel, nextRequest, context, iteration);
+                                    executeNextIteration(streamingModel, nextRequest, context, iteration, maxIterations);
                                 })
                                 .exceptionally(ex -> {
                                     log.error("处理工具调用失败", ex);
-                                    callback.onPrompt(AgentPromptType.ERROR, "工具调用处理失败: " + ex.getMessage());
-                                    callback.onStreamComplete(null);
+                                    // 发布错误提示事件
+                                    if (context.getEventPublisher() != null) {
+                                        PromptEvent errorEvent = new PromptEvent(context, iteration.get(),
+                                                AgentPromptType.ERROR, "工具调用处理失败: " + ex.getMessage());
+                                        context.getEventPublisher().publishEvent(errorEvent);
+
+                                        // 发布流式输出完成事件（失败）
+                                        StreamCompleteEvent completeEvent = StreamCompleteEvent.failure(context,
+                                                "工具调用处理失败: " + ex.getMessage());
+                                        context.getEventPublisher().publishEvent(completeEvent);
+                                    }
                                     return null;
                                 });
                     } else {
                         // 没有工具调用，对话完成
                         log.info("ReAct 循环完成: iterations={}", iteration.get());
-                        addMessageWithEvent(callback, context, iteration.get(), aiMessage);
-                        callback.onStreamComplete(null);
+                        addMessageWithEvent(context, iteration.get(), aiMessage);
+
+                        // 发布流式输出完成事件（成功）
+                        if (context.getEventPublisher() != null) {
+                            StreamCompleteEvent completeEvent = StreamCompleteEvent.success(context, null);
+                            context.getEventPublisher().publishEvent(completeEvent);
+                        }
                     }
                 })
                 .exceptionally(ex -> {
                     log.error("LLM 调用失败", ex);
-                    callback.onPrompt(AgentPromptType.ERROR, "LLM 调用失败: " + ex.getMessage());
-                    callback.onStreamComplete(null);
+                    // 发布错误提示事件
+                    if (context.getEventPublisher() != null) {
+                        PromptEvent errorEvent = new PromptEvent(context, iteration.get(),
+                                AgentPromptType.ERROR, "LLM 调用失败: " + ex.getMessage());
+                        context.getEventPublisher().publishEvent(errorEvent);
+
+                        // 发布流式输出完成事件（失败）
+                        StreamCompleteEvent completeEvent = StreamCompleteEvent.failure(context,
+                                "LLM 调用失败: " + ex.getMessage());
+                        context.getEventPublisher().publishEvent(completeEvent);
+                    }
                     return null;
                 });
     }
@@ -205,16 +257,18 @@ public class ReactExecutor {
     private CompletableFuture<ChatResponse> callLlmStreamingAsync(
             StreamingChatModel streamingModel,
             ChatRequest chatRequest,
-            AgentCallback callback
+            AgentExecutionContext context,
+            int iteration
     ) {
         CompletableFuture<ChatResponse> future = new CompletableFuture<>();
 
         streamingModel.chat(chatRequest, new StreamingChatResponseHandler() {
             @Override
             public void onPartialResponse(String partialResponse) {
-                // 处理流式输出片段
-                if (partialResponse != null) {
-                    callback.onStream(partialResponse);
+                // 发布流式输出事件
+                if (partialResponse != null && context.getEventPublisher() != null) {
+                    StreamEvent streamEvent = new StreamEvent(context, iteration, partialResponse);
+                    context.getEventPublisher().publishEvent(streamEvent);
                 }
             }
 
@@ -240,10 +294,9 @@ public class ReactExecutor {
      */
     private CompletableFuture<List<ToolExecutionResultMessage>> handleToolCallsAsync(
             List<dev.langchain4j.agent.tool.ToolExecutionRequest> toolExecutionRequests,
-            AgentExecutionContext context
+            AgentExecutionContext context,
+            int iteration
     ) {
-        AgentCallback callback = context.getAgentCallback();
-
         // 创建所有工具调用的 Future 列表
         List<CompletableFuture<ToolExecutionResultMessage>> toolFutures = new ArrayList<>();
 
@@ -254,8 +307,12 @@ public class ReactExecutor {
 
             log.info("处理工具调用: toolName={}, toolCallId={}", toolName, toolCallId);
 
-            // 1. 通知客户端工具调用
-            callback.onToolCall(toolName, toolArgs);
+            // 1. 发布工具调用通知事件
+            if (context.getEventPublisher() != null) {
+                ToolCallNotifyEvent notifyEvent = new ToolCallNotifyEvent(
+                        context, iteration, toolName, toolArgs, toolCallId);
+                context.getEventPublisher().publishEvent(notifyEvent);
+            }
 
             // 2. 创建异步等待
             CompletableFuture<AgentToolCallResponseData> responseFuture = toolCallWaitManager.createWait(
@@ -317,8 +374,10 @@ public class ReactExecutor {
     /**
      * 添加消息并发布事件
      */
-    private void addMessageWithEvent(AgentCallback callback, AgentExecutionContext context,
+    private void addMessageWithEvent(AgentExecutionContext context,
                                      int iteration, ChatMessage message) {
+        AgentCallback callback = context.getAgentCallback();
+
         // 发布消息添加前事件
         if (context.getEventPublisher() != null) {
             BeforeMessageAddEvent beforeEvent = new BeforeMessageAddEvent(context, iteration, message);
@@ -335,21 +394,13 @@ public class ReactExecutor {
         ChatMessage finalMessage = message;
         callback.addMemoryMessage(message,
                 msg -> {
-                    // 成功回调
-                    if (context.getOnMessageAdded() != null) {
-                        context.getOnMessageAdded().accept(msg);
-                    }
-                    // 发布消息添加后事件
+                    // 发布消息添加后事件（成功）
                     if (context.getEventPublisher() != null) {
                         AfterMessageAddEvent afterEvent = new AfterMessageAddEvent(context, iteration, finalMessage, true);
                         context.getEventPublisher().publishEvent(afterEvent);
                     }
                 },
                 msg -> {
-                    // 失败回调
-                    if (context.getOnMessageAddFailed() != null) {
-                        context.getOnMessageAddFailed().accept(msg);
-                    }
                     // 发布消息添加后事件（失败）
                     if (context.getEventPublisher() != null) {
                         AfterMessageAddEvent afterEvent = new AfterMessageAddEvent(context, iteration, finalMessage, false);

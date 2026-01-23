@@ -64,20 +64,6 @@ public class AgentExecutionContext {
     private AgentEventPublisher eventPublisher;
 
     /**
-     * 消息添加成功回调（用于保存到数据库等业务逻辑）
-     * @deprecated 建议使用事件监听器机制 {@link AgentEventPublisher}
-     */
-    @Deprecated
-    private Consumer<ChatMessage> onMessageAdded;
-
-    /**
-     * 消息添加失败回调
-     * @deprecated 建议使用事件监听器机制 {@link AgentEventPublisher}
-     */
-    @Deprecated
-    private Consumer<ChatMessage> onMessageAddFailed;
-
-    /**
      * 检查是否被中断
      */
     public boolean isInterrupted() {
