@@ -1,6 +1,8 @@
 package org.joker.comfypilot.agent.domain.agent.workflow;
 
 import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.TextContent;
+import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -12,10 +14,16 @@ import org.joker.comfypilot.agent.domain.service.Agent;
 import org.joker.comfypilot.agent.domain.service.AgentConfigDefinition;
 import org.joker.comfypilot.agent.infrastructure.tool.StatusUpdateTool;
 import org.joker.comfypilot.agent.infrastructure.tool.TodoWriteTool;
+import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerAdvancedFeaturesDTO;
+import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerDTO;
+import org.joker.comfypilot.cfsvr.application.service.ComfyuiServerService;
 import org.joker.comfypilot.common.domain.message.PersistableChatMessage;
 import org.joker.comfypilot.common.enums.MessageRole;
 import org.joker.comfypilot.model.domain.enums.ModelCallingType;
 import org.joker.comfypilot.model.domain.service.StreamingChatModelFactory;
+import org.joker.comfypilot.session.application.dto.ChatSessionDTO;
+import org.joker.comfypilot.session.application.dto.client2server.UserMessageRequestData;
+import org.joker.comfypilot.session.application.service.ChatSessionService;
 import org.joker.comfypilot.session.domain.enums.MessageStatus;
 import org.joker.comfypilot.session.domain.repository.ChatMessageRepository;
 import org.joker.comfypilot.tool.domain.service.Tool;
@@ -42,6 +50,10 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
     private StreamingChatModelFactory streamingChatModelFactory;
     @Autowired
     private ChatMessageRepository chatMessageRepository;
+    @Autowired
+    private ChatSessionService chatSessionService;
+    @Autowired
+    private ComfyuiServerService comfyuiServerService;
 
     @Override
     public String getAgentCode() {
@@ -86,37 +98,22 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
     @Override
     public Map<String, Object> getAgentScopeConfig() {
         Map<String, Object> config = new HashMap<>();
-        config.put("SystemPrompt", "你是一个友好的AI助手，专注于回答用户的问题。请保持回答简洁、准确、有帮助。");
+        config.put("SystemPrompt", WorkflowAgentPrompts.SYSTEM_PROMPT);
         return config;
     }
 
     protected void executeWithStreaming(AgentExecutionContext executionContext) throws Exception {
         AgentCallback agentCallback = executionContext.getAgentCallback();
-        // 发送ai思考中消息
-        agentCallback.onPrompt(AgentPromptType.THINKING, null);
 
         AgentExecutionRequest request = executionContext.getRequest();
         String userMessage = request.getUserMessage();
-        String workflowContent = request.getWorkflowContent();
+        UserMessageRequestData userMessageData = request.getUserMessageData();
         Map<String, Object> agentConfig = getRuntimeAgentConfig(executionContext);
-        Map<String, Object> agentScope = new HashMap<>(executionContext.getAgentScope());
+        Map<String, Object> agentScope = executionContext.getAgentScope();
 
         // 从 ToolRegistry 获取工具列表
         List<Tool> todoTools = toolRegistry.getToolsByClass(TodoWriteTool.class);
         List<Tool> statusTools = toolRegistry.getToolsByClass(StatusUpdateTool.class);
-
-        // 合并所有工具
-        List<Tool> allTools = new ArrayList<>();
-        allTools.addAll(todoTools);
-        allTools.addAll(statusTools);
-        if (executionContext.getClientTools() != null && !executionContext.getClientTools().isEmpty()) {
-            allTools.addAll(executionContext.getClientTools());
-        }
-
-        log.info("为 WorkflowAgent 加载了 {} 个工具", allTools.size());
-
-        // 将工具列表保存到执行上下文（后续调用 LLM 时会用到）
-        executionContext.setAllTools(allTools);
 
         // 创建流式聊天模型（工具规范将在调用时通过 ChatRequest 传递）
         StreamingChatModel streamingModel = streamingChatModelFactory.createStreamingChatModel(
@@ -124,27 +121,52 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                 agentConfig
         );
 
-        agentCallback.addMemoryMessage(SystemMessage.from(WorkflowAgentPrompts.SYSTEM_PROMPT), (chatMessage) -> {
-            // 保存系统消息
+        // 构建用户消息+Agent提示词
+        StringBuilder userMessageBuilder = new StringBuilder();
+        userMessageBuilder.append(WorkflowAgentPrompts.USER_QUERY_START_TOKEN).append(userMessage).append(WorkflowAgentPrompts.USER_QUERY_END_TOKEN).append("\n");
+        String workflowContent = userMessageData.getWorkflowContent();
+        userMessageBuilder.append(WorkflowAgentPrompts.USER_WORKFLOW_PROMPT.formatted(workflowContent)).append("\n");
+
+        // Agent构建ComfyUI服务高级功能
+        ChatSessionDTO chatSessionDTO = chatSessionService.getSessionByCode(executionContext.getSessionCode());
+        ComfyuiServerDTO comfyuiServerDTO = comfyuiServerService.getById(chatSessionDTO.getComfyuiServerId());
+        if (Boolean.TRUE.equals(comfyuiServerDTO.getAdvancedFeaturesEnabled()) && comfyuiServerDTO.getAdvancedFeatures() != null) {
+            ComfyuiServerAdvancedFeaturesDTO advancedFeatures = comfyuiServerDTO.getAdvancedFeatures();
+
+            //
+        }
+
+        // 添加系统提示词
+        agentCallback.addMemoryMessage(SystemMessage.from(agentScope.get("SystemPrompt").toString()), null, null);
+
+        // 添加用户提示词
+        agentCallback.addMemoryMessage(UserMessage.from(
+                List.of(TextContent.from(userMessageBuilder.toString()))
+        ), (chatMessage) -> {
+            // 保存用户消息
             org.joker.comfypilot.session.domain.entity.ChatMessage systemChatMessage = org.joker.comfypilot.session.domain.entity.ChatMessage.builder()
                     .sessionId(executionContext.getSessionId())
                     .sessionCode(executionContext.getSessionCode())
                     .requestId(executionContext.getRequestId())
-                    .role(MessageRole.SYSTEM)
+                    .role(userMessage.startsWith("/") ? MessageRole.USER_ORDER : MessageRole.USER)
                     .status(MessageStatus.ACTIVE)
                     .metadata(new HashMap<>())
-                    .content("")
+                    .content(userMessage)
                     .chatContent(PersistableChatMessage.toJsonString(chatMessage))
                     .build();
             chatMessageRepository.save(systemChatMessage);
         }, null);
 
+        // TODO 工具加载放到AgentExecutionContext里用allTools加载
 
         ChatRequest chatRequest = ChatRequest.builder()
-                .toolSpecifications(allTools.stream().map(Tool::toolSpecification).toList())
                 .messages(agentCallback.getMemoryMessages())
                 .build();
 
+        // TODO 设计一套ReAct的执行流程
+
+        // 发送ai思考中消息
+        agentCallback.onPrompt(AgentPromptType.THINKING, null);
 
     }
 

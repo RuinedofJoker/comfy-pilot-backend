@@ -223,7 +223,7 @@ public class ChatSessionServiceImpl implements ChatSessionService {
                     .sessionId(chatSession.getId())
                     .userId(wsContext.getUserId())
                     .requestId(requestId)
-                    .workflowContent(userRequestWsMessageData.getWorkflowContent())
+                    .userMessageData(userRequestWsMessageData)
                     .toolSchemas(userRequestWsMessageData.getToolSchemas())
                     .userMessage(content)
                     .agentConfig(chatSession.getAgentConfig())

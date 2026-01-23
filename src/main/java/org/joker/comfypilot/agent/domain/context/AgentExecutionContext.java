@@ -12,6 +12,7 @@ import org.joker.comfypilot.agent.domain.service.Agent;
 import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
 import org.joker.comfypilot.tool.domain.service.Tool;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -52,8 +53,6 @@ public class AgentExecutionContext {
 
     private List<? extends Tool> clientTools;
 
-    private List<? extends Tool> allTools;
-
     private AgentCallback agentCallback;
 
     /**
@@ -61,6 +60,15 @@ public class AgentExecutionContext {
      */
     public boolean isInterrupted() {
         return agentCallback != null && agentCallback.isInterrupted();
+    }
+
+    /**
+     * 获取当前需要加载的所有工具 TODO
+     * @param serverToolSets 服务端工具集
+     * @return 整合服务端和客户端的所有工具
+     */
+    public Map<String, ? extends Tool> allTools(List<Class<?>> serverToolSets) {
+        return new HashMap<>();
     }
 
 }

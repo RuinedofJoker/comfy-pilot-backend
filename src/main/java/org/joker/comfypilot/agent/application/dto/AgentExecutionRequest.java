@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.joker.comfypilot.session.application.dto.client2server.UserMessageRequestData;
 
 import java.io.Serializable;
 import java.util.List;
@@ -44,8 +45,8 @@ public class AgentExecutionRequest implements Serializable {
     @Schema(description = "agent配置（json格式，格式内容是根据agentConfigDefinitions填写的）")
     private Map<String, Object> agentConfig;
 
-    @Schema(description = "工作流内容（一般是json格式，comfyui规定的格式）")
-    private String workflowContent;
+    @Schema(description = "用户消息数据")
+    private UserMessageRequestData userMessageData;
 
     /**
      * 客户端MCP工具列表

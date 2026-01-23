@@ -163,8 +163,10 @@ public class WorkflowAgentPrompts {
             
             """.trim();
 
-    public static final String EXECUTION_PLAN_PROMPT = """
-            
+    public static final String USER_WORKFLOW_PROMPT = """
+            以下是用户当前打开的ComfyUI界面上正在展示的工作流json原型：
+            %s
+            这个工作流json内容可能为空。
             """.trim();
 
 }
