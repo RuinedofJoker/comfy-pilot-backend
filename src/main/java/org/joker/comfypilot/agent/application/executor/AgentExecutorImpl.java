@@ -14,6 +14,7 @@ import org.joker.comfypilot.agent.domain.service.Agent;
 import org.joker.comfypilot.agent.domain.service.AgentRegistry;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.util.TraceIdUtil;
+import org.joker.comfypilot.session.domain.enums.AgentPromptType;
 import org.joker.comfypilot.tool.infrastructure.service.ClientTool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -151,7 +152,7 @@ public class AgentExecutorImpl implements AgentExecutor {
 
             // 如果有流式回调，通知错误
             if (executionContext.getAgentCallback() != null) {
-                executionContext.getAgentCallback().onError(e.getMessage());
+                executionContext.getAgentCallback().onPrompt(AgentPromptType.ERROR, e.getMessage());
             }
 
             return AgentExecutionResponse.builder()

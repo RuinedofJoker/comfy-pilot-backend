@@ -1,6 +1,7 @@
 package org.joker.comfypilot.agent.domain.callback;
 
 import dev.langchain4j.data.message.ChatMessage;
+import org.joker.comfypilot.session.domain.enums.AgentPromptType;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -11,21 +12,13 @@ import java.util.function.Consumer;
 public interface AgentCallback {
 
     /**
-     * 当Agent开始思考时调用
-     */
-    void onThinking();
-
-    /**
-     * 当Agent开始生成摘要时
-     */
-    void onSummery();
-
-    /**
-     * 当Agent生成完摘要后调用
+     * 统一的提示消息回调
+     * 用于处理Agent执行过程中的各种状态提示
      *
-     * @param summery 摘要内容
+     * @param promptType 提示类型
+     * @param message    提示内容（可选，如果为null则使用默认提示）
      */
-    void onSummeryComplete(String summery);
+    void onPrompt(AgentPromptType promptType, String message);
 
     /**
      * 当Agent输出部分内容时调用（流式输出）
@@ -55,18 +48,6 @@ public interface AgentCallback {
      * @param toolArgs 工具参数
      */
     void onToolCall(String toolName, String toolArgs);
-
-    /**
-     * 执行中断完成调用
-     */
-    void onExecutionInterrupted();
-
-    /**
-     * 当发生错误时调用
-     *
-     * @param error 错误信息
-     */
-    void onError(String error);
 
     /**
      * 检查是否被中断

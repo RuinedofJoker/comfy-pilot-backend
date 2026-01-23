@@ -5,6 +5,7 @@ import org.joker.comfypilot.session.application.dto.VoidWebSocketMessageData;
 import org.joker.comfypilot.session.application.dto.client2server.AgentToolCallResponseData;
 import org.joker.comfypilot.session.application.dto.client2server.UserMessageRequestData;
 import org.joker.comfypilot.session.application.dto.server2client.AgentCompleteResponseData;
+import org.joker.comfypilot.session.application.dto.server2client.AgentPromptData;
 import org.joker.comfypilot.session.application.dto.server2client.AgentToolCallRequestData;
 
 /**
@@ -39,19 +40,9 @@ public enum WebSocketMessageType {
     PING("心跳", VoidWebSocketMessageData.class),
 
     /**
-     * 服务端 -> 客户端：Agent开始思考
+     * 服务端 -> 客户端：Agent状态提示（统一的提示消息）
      */
-    AGENT_THINKING("Agent思考中", VoidWebSocketMessageData.class),
-
-    /**
-     * 服务端 -> 客户端：Agent开始生成摘要
-     */
-    SUMMERY("Agent生成摘要中", VoidWebSocketMessageData.class),
-
-    /**
-     * 服务端 -> 客户端：Agent摘要生成完成
-     */
-    SUMMERY_COMPLETE("摘要生成完成", VoidWebSocketMessageData.class),
+    AGENT_PROMPT("Agent状态提示", AgentPromptData.class),
 
     /**
      * 服务端 -> 客户端：Agent流式输出（部分内容）
@@ -67,16 +58,6 @@ public enum WebSocketMessageType {
      * 服务端 -> 客户端：Agent请求调用Tool
      */
     AGENT_TOOL_CALL_REQUEST("Agent调用工具请求", AgentToolCallRequestData.class),
-
-    /**
-     * 服务端 -> 客户端：执行被中断
-     */
-    EXECUTION_INTERRUPTED("执行中断完成", VoidWebSocketMessageData.class),
-
-    /**
-     * 服务端 -> 客户端：执行错误
-     */
-    ERROR("错误", VoidWebSocketMessageData.class),
 
     /**
      * 服务端 -> 客户端：心跳响应

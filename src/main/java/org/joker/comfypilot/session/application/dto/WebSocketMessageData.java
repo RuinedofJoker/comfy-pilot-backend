@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.joker.comfypilot.session.application.dto.client2server.AgentToolCallResponseData;
 import org.joker.comfypilot.session.application.dto.client2server.UserMessageRequestData;
 import org.joker.comfypilot.session.application.dto.server2client.AgentCompleteResponseData;
+import org.joker.comfypilot.session.application.dto.server2client.AgentPromptData;
 import org.joker.comfypilot.session.application.dto.server2client.AgentToolCallRequestData;
 
 import java.io.Serializable;
@@ -36,14 +37,10 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = VoidWebSocketMessageData.class, name = "PING"),
 
         // 服务端 -> 客户端
-        @JsonSubTypes.Type(value = VoidWebSocketMessageData.class, name = "AGENT_THINKING"),
-        @JsonSubTypes.Type(value = VoidWebSocketMessageData.class, name = "SUMMERY"),
-        @JsonSubTypes.Type(value = VoidWebSocketMessageData.class, name = "SUMMERY_COMPLETE"),
+        @JsonSubTypes.Type(value = AgentPromptData.class, name = "AGENT_PROMPT"),
         @JsonSubTypes.Type(value = VoidWebSocketMessageData.class, name = "AGENT_STREAM"),
         @JsonSubTypes.Type(value = AgentCompleteResponseData.class, name = "AGENT_COMPLETE"),
         @JsonSubTypes.Type(value = AgentToolCallRequestData.class, name = "AGENT_TOOL_CALL_REQUEST"),
-        @JsonSubTypes.Type(value = VoidWebSocketMessageData.class, name = "EXECUTION_INTERRUPTED"),
-        @JsonSubTypes.Type(value = VoidWebSocketMessageData.class, name = "ERROR"),
         @JsonSubTypes.Type(value = VoidWebSocketMessageData.class, name = "PONG")
 })
 public interface WebSocketMessageData extends Serializable {

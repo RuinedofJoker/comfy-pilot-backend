@@ -19,6 +19,7 @@ import org.joker.comfypilot.model.domain.service.StreamingChatModelFactory;
 import org.joker.comfypilot.session.domain.enums.MessageStatus;
 import org.joker.comfypilot.session.domain.repository.ChatMessageRepository;
 import org.joker.comfypilot.tool.domain.service.Tool;
+import org.joker.comfypilot.session.domain.enums.AgentPromptType;
 import org.joker.comfypilot.tool.domain.service.ToolRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -92,7 +93,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
     protected void executeWithStreaming(AgentExecutionContext executionContext) throws Exception {
         AgentCallback agentCallback = executionContext.getAgentCallback();
         // 发送ai思考中消息
-        agentCallback.onThinking();
+        agentCallback.onPrompt(AgentPromptType.THINKING, null);
 
         AgentExecutionRequest request = executionContext.getRequest();
         String userMessage = request.getUserMessage();

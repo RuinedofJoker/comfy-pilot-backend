@@ -10,8 +10,10 @@ import org.joker.comfypilot.agent.infrastructure.memory.ChatMemoryChatMemoryStor
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.util.SpringContextUtil;
 import org.joker.comfypilot.session.application.dto.WebSocketMessage;
+import org.joker.comfypilot.session.application.dto.server2client.AgentPromptData;
 import org.joker.comfypilot.session.application.dto.server2client.AgentToolCallRequestData;
 import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
+import org.joker.comfypilot.session.domain.enums.AgentPromptType;
 import org.joker.comfypilot.session.domain.enums.WebSocketMessageType;
 import org.joker.comfypilot.tool.domain.service.ToolRegistry;
 import org.springframework.web.socket.TextMessage;
@@ -47,21 +49,24 @@ public class WebSocketAgentCallback implements AgentCallback {
     }
 
     @Override
-    public void onThinking() {
-        log.debug("Agent开始思考: sessionCode={}, requestId={}", sessionCode, requestId);
-        sendMessage(WebSocketMessageType.AGENT_THINKING, "Agent正在思考中...");
-    }
+    public void onPrompt(AgentPromptType promptType, String message) {
+        log.debug("Agent提示: sessionCode={}, promptType={}, message={}", sessionCode, promptType, message);
 
-    @Override
-    public void onSummery() {
-        log.info("Agent开始生成摘要: sessionCode={}", sessionCode);
-        sendMessage(WebSocketMessageType.SUMMERY, null);
-    }
+        // 构建提示数据
+        AgentPromptData promptData = AgentPromptData.builder()
+                .promptType(promptType)
+                .message(message != null ? message : promptType.getDefaultMessage())
+                .build();
 
-    @Override
-    public void onSummeryComplete(String summery) {
-        log.info("Agent摘要生成完成: sessionCode={}", sessionCode);
-        sendMessage(WebSocketMessageType.SUMMERY_COMPLETE, summery);
+        WebSocketMessage<AgentPromptData> wsMessage = WebSocketMessage.<AgentPromptData>builder()
+                .type(WebSocketMessageType.AGENT_PROMPT.name())
+                .sessionCode(sessionCode)
+                .requestId(requestId)
+                .data(promptData)
+                .timestamp(System.currentTimeMillis())
+                .build();
+
+        sendWebSocketMessage(wsMessage);
     }
 
     @Override
@@ -96,12 +101,6 @@ public class WebSocketAgentCallback implements AgentCallback {
     }
 
     @Override
-    public void onExecutionInterrupted() {
-        log.info("Agent执行中断完成: sessionCode={}", sessionCode);
-        sendMessage(WebSocketMessageType.EXECUTION_INTERRUPTED, null);
-    }
-
-    @Override
     public void onComplete(String fullContent) {
         log.info("Agent执行完成: sessionCode={}", sessionCode);
 
@@ -121,26 +120,7 @@ public class WebSocketAgentCallback implements AgentCallback {
     }
 
     @Override
-    public void onError(String error) {
-        log.error("Agent执行错误: sessionCode={}, error={}", sessionCode, error);
-
-        WebSocketMessage<?> message = WebSocketMessage.builder()
-                .type(WebSocketMessageType.ERROR.name())
-                .sessionCode(sessionCode)
-                .requestId(requestId)
-                .error(error)
-                .timestamp(System.currentTimeMillis())
-                .build();
-
-        sendWebSocketMessage(message);
-
-        // 标记执行完成
-        sessionContext.completeExecution();
-    }
-
-    @Override
     public boolean isInterrupted() {
-        sendMessage(WebSocketMessageType.EXECUTION_INTERRUPTED, "执行已中断");
         return sessionContext.isInterrupted();
     }
 
