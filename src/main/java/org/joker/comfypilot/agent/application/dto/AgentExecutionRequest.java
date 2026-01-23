@@ -26,6 +26,9 @@ public class AgentExecutionRequest implements Serializable {
     @Schema(description = "会话ID")
     private Long sessionId;
 
+    @Schema(description = "会话编码")
+    private String sessionCode;
+
     @Schema(description = "用户输入内容")
     private String userMessage;
 

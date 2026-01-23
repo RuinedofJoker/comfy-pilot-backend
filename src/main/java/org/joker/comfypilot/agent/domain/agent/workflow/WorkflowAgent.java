@@ -12,9 +12,13 @@ import org.joker.comfypilot.agent.domain.service.AbstractAgent;
 import org.joker.comfypilot.agent.domain.service.Agent;
 import org.joker.comfypilot.agent.domain.service.AgentConfigDefinition;
 import org.joker.comfypilot.agent.infrastructure.memory.ChatMemoryChatMemoryStore;
+import org.joker.comfypilot.common.domain.message.PersistableChatMessage;
+import org.joker.comfypilot.common.enums.MessageRole;
 import org.joker.comfypilot.model.domain.enums.ModelCallingType;
 import org.joker.comfypilot.model.domain.repository.ModelProviderRepository;
 import org.joker.comfypilot.model.domain.service.StreamingChatModelFactory;
+import org.joker.comfypilot.session.domain.enums.MessageStatus;
+import org.joker.comfypilot.session.domain.repository.ChatMessageRepository;
 import org.joker.comfypilot.tool.domain.service.ToolRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -39,6 +43,8 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
     private StreamingChatModelFactory streamingChatModelFactory;
     @Autowired
     private ChatMemoryChatMemoryStore chatMemoryChatMemoryStore;
+    @Autowired
+    private ChatMessageRepository chatMessageRepository;
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -100,22 +106,20 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
         StreamingChatModel streamingModel = streamingChatModelFactory.createStreamingChatModel((String) input.get("llmModel"), agentConfig);
 
         agentCallback.addMemoryMessage(SystemMessage.from(WorkflowAgentPrompts.SYSTEM_PROMPT), (chatMessage) -> {
-
+            // 保存用户消息
+            org.joker.comfypilot.session.domain.entity.ChatMessage userMessage = org.joker.comfypilot.session.domain.entity.ChatMessage.builder()
+                    .sessionId(executionContext.getSessionId())
+                    .sessionCode(executionContext.getSessionCode())
+                    .requestId(executionContext.getRequestId())
+                    .role(MessageRole.SYSTEM)
+                    .status(MessageStatus.ACTIVE)
+                    .metadata(new HashMap<>())
+                    .content("")
+                    .chatContent(PersistableChatMessage.toJsonString(chatMessage))
+                    .build();
+            chatMessageRepository.save(userMessage);
         }, null);
 
-        // TODO 查询历史消息填充
-        // TODO 构建
 
-        // 保存用户消息
-        /*org.joker.comfypilot.session.domain.entity.ChatMessage userMessage = org.joker.comfypilot.session.domain.entity.ChatMessage.builder()
-                .sessionId(chatSession.getId())
-                .sessionCode(sessionCode)
-                .requestId(requestId)
-                .role(content.startsWith("/") ? MessageRole.USER_ORDER : MessageRole.USER)
-                .status(MessageStatus.ACTIVE)
-                .metadata(new HashMap<>())
-                .content(content)
-                .build();
-        chatMessageRepository.save(userMessage);*/
     }
 }
