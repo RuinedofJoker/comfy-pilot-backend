@@ -1,12 +1,10 @@
 package org.joker.comfypilot.agent.infrastructure.memory;
 
 import dev.langchain4j.data.message.*;
-import org.joker.comfypilot.common.util.HistoryMessageUtil;
 import org.joker.comfypilot.session.infrastructure.websocket.WebSocketSessionManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,6 +27,9 @@ public class ChatMemoryChatMemoryStore {
         AtomicBoolean added = new AtomicBoolean(false);
         messagesByMemoryId.compute(wsSessionId, (ignored, oldMessages) -> {
             if (oldMessages != null) {
+                if (!oldMessages.isEmpty() && (oldMessages.getLast() instanceof UserMessage) && !(chatMessage instanceof AiMessage)) {
+                    oldMessages.add(AiMessage.from("用户中断对话"));
+                }
                 // 没执行进来说明会话消息未初始化或会话已经关闭了
                 if (chatMessage instanceof SystemMessage) {
                     if (!oldMessages.isEmpty() && (oldMessages.getFirst() instanceof SystemMessage)) {
@@ -36,33 +37,9 @@ public class ChatMemoryChatMemoryStore {
                     }
                     oldMessages.addFirst(chatMessage);
                     added.set(true);
-                } else if (chatMessage instanceof UserMessage userMessage) {
-                    userMessage = HistoryMessageUtil.adjustUserMessage(userMessage);
-                    if (oldMessages.isEmpty() || (oldMessages.size() == 1 && (oldMessages.getFirst() instanceof SystemMessage)) || oldMessages.getLast() instanceof AiMessage || oldMessages.getLast() instanceof ToolExecutionResultMessage) {
-                        oldMessages.add(userMessage);
-                        added.set(true);
-                    } else if (oldMessages.getLast() instanceof UserMessage oldUserMessage) {
-                        // 合并UserMessage
-                        List<Content> contents = new ArrayList<>(userMessage.contents());
-                        String text = ((TextContent) contents.removeFirst()).text();
-                        String oldText = ((TextContent) (oldUserMessage).contents().getFirst()).text();
-                        TextContent mergedTextContent = TextContent.from(oldText + "\n" + text);
-                        contents.addFirst(mergedTextContent);
-                        UserMessage mergedUserMessage = UserMessage.from(contents);
-                        oldMessages.removeLast();
-                        oldMessages.addLast(mergedUserMessage);
-                        added.set(true);
-                    }
-                } else if (chatMessage instanceof AiMessage) {
-                    if (!oldMessages.isEmpty() && (oldMessages.getFirst() instanceof UserMessage)) {
-                        oldMessages.add(chatMessage);
-                        added.set(true);
-                    }
-                } else if (chatMessage instanceof ToolExecutionResultMessage) {
-                    if (!oldMessages.isEmpty() && ((oldMessages.getFirst() instanceof AiMessage) || (oldMessages.getFirst() instanceof ToolExecutionResultMessage))) {
-                        oldMessages.add(chatMessage);
-                        added.set(true);
-                    }
+                } else {
+                    oldMessages.add(chatMessage);
+                    added.set(true);
                 }
             }
             return oldMessages;
@@ -72,7 +49,13 @@ public class ChatMemoryChatMemoryStore {
 
     public boolean updateMessages(String wsSessionId, List<ChatMessage> messages) {
         AtomicBoolean closed = new AtomicBoolean(false);
-        HistoryMessageUtil.adjustMessages(messages);
+
+        for (int i = 0; i < messages.size(); i++) {
+            ChatMessage chatMessage = messages.get(i);
+            if (chatMessage instanceof UserMessage && (i == messages.size() - 1 || !(messages.get(i + 1) instanceof AiMessage))) {
+                messages.add(i + 1, AiMessage.from("用户中断对话"));
+            }
+        }
 
         messagesByMemoryId.compute(wsSessionId, (ignored, oldMessages) -> {
             oldMessages = new CopyOnWriteArrayList<>(messages);
