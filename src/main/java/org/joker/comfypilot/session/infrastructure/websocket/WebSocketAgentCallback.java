@@ -1,10 +1,13 @@
 package org.joker.comfypilot.session.infrastructure.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.langchain4j.data.message.ChatMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.agent.domain.callback.AgentCallback;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
+import org.joker.comfypilot.agent.infrastructure.memory.ChatMemoryChatMemoryStore;
+import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.util.SpringContextUtil;
 import org.joker.comfypilot.session.application.dto.WebSocketMessage;
 import org.joker.comfypilot.session.application.dto.server2client.AgentToolCallRequestData;
@@ -14,11 +17,12 @@ import org.joker.comfypilot.tool.domain.service.ToolRegistry;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.util.function.Consumer;
+
 /**
  * WebSocket流式输出回调实现
  */
 @Slf4j
-@RequiredArgsConstructor
 public class WebSocketAgentCallback implements AgentCallback {
 
     private final WebSocketSession webSocketSession;
@@ -27,6 +31,19 @@ public class WebSocketAgentCallback implements AgentCallback {
     private final String sessionCode;
     private final String requestId;
     private final ObjectMapper objectMapper;
+
+    private final ChatMemoryChatMemoryStore chatMemoryChatMemoryStore;
+
+    public WebSocketAgentCallback(WebSocketSession webSocketSession, WebSocketSessionContext sessionContext, AgentExecutionContext agentExecutionContext, String sessionCode, String requestId, ObjectMapper objectMapper) {
+        this.webSocketSession = webSocketSession;
+        this.sessionContext = sessionContext;
+        this.agentExecutionContext = agentExecutionContext;
+        this.sessionCode = sessionCode;
+        this.requestId = requestId;
+        this.objectMapper = objectMapper;
+
+        this.chatMemoryChatMemoryStore = SpringContextUtil.getBean(ChatMemoryChatMemoryStore.class);
+    }
 
     @Override
     public void onThinking() {
@@ -124,6 +141,20 @@ public class WebSocketAgentCallback implements AgentCallback {
     public boolean isInterrupted() {
         sendMessage(WebSocketMessageType.EXECUTION_INTERRUPTED, "执行已中断");
         return sessionContext.isInterrupted();
+    }
+
+    @Override
+    public void addMemoryMessage(ChatMessage message, Consumer<ChatMessage> successCallback, Consumer<ChatMessage> failCallback) {
+        if (chatMemoryChatMemoryStore.addMessage(agentExecutionContext.getWsSessionId(), message)) {
+            if (successCallback != null) {
+                successCallback.accept(message);
+            }
+        } else {
+            if (failCallback != null) {
+                failCallback.accept(message);
+            }
+            throw new BusinessException("当前会话已关闭");
+        }
     }
 
     /**

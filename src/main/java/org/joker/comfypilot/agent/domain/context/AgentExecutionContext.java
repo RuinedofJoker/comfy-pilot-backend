@@ -9,6 +9,7 @@ import org.joker.comfypilot.agent.application.dto.AgentExecutionResponse;
 import org.joker.comfypilot.agent.domain.callback.AgentCallback;
 import org.joker.comfypilot.agent.domain.entity.AgentExecutionLog;
 import org.joker.comfypilot.agent.domain.service.Agent;
+import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
 import org.joker.comfypilot.tool.domain.service.Tool;
 
 import java.util.List;
@@ -27,7 +28,13 @@ public class AgentExecutionContext {
 
     private String agentCode;
 
+    private String wsSessionId;
+
+    private WebSocketSessionContext webSocketSessionContext;
+
     private Long sessionId;
+
+    private String sessionCode;
 
     private String requestId;
 

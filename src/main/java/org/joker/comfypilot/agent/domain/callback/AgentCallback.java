@@ -1,5 +1,9 @@
 package org.joker.comfypilot.agent.domain.callback;
 
+import dev.langchain4j.data.message.ChatMessage;
+
+import java.util.function.Consumer;
+
 /**
  * Agent输出回调接口
  */
@@ -69,4 +73,9 @@ public interface AgentCallback {
      * @return true表示已中断
      */
     boolean isInterrupted();
+
+    /**
+     * 添加消息
+     */
+    void addMemoryMessage(ChatMessage message, Consumer<ChatMessage> successCallback, Consumer<ChatMessage> failCallback);
 }

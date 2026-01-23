@@ -17,8 +17,6 @@ import org.joker.comfypilot.session.application.service.ChatSessionService;
 import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
 import org.joker.comfypilot.session.domain.entity.ChatMessage;
 import org.joker.comfypilot.session.domain.entity.ChatSession;
-import org.joker.comfypilot.common.enums.MessageRole;
-import org.joker.comfypilot.session.domain.enums.MessageStatus;
 import org.joker.comfypilot.session.domain.enums.SessionStatus;
 import org.joker.comfypilot.session.domain.repository.ChatMessageRepository;
 import org.joker.comfypilot.session.domain.repository.ChatSessionRepository;
@@ -30,7 +28,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -221,18 +218,6 @@ public class ChatSessionServiceImpl implements ChatSessionService {
                 throw new BusinessException("会话已关闭,无法发送消息");
             }
 
-            // 保存用户消息
-            ChatMessage userMessage = ChatMessage.builder()
-                    .sessionId(chatSession.getId())
-                    .sessionCode(sessionCode)
-                    .requestId(requestId)
-                    .role(content.startsWith("/") ? MessageRole.USER_ORDER : MessageRole.USER)
-                    .status(MessageStatus.ACTIVE)
-                    .metadata(new HashMap<>())
-                    .content(content)
-                    .build();
-            chatMessageRepository.save(userMessage);
-
             // 构建Agent执行请求
             AgentExecutionRequest agentRequest = AgentExecutionRequest.builder()
                     .sessionId(chatSession.getId())
@@ -247,6 +232,9 @@ public class ChatSessionServiceImpl implements ChatSessionService {
 
             // 获取Agent执行上下文（直接使用传入的agentCode）
             AgentExecutionContext executionContext = agentExecutor.getExecutionContext(chatSession.getAgentCode(), agentRequest);
+            executionContext.setSessionCode(sessionCode);
+            executionContext.setWsSessionId(wsContext.getWebSocketSession().getId());
+            executionContext.setWebSocketSessionContext(wsContext);
 
             // 创建流式回调
             WebSocketAgentCallback agentCallback = new WebSocketAgentCallback(

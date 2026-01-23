@@ -2,15 +2,16 @@ package org.joker.comfypilot.agent.domain.agent.workflow;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
+import org.joker.comfypilot.agent.domain.callback.AgentCallback;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.joker.comfypilot.agent.domain.service.AbstractAgent;
 import org.joker.comfypilot.agent.domain.service.Agent;
 import org.joker.comfypilot.agent.domain.service.AgentConfigDefinition;
+import org.joker.comfypilot.agent.infrastructure.memory.ChatMemoryChatMemoryStore;
 import org.joker.comfypilot.model.domain.enums.ModelCallingType;
 import org.joker.comfypilot.model.domain.repository.ModelProviderRepository;
 import org.joker.comfypilot.model.domain.service.StreamingChatModelFactory;
@@ -36,6 +37,8 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
     private ModelProviderRepository modelProviderRepository;
     @Autowired
     private StreamingChatModelFactory streamingChatModelFactory;
+    @Autowired
+    private ChatMemoryChatMemoryStore chatMemoryChatMemoryStore;
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -83,8 +86,9 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
     }
 
     protected void executeWithStreaming(AgentExecutionContext executionContext) throws Exception {
+        AgentCallback agentCallback = executionContext.getAgentCallback();
         // 发送ai思考中消息
-        executionContext.getAgentCallback().onThinking();
+        agentCallback.onThinking();
 
         AgentExecutionRequest request = executionContext.getRequest();
 
@@ -95,9 +99,23 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
         Map<String, Object> agentScope = new HashMap<>(executionContext.getAgentScope());
         StreamingChatModel streamingModel = streamingChatModelFactory.createStreamingChatModel((String) input.get("llmModel"), agentConfig);
 
-        SystemMessage systemMessage = null;
-        LinkedList<ChatMessage> messages = new LinkedList<>();
+        agentCallback.addMemoryMessage(SystemMessage.from(WorkflowAgentPrompts.SYSTEM_PROMPT), (chatMessage) -> {
+
+        }, null);
+
         // TODO 查询历史消息填充
         // TODO 构建
+
+        // 保存用户消息
+        /*org.joker.comfypilot.session.domain.entity.ChatMessage userMessage = org.joker.comfypilot.session.domain.entity.ChatMessage.builder()
+                .sessionId(chatSession.getId())
+                .sessionCode(sessionCode)
+                .requestId(requestId)
+                .role(content.startsWith("/") ? MessageRole.USER_ORDER : MessageRole.USER)
+                .status(MessageStatus.ACTIVE)
+                .metadata(new HashMap<>())
+                .content(content)
+                .build();
+        chatMessageRepository.save(userMessage);*/
     }
 }
