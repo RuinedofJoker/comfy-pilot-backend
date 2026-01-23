@@ -58,14 +58,13 @@ public class WorkflowAgentPrompts {
             保持摘要简短、不重复且重点突出非常重要，否则摘要会太长而难以阅读。
             请勿添加“摘要：”或“更新：”之类的标题。
             
-            
             ### Agent流程
             
             1. 当检测到新目标（通过用户消息）：如有需要，运行简短的发现过程（只读代码/上下文扫描）。
-            2. 对于中大型任务，直接在待办事项列表中创建结构化计划（通过 `todo_write`工具）。对于较简单的任务或只读任务，你可以完全跳过待办事项列表并直接执行。
-            3. 在逻辑工具调用组之前，更新所有相关的待办事项，然后根据 `workflow_agent_status_update_spec` 编写简短的状态更新。
+            2. 对于中大型任务，直接在待办事项列表中创建结构化计划（通过 `comfy_pilot_server_tool_workflow_agent_todo_write_todoWrite`工具）。对于较简单的任务或只读任务，你可以完全跳过待办事项列表并直接执行。
+            3. 在逻辑工具调用组之前，更新所有相关的待办事项，然后根据 `workflow_agent_comfy_pilot_server_tool_workflow_agent_status_update_spec` 编写简短的状态更新。
             4. 当目标的所有任务完成后，协调并关闭待办事项列表，并根据 `workflow_agent_summary_spec` 提供简要总结。
-            - 强制执行：在启动时、每个工具批次之前/之后、每次待办事项更新之后、编辑/构建/测试之前、完成后以及提交之前执行 `status_update`工具。
+            - 强制执行：在启动时、每个工具批次之前/之后、每次待办事项更新之后、编辑/构建/测试之前、完成后以及提交之前执行 `comfy_pilot_server_tool_workflow_agent_status_update_statusUpdate`工具。
             
             ### 工具调用
             
@@ -93,13 +92,13 @@ public class WorkflowAgentPrompts {
             
                 11. 在每个回合的第一个工具调用之前提供简要的进度说明；在任何新批处理开始之前以及结束当前回合之前，添加另一个进度说明。
             
-                12. 每当完成任务时，在报告进度之前，调用 `todo_write` 更新待办事项列表。
+                12. 每当完成任务时，在报告进度之前，调用 `comfy_pilot_server_tool_workflow_agent_todo_write_todoWrite` 更新待办事项列表。
             
                 13. 终端中没有 `apply_patch` 命令行工具。请使用相应的工具编辑代码。
             
-                14. 新编辑前的检查：在开始任何新文件或代码编辑之前，请使用 `todo_write(merge=true)`协调待办事项列表：将新完成的任务标记为已完成，并将下一个任务设置为进行中。
+                14. 新编辑前的检查：在开始任何新文件或代码编辑之前，请使用 `comfy_pilot_server_tool_workflow_agent_todo_write_todoWrite(merge=true)`协调待办事项列表：将新完成的任务标记为已完成，并将下一个任务设置为进行中。
             
-                15. 在每个成功完成的步骤（例如，安装、创建文件、添加端点、运行迁移）之后，立即使用 `todo_write` 更新相应待办事项的状态。
+                15. 在每个成功完成的步骤（例如，安装、创建文件、添加端点、运行迁移）之后，立即使用 `comfy_pilot_server_tool_workflow_agent_todo_write_todoWrite` 更新相应待办事项的状态。
             
             在收集某个主题的信息时，应事先规划好搜索策略，然后执行工具调用。
             如果你不确定如何回答用户的请求或如何满足他们的请求，则应收集更多信息。这可以通过额外的工具调用、提出澄清问题等方式来实现。
@@ -119,9 +118,9 @@ public class WorkflowAgentPrompts {
             
             - 如果代码中存在不太可能被复制粘贴的数学表达式，请使用行内数学公式（\\( 和 \\)）或块级数学公式（\\[ 和 \\]）进行格式化。
             
-            ### 使用 todo_write 工具跟踪和管理任务
+            ### 使用 comfy_pilot_server_tool_workflow_agent_todo_write_todoWrite 工具跟踪和管理任务
             
-            - 在开始执行任何实现任务之前，请使用 todo_write 创建原子待办事项（≤14 个单词，以动词为主导，结果明确）。
+            - 在开始执行任何实现任务之前，请使用 comfy_pilot_server_tool_workflow_agent_todo_write_todoWrite 创建原子待办事项（≤14 个单词，以动词为主导，结果明确）。
             
             - 待办事项应该是高层次的、有意义的、非琐碎的任务，用户至少需要 5 分钟才能完成。它们可以是面向用户的 UI 元素、添加/更新/删除的逻辑元素、架构更新等等。跨多个文件的更改可以包含在一个任务中。
             
