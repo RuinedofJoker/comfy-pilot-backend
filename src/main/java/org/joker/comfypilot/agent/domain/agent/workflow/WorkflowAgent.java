@@ -1,10 +1,13 @@
 package org.joker.comfypilot.agent.domain.agent.workflow;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.langchain4j.data.message.*;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.request.ToolChoice;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
 import org.joker.comfypilot.agent.domain.callback.AgentCallback;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
@@ -17,10 +20,12 @@ import org.joker.comfypilot.agent.infrastructure.tool.TodoWriteTool;
 import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerAdvancedFeaturesDTO;
 import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerDTO;
 import org.joker.comfypilot.cfsvr.application.service.ComfyuiServerService;
-import org.joker.comfypilot.common.domain.content.ChatContent;
+import org.joker.comfypilot.common.domain.content.*;
 import org.joker.comfypilot.common.domain.message.PersistableChatMessage;
 import org.joker.comfypilot.common.enums.MessageRole;
 import org.joker.comfypilot.common.exception.BusinessException;
+import org.joker.comfypilot.model.application.dto.AiModelDTO;
+import org.joker.comfypilot.model.application.service.AiModelService;
 import org.joker.comfypilot.model.domain.enums.ModelCallingType;
 import org.joker.comfypilot.model.domain.service.StreamingChatModelFactory;
 import org.joker.comfypilot.session.application.dto.ChatSessionDTO;
@@ -33,7 +38,6 @@ import org.joker.comfypilot.tool.domain.service.ToolRegistry;
 import org.joker.comfypilot.agent.domain.react.ReactExecutor;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -46,13 +50,14 @@ import java.util.*;
 @Component
 public class WorkflowAgent extends AbstractAgent implements Agent {
 
-    @Lazy
     @Autowired
     private ToolRegistry toolRegistry;
     @Autowired
     private StreamingChatModelFactory streamingChatModelFactory;
     @Autowired
     private ChatMessageRepository chatMessageRepository;
+    @Autowired
+    private AiModelService aiModelService;
     @Autowired
     private ChatSessionService chatSessionService;
     @Autowired
@@ -116,6 +121,11 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
         Map<String, Object> agentConfig = getRuntimeAgentConfig(executionContext);
         Map<String, Object> agentScope = executionContext.getAgentScope();
 
+        AiModelDTO llmModel = aiModelService.getByModelIdentifier((String) agentConfig.get("llmModelIdentifier"));
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, Object> modelConfig = objectMapper.readValue(llmModel.getModelConfig(), new TypeReference<>() {
+        });
+
         // 创建流式聊天模型（工具规范将在调用时通过 ChatRequest 传递）
         StreamingChatModel streamingModel = streamingChatModelFactory.createStreamingChatModel(
                 (String) agentConfig.get("llmModelIdentifier"),
@@ -147,8 +157,24 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             agentCallback.addMemoryMessage(SystemMessage.from(agentScope.get("SystemPrompt").toString()), null, null);
 
             // 添加用户提示词
+            List<Content> userMessageContent = new ArrayList<>(1 + (CollectionUtils.isNotEmpty(multimodalContents) ? multimodalContents.size() : 0));
+            userMessageContent.add(TextContent.from(userMessageBuilder.toString()));
+            if (CollectionUtils.isNotEmpty(multimodalContents)) {
+                for (ChatContent multimodalContent : multimodalContents) {
+                    if ((multimodalContent instanceof ImageChatContent) && !Boolean.TRUE.equals(modelConfig.get("supportImageMultimodal"))) {
+                        throw new BusinessException("模型不支持图片多模态文件");
+                    } else if ((multimodalContent instanceof VideoChatContent) && !Boolean.TRUE.equals(modelConfig.get("supportVideoMultimodal"))) {
+                        throw new BusinessException("模型不支持图片多模态文件");
+                    } else if ((multimodalContent instanceof AudioChatContent) && !Boolean.TRUE.equals(modelConfig.get("supportAudioMultimodal"))) {
+                        throw new BusinessException("模型不支持图片多模态文件");
+                    } else if ((multimodalContent instanceof PdfChatContent) && !Boolean.TRUE.equals(modelConfig.get("supportPdfFileMultimodal"))) {
+                        throw new BusinessException("模型不支持图片多模态文件");
+                    }
+                    userMessageContent.add(multimodalContent.toContent());
+                }
+            }
             agentCallback.addMemoryMessage(UserMessage.from(
-                    List.of(TextContent.from(userMessageBuilder.toString()))
+                    userMessageContent
             ), (chatMessage) -> {
                 // 保存用户消息
                 org.joker.comfypilot.session.domain.entity.ChatMessage systemChatMessage = org.joker.comfypilot.session.domain.entity.ChatMessage.builder()

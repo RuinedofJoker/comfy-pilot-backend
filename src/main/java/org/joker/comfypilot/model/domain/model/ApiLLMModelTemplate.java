@@ -27,7 +27,7 @@ public class ApiLLMModelTemplate extends AbstractModelTemplate implements ModelT
     @Override
     public Map<String, Object> configFormat() {
         Map<String, Object> parameters = new HashMap<>(Map.of(
-                "apiKey", "skuxxxx",
+                "apiKey", "",
                 "$apiKey", "第三方apiKey，可选，没填用模型上的",
                 "temperature", 0.8,
                 "$temperature", "模型温度",
@@ -38,8 +38,14 @@ public class ApiLLMModelTemplate extends AbstractModelTemplate implements ModelT
                 "timeout", 200,
                 "$timeout", "超时时间"
         ));
-        parameters.put("supportMultimodal", false);
-        parameters.put("$supportMultimodal", "是否支持多模态");
+        parameters.put("supportImageMultimodal", false);
+        parameters.put("$supportImageMultimodal", "是否支持图片多模态");
+        parameters.put("supportVideoMultimodal", false);
+        parameters.put("$supportVideoMultimodal", "是否支持图片多模态");
+        parameters.put("supportAudioMultimodal", false);
+        parameters.put("$supportAudioMultimodal", "是否支持音频多模态");
+        parameters.put("supportPdfFileMultimodal", false);
+        parameters.put("$supportPdfFileMultimodal", "是否支持PDF文件多模态");
         return parameters;
     }
 
