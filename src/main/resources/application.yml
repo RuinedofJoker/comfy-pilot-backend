@@ -106,6 +106,15 @@ admin:
     username: ${ADMIN_DEFAULT_USERNAME:admin}
     password: ${ADMIN_DEFAULT_PASSWORD:admin}
 
+# MCP 外部工具配置
+mcp:
+  enabled: true
+  config-path: C:/code/comfy-pilot/mcp.json
+  connection-timeout: 5000
+  call-timeout: 30000
+  retry-attempts: 3
+  fail-fast: false
+
 # SpringDoc OpenAPI 配置
 springdoc:
   api-docs:

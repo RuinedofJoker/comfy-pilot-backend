@@ -75,13 +75,12 @@ public class WebSocketAgentCallback implements AgentCallback {
     }
 
     @Override
-    public void onToolCall(String toolName, String toolArgs) {
-        log.info("Agent调用工具: sessionCode={}, tool={}, args={}", sessionCode, toolName, toolArgs);
-
-        boolean isClientTool = !toolName.startsWith(Tool.SERVER_TOOL_PREFIX);
+    public void onToolCall(boolean isClientTool, String toolCallId, String toolName, String toolArgs) {
+        log.info("Agent调用工具: sessionCode={}, tool={}, args={}, isClientTool={}", sessionCode, toolName, toolArgs, isClientTool);
 
         // 构建工具调用请求数据
         AgentToolCallRequestData requestData = AgentToolCallRequestData.builder()
+                .toolCallId(toolCallId)
                 .toolName(toolName)
                 .toolArgs(toolArgs)
                 .isClientTool(isClientTool)

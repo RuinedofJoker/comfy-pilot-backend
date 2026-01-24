@@ -21,6 +21,12 @@ public class AgentToolCallRequestData implements ServerToClientMessage {
     private static final long serialVersionUID = 1L;
 
     /**
+     * 工具调用id
+     */
+    @Schema(description = "工具调用id", example = "xxx")
+    private String toolCallId;
+
+    /**
      * 工具名称
      */
     @Schema(description = "工具名称", example = "readFile")

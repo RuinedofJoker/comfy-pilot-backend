@@ -295,7 +295,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                 Tool serverTool = SpringContextUtil.getBean(ToolRegistry.class).getToolByName(responseData.getToolName());
                 if (serverTool != null) {
                     try {
-                        String executeResult = serverTool.executeTool(responseData.getToolName(), responseData.getToolArgs());
+                        String executeResult = serverTool.executeTool(responseData.getToolCallId(), responseData.getToolName(), responseData.getToolArgs());
                         responseData.setSuccess(true);
                         responseData.setResult(executeResult);
                     } catch (Exception e) {

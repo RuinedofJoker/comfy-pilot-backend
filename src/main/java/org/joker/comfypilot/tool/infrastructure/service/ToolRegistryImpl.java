@@ -9,6 +9,7 @@ import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.tool.domain.service.Tool;
 import org.joker.comfypilot.tool.domain.service.ToolRegistry;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
@@ -42,6 +43,9 @@ public class ToolRegistryImpl implements ToolRegistry, ApplicationContextAware {
 
     private ApplicationContext applicationContext;
 
+    @Autowired
+    private McpConfigLoader mcpConfigLoader;
+
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
@@ -73,7 +77,10 @@ public class ToolRegistryImpl implements ToolRegistry, ApplicationContextAware {
             }
         }
 
-        log.info("工具注册完成，共注册 {} 个工具类", toolCount);
+        log.info("本地工具注册完成，共注册 {} 个工具类", toolCount);
+
+        // 注册 MCP 外部工具
+        registerMcpTools();
     }
 
     /**
@@ -215,6 +222,41 @@ public class ToolRegistryImpl implements ToolRegistry, ApplicationContextAware {
     public List<Tool> getToolsByClass(Class<?> clazz) {
         List<Tool> tools = classToolMap.get(clazz);
         return tools != null ? tools : List.of();
+    }
+
+    /**
+     * 注册 MCP 外部工具
+     */
+    private void registerMcpTools() {
+        try {
+            log.info("开始加载 MCP 外部工具");
+            List<Tool> mcpTools = mcpConfigLoader.loadMcpTools();
+
+            if (mcpTools.isEmpty()) {
+                log.info("未加载到任何 MCP 外部工具");
+                return;
+            }
+
+            // 注册每个 MCP 工具
+            int registeredCount = 0;
+            for (Tool tool : mcpTools) {
+                String toolName = tool.toolName();
+
+                if (toolMap.containsKey(toolName)) {
+                    log.warn("MCP 工具名称冲突，跳过注册: {}", toolName);
+                    continue;
+                }
+
+                toolMap.put(toolName, tool);
+                registeredCount++;
+                log.debug("注册 MCP 工具: {}", toolName);
+            }
+
+            log.info("MCP 工具注册完成，共注册 {} 个工具", registeredCount);
+
+        } catch (Exception e) {
+            log.error("注册 MCP 工具失败: {}", e.getMessage(), e);
+        }
     }
 
 }

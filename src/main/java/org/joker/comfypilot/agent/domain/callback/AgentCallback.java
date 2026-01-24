@@ -44,10 +44,12 @@ public interface AgentCallback {
     /**
      * 当Agent调用Tool时调用
      *
-     * @param toolName 工具名称
-     * @param toolArgs 工具参数
+     * @param isClientTool 是否是客户端工具
+     * @param toolCallId   工具调用ID
+     * @param toolName     工具名称
+     * @param toolArgs     工具参数
      */
-    void onToolCall(String toolName, String toolArgs);
+    void onToolCall(boolean isClientTool, String toolCallId, String toolName, String toolArgs);
 
     /**
      * 检查是否被中断

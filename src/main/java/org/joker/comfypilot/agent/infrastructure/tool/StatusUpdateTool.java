@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Slf4j
 @Component
-@ToolSet("workflow_agent_")
+@ToolSet
 public class StatusUpdateTool {
 
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");

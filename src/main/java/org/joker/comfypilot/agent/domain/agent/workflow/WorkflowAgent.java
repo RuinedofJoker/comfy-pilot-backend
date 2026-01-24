@@ -116,10 +116,6 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
         Map<String, Object> agentConfig = getRuntimeAgentConfig(executionContext);
         Map<String, Object> agentScope = executionContext.getAgentScope();
 
-        // 从 ToolRegistry 获取工具列表
-        List<Tool> todoTools = toolRegistry.getToolsByClass(TodoWriteTool.class);
-        List<Tool> statusTools = toolRegistry.getToolsByClass(StatusUpdateTool.class);
-
         // 创建流式聊天模型（工具规范将在调用时通过 ChatRequest 传递）
         StreamingChatModel streamingModel = streamingChatModelFactory.createStreamingChatModel(
                 (String) agentConfig.get("llmModelIdentifier"),
@@ -168,17 +164,31 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                 chatMessageRepository.save(systemChatMessage);
             }, null);
 
+            // 从 ToolRegistry 获取工具列表
+            List<Tool> todoTools = toolRegistry.getToolsByClass(TodoWriteTool.class);
+            List<Tool> statusTools = toolRegistry.getToolsByClass(StatusUpdateTool.class);
+
             // 准备工具规范
             List<ToolSpecification> toolSpecs = new ArrayList<>();
-
-            // 添加内置工具
-            toolSpecs.addAll(todoTools.stream().map(Tool::toolSpecification).toList());
-            toolSpecs.addAll(statusTools.stream().map(Tool::toolSpecification).toList());
 
             // 添加用户提供的 MCP 工具
             if (userMessageData.getToolSchemas() != null && !userMessageData.getToolSchemas().isEmpty()) {
                 toolSpecs.addAll(executionContext.getClientTools().stream().map(Tool::toolSpecification).toList());
             }
+
+            // 添加内置工具
+            for (Tool serverTool : todoTools) {
+                if (executionContext.getClientToolNames().contains(serverTool.toolName())) {
+                    throw new BusinessException("客户端工具" + serverTool.toolName() + "与服务内部工具重名");
+                }
+            }
+            for (Tool serverTool : statusTools) {
+                if (executionContext.getClientToolNames().contains(serverTool.toolName())) {
+                    throw new BusinessException("客户端工具" + serverTool.toolName() + "与服务内部工具重名");
+                }
+            }
+            toolSpecs.addAll(todoTools.stream().map(Tool::toolSpecification).toList());
+            toolSpecs.addAll(statusTools.stream().map(Tool::toolSpecification).toList());
 
             // 构建 ChatRequest
             ChatRequest chatRequest = ChatRequest.builder()
@@ -216,7 +226,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
 
             // 4. 工具调用通知事件 -> AgentCallback.onToolCall()
             eventPublisher.addEventListener(AgentEventType.TOOL_CALL_NOTIFY, (ToolCallNotifyEvent event) -> {
-                agentCallback.onToolCall(event.getToolName(), event.getToolArgs());
+                agentCallback.onToolCall(executionContext.getClientToolNames().contains(event.getToolName()), event.getToolCallId(), event.getToolName(), event.getToolArgs());
             });
 
             // 5. 消息添加后事件 -> 保存到数据库

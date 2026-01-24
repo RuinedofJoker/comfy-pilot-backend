@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Slf4j
 @Component
-@ToolSet("workflow_agent_todo_write_")
+@ToolSet
 public class TodoWriteTool {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();

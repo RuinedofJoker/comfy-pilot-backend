@@ -80,6 +80,7 @@ public class AgentExecutorImpl implements AgentExecutor {
                 .sessionId(request.getSessionId())
                 .request(request)
                 .clientTools(clientTools)
+                .clientToolNames(clientToolNames)
                 .executionLog(executionLog)
                 .build();
     }

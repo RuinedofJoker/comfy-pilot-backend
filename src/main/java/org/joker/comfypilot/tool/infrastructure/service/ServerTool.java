@@ -154,9 +154,9 @@ public class ServerTool implements Tool {
      * @throws BusinessException 工具执行失败时抛出，包含详细的错误信息
      */
     @Override
-    public String executeTool(String name, String arguments) {
+    public String executeTool(String toolCallId, String name, String arguments) {
         try {
-            log.debug("开始执行工具: toolName={}, arguments={}", name, arguments);
+            log.debug("开始执行工具: toolCallId={} toolName={}, arguments={}", toolCallId, name, arguments);
 
             // 1. 构建方法参数
             Object[] args = buildArguments(method, arguments);

@@ -41,7 +41,7 @@ import java.lang.reflect.Method;
  */
 public interface Tool {
 
-    String SERVER_TOOL_PREFIX = "comfy_pilot_server_tool_";
+    String SERVER_TOOL_PREFIX = "cp_server_tool_";
 
     /**
      * 获取工具名称
@@ -89,12 +89,13 @@ public interface Tool {
      * {"user": {"name": "张三", "age": 25}, "action": "create"}
      * }</pre>
      *
-     * @param name      工具名称（用于日志记录）
-     * @param arguments JSON 格式的参数字符串
+     * @param toolCallId 工具调用ID
+     * @param name       工具名称
+     * @param arguments  JSON 格式的参数字符串
      * @return JSON 格式的执行结果
      * @throws org.joker.comfypilot.common.exception.BusinessException 工具执行失败时抛出
      */
-    String executeTool(String name, String arguments);
+    String executeTool(String toolCallId, String name, String arguments);
 
     default boolean isServerTool() {
         return ServerTool.class.equals(getClass());

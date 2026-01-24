@@ -373,6 +373,7 @@ public class ReactExecutor {
                         if (ex != null) {
                             log.error("等待工具调用响应失败: toolName={}", toolName, ex);
                             responseData = AgentToolCallResponseData.builder()
+                                    .toolCallId(toolCallId)
                                     .toolName(toolName)
                                     .isAllow(false)
                                     .success(false)

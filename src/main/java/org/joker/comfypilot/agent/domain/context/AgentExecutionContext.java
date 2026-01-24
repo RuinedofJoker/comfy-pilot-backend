@@ -17,6 +17,7 @@ import org.joker.comfypilot.tool.domain.service.Tool;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -55,6 +56,8 @@ public class AgentExecutionContext {
     private Map<String, Object> agentScope;
 
     private List<? extends Tool> clientTools;
+
+    private Set<String> clientToolNames;
 
     private AgentCallback agentCallback;
 
