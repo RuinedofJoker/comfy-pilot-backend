@@ -134,7 +134,6 @@ public class McpServerTool implements Tool {
             Map<String, Object> requestBody = Map.of(
                     "method", "tools/call",
                     "params", Map.of(
-                            "id", toolCallId,
                             "name", originalToolName,
                             "arguments", OBJECT_MAPPER.readValue(arguments, Map.class)
                     )
