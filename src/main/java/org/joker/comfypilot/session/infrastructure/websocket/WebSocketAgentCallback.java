@@ -14,7 +14,6 @@ import org.joker.comfypilot.session.application.dto.server2client.AgentToolCallR
 import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
 import org.joker.comfypilot.session.domain.enums.AgentPromptType;
 import org.joker.comfypilot.session.domain.enums.WebSocketMessageType;
-import org.joker.comfypilot.tool.domain.service.Tool;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
