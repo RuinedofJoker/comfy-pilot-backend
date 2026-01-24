@@ -213,6 +213,8 @@ public class EmbeddedDatabaseConfig {
                         file_size BIGINT NOT NULL,
                         file_type VARCHAR(100),
                         file_extension VARCHAR(50),
+                        source_type VARCHAR(50) NOT NULL,
+                        web_relative_path VARCHAR(500) NOT NULL,
                         upload_user_id BIGINT NOT NULL,
                         business_type VARCHAR(50),
                         business_id BIGINT,
@@ -229,7 +231,7 @@ public class EmbeddedDatabaseConfig {
             // 创建索引
             jdbcTemplate.execute("CREATE INDEX idx_file_resource_upload_user_id ON file_resource(upload_user_id)");
             jdbcTemplate.execute("CREATE INDEX idx_file_resource_business ON file_resource(business_type, business_id)");
-            jdbcTemplate.execute("CREATE UNIQUE INDEX idx_file_resource_stored_name ON file_resource(stored_name, is_deleted)");
+            jdbcTemplate.execute("CREATE UNIQUE INDEX uk_file_resource_sources_stored_name ON file_resource(source_type, stored_name, is_deleted)");
             jdbcTemplate.execute("CREATE INDEX idx_file_resource_create_time ON file_resource(create_time)");
 
             log.info("文件资源表创建完成");
@@ -374,7 +376,7 @@ public class EmbeddedDatabaseConfig {
             jdbcTemplate.execute(sql);
 
             // 创建索引
-            jdbcTemplate.execute("CREATE UNIQUE INDEX uk_workflow_version ON workflow_version(workflow_id, version_code)");
+            jdbcTemplate.execute("CREATE UNIQUE INDEX uk_workflow_version ON workflow_version(workflow_id, version_code, is_deleted)");
             jdbcTemplate.execute("CREATE INDEX idx_version_workflow_id ON workflow_version(workflow_id)");
             jdbcTemplate.execute("CREATE INDEX idx_version_content_hash ON workflow_version(content_hash)");
             jdbcTemplate.execute("CREATE INDEX idx_version_session_id ON workflow_version(session_id)");
@@ -449,7 +451,7 @@ public class EmbeddedDatabaseConfig {
             jdbcTemplate.execute(sql);
 
             // 创建索引
-            jdbcTemplate.execute("CREATE UNIQUE INDEX uk_model_identifier ON ai_model(model_identifier)");
+            jdbcTemplate.execute("CREATE UNIQUE INDEX uk_model_identifier ON ai_model(model_identifier, is_deleted)");
             jdbcTemplate.execute("CREATE INDEX idx_model_access_type ON ai_model(access_type)");
             jdbcTemplate.execute("CREATE INDEX idx_model_type ON ai_model(model_type)");
             jdbcTemplate.execute("CREATE INDEX idx_model_calling_type ON ai_model(model_calling_type)");
@@ -491,6 +493,7 @@ public class EmbeddedDatabaseConfig {
             jdbcTemplate.execute(sql);
 
             // 创建索引
+            jdbcTemplate.execute("CREATE UNIQUE INDEX uk_agent_code ON agent_config(agent_code, is_deleted)");
             jdbcTemplate.execute("CREATE INDEX idx_agent_config_status ON agent_config(status)");
             jdbcTemplate.execute("CREATE INDEX idx_agent_config_is_deleted ON agent_config(is_deleted)");
 

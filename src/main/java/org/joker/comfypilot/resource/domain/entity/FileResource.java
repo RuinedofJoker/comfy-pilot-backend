@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.joker.comfypilot.common.domain.BaseEntity;
+import org.joker.comfypilot.resource.domain.enums.FileSourceType;
 
 import java.time.LocalDateTime;
 
@@ -53,6 +54,16 @@ public class FileResource extends BaseEntity<Long> {
      * 文件扩展名
      */
     private String fileExtension;
+
+    /**
+     * 文件来源类型
+     */
+    private FileSourceType sourceType;
+
+    /**
+     * 文件Web相对路径
+     */
+    private String webRelativePath;
 
     /**
      * 上传用户ID
@@ -104,18 +115,4 @@ public class FileResource extends BaseEntity<Long> {
         this.downloadCount++;
     }
 
-    /**
-     * 更新业务关联信息
-     */
-    public void updateBusinessInfo(String businessType, Long businessId) {
-        this.businessType = businessType;
-        this.businessId = businessId;
-    }
-
-    /**
-     * 获取完整文件路径
-     */
-    public String getFullPath() {
-        return filePath + "/" + storedName;
-    }
 }

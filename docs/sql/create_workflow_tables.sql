@@ -82,7 +82,7 @@ COMMENT ON COLUMN workflow_version.is_deleted IS '逻辑删除标记（0-未删�
 -- =====================================================
 -- 4. 创建workflow_version表的索引
 -- =====================================================
-CREATE UNIQUE INDEX uk_workflow_version ON workflow_version(workflow_id, version_code);
+CREATE UNIQUE INDEX uk_workflow_version ON workflow_version(workflow_id, version_code, is_deleted);
 CREATE INDEX idx_version_workflow_id ON workflow_version(workflow_id);
 CREATE INDEX idx_version_content_hash ON workflow_version(content_hash);
 CREATE INDEX idx_version_session_id ON workflow_version(session_id);

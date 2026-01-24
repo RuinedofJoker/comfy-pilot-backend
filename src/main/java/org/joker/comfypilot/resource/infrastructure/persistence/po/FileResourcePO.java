@@ -54,6 +54,16 @@ public class FileResourcePO extends BasePO {
     private String fileExtension;
 
     /**
+     * 文件来源类型
+     */
+    private String sourceType;
+
+    /**
+     * 文件Web相对路径
+     */
+    private String webRelativePath;
+
+    /**
      * 上传用户ID
      */
     private Long uploadUserId;

@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS chat_session (
 );
 
 -- 创建唯一索引
-CREATE UNIQUE INDEX uk_session_code ON chat_session(session_code) WHERE is_deleted = 0;
+CREATE UNIQUE INDEX uk_session_code ON chat_session(session_code, is_deleted);
 
 -- 创建普通索引
 CREATE INDEX idx_chat_session_user_id ON chat_session(user_id);

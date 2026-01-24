@@ -3,6 +3,7 @@ package org.joker.comfypilot.resource.interfaces.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.joker.comfypilot.auth.infrastructure.context.UserContextHolder;
 import org.joker.comfypilot.common.interfaces.response.Result;
 import org.joker.comfypilot.resource.application.converter.FileResourceDTOConverter;
 import org.joker.comfypilot.resource.application.service.FileDownloadService;
@@ -47,9 +48,8 @@ public class FileResourceController {
     public Result<FileResourceDTO> uploadFile(
             @Parameter(description = "上传的文件", required = true) @RequestParam("file") MultipartFile file,
             @Parameter(description = "业务类型") @RequestParam(value = "businessType", required = false) String businessType,
-            @Parameter(description = "业务ID") @RequestParam(value = "businessId", required = false) Long businessId,
-            @Parameter(hidden = true) @RequestAttribute("userId") Long userId) {
-
+            @Parameter(description = "业务ID") @RequestParam(value = "businessId", required = false) Long businessId) {
+        Long userId = UserContextHolder.getCurrentUserId();
         FileResource fileResource = fileUploadService.uploadFile(file, userId, businessType, businessId);
         return Result.success(dtoConverter.toDTO(fileResource));
     }
@@ -62,9 +62,8 @@ public class FileResourceController {
     public Result<List<FileResourceDTO>> uploadFiles(
             @Parameter(description = "上传的文件列表", required = true) @RequestParam("files") List<MultipartFile> files,
             @Parameter(description = "业务类型") @RequestParam(value = "businessType", required = false) String businessType,
-            @Parameter(description = "业务ID") @RequestParam(value = "businessId", required = false) Long businessId,
-            @Parameter(hidden = true) @RequestAttribute("userId") Long userId) {
-
+            @Parameter(description = "业务ID") @RequestParam(value = "businessId", required = false) Long businessId) {
+        Long userId = UserContextHolder.getCurrentUserId();
         List<FileResource> fileResources = fileUploadService.uploadFiles(files, userId, businessType, businessId);
         List<FileResourceDTO> dtos = fileResources.stream()
                 .map(dtoConverter::toDTO)
@@ -75,11 +74,11 @@ public class FileResourceController {
     /**
      * 下载文件
      */
-    @Operation(summary = "下载文件", description = "根据文件ID下载文件")
-    @GetMapping("/download/{fileId}")
+    @Operation(summary = "下载文件", description = "根据文件名下载文件")
+    @GetMapping("/download/{fileName}")
     public ResponseEntity<InputStreamResource> downloadFile(
-            @Parameter(description = "文件ID", required = true) @PathVariable Long fileId) {
-        FileResource fileResource = fileDownloadService.downloadFile(fileId);
+            @Parameter(description = "文件名（storedName）", required = true) @PathVariable String fileName) {
+        FileResource fileResource = fileDownloadService.downloadFileByStoredName(fileName);
         InputStream inputStream = fileDownloadService.getFileInputStream(fileResource);
 
         return ResponseEntity.ok()
@@ -93,12 +92,11 @@ public class FileResourceController {
      * 删除文件
      */
     @Operation(summary = "删除文件", description = "根据文件ID删除文件（逻辑删除）")
-    @DeleteMapping("/{fileId}")
+    @DeleteMapping("/{storedName}")
     public Result<Void> deleteFile(
-            @Parameter(description = "文件ID", required = true) @PathVariable Long fileId,
-            @Parameter(hidden = true) @RequestAttribute("userId") Long userId) {
-
-        fileManagementService.deleteFile(fileId, userId);
+            @Parameter(description = "文件ID", required = true) @PathVariable String storedName) {
+        Long userId = UserContextHolder.getCurrentUserId();
+        fileManagementService.deleteFile(storedName, userId);
         return Result.success();
     }
 
@@ -107,8 +105,8 @@ public class FileResourceController {
      */
     @Operation(summary = "查询用户文件列表", description = "获取当前用户上传的所有文件列表")
     @GetMapping("/user")
-    public Result<List<FileResourceDTO>> listUserFiles(
-            @Parameter(hidden = true) @RequestAttribute("userId") Long userId) {
+    public Result<List<FileResourceDTO>> listUserFiles() {
+        Long userId = UserContextHolder.getCurrentUserId();
         List<FileResource> fileResources = fileManagementService.listUserFiles(userId);
         List<FileResourceDTO> dtos = fileResources.stream()
                 .map(dtoConverter::toDTO)

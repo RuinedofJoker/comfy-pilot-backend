@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS ai_model (
 );
 
 -- 创建索引
-CREATE UNIQUE INDEX uk_model_identifier ON ai_model(model_identifier);
+CREATE UNIQUE INDEX uk_model_identifier ON ai_model(model_identifier, is_deleted);
 CREATE INDEX idx_model_access_type ON ai_model(access_type);
 CREATE INDEX idx_model_type ON ai_model(model_type);
 CREATE INDEX idx_model_calling_type ON ai_model(model_calling_type);

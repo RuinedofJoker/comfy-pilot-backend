@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS agent_config (
 );
 
 -- 创建唯一索引
-CREATE UNIQUE INDEX uk_agent_code ON agent_config(agent_code) WHERE is_deleted = 0;
+CREATE UNIQUE INDEX uk_agent_code ON agent_config(agent_code, is_deleted);
 
 -- 创建普通索引
 CREATE INDEX idx_agent_config_status ON agent_config(status);

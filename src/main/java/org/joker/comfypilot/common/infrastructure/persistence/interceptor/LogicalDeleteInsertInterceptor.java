@@ -8,7 +8,6 @@ import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.plugin.*;
-import org.joker.comfypilot.common.infrastructure.persistence.annotation.UniqueKey;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
@@ -20,7 +19,7 @@ import java.util.*;
 /**
  * 逻辑删除插入拦截器
  *
- * 功能：在逻辑删除场景下，如果插入操作指定了主键或唯一键，
+ * 功能：在逻辑删除场景下，如果插入操作指定了主键，
  * 先检查是否存在逻辑删除的记录，如果存在则物理删除后再插入
  */
 @Slf4j
@@ -118,21 +117,6 @@ public class LogicalDeleteInsertInterceptor implements Interceptor {
                     // 检查主键
                     if (field.isAnnotationPresent(TableId.class)) {
                         keyInfo.setPrimaryKey(field.getName(), value);
-                    }
-
-                    // 检查唯一键
-                    if (field.isAnnotationPresent(UniqueKey.class)) {
-                        UniqueKey uniqueKey = field.getAnnotation(UniqueKey.class);
-                        String group = uniqueKey.group();
-                        int order = uniqueKey.order();
-
-                        if (group.isEmpty()) {
-                            // 单字段唯一键
-                            keyInfo.addSingleUniqueKey(field.getName(), value);
-                        } else {
-                            // 联合唯一键
-                            keyInfo.addCompositeUniqueKey(group, field.getName(), value, order);
-                        }
                     }
                 } catch (IllegalAccessException e) {
                     log.warn("无法访问字段: {}", field.getName(), e);
@@ -269,31 +253,6 @@ public class LogicalDeleteInsertInterceptor implements Interceptor {
             );
         }
 
-        // 使用单字段唯一键
-        if (!keyInfo.getSingleUniqueKeys().isEmpty()) {
-            Map.Entry<String, Object> entry = keyInfo.getSingleUniqueKeys().entrySet().iterator().next();
-            return new QueryCondition(
-                camelToUnderscore(entry.getKey()) + " = ?",
-                Collections.singletonList(entry.getValue())
-            );
-        }
-
-        // 使用联合唯一键（选择第一个完整的组）
-        for (Map.Entry<String, Map<String, Object>> groupEntry : keyInfo.getCompositeUniqueKeys().entrySet()) {
-            Map<String, Object> fields = groupEntry.getValue();
-            if (!fields.isEmpty()) {
-                List<String> whereParts = new ArrayList<>();
-                List<Object> params = new ArrayList<>();
-
-                for (Map.Entry<String, Object> fieldEntry : fields.entrySet()) {
-                    whereParts.add(camelToUnderscore(fieldEntry.getKey()) + " = ?");
-                    params.add(fieldEntry.getValue());
-                }
-
-                return new QueryCondition(String.join(" AND ", whereParts), params);
-            }
-        }
-
         return null;
     }
 
@@ -303,25 +262,14 @@ public class LogicalDeleteInsertInterceptor implements Interceptor {
     private static class KeyInfo {
         private String primaryKeyName;
         private Object primaryKeyValue;
-        private Map<String, Object> singleUniqueKeys = new HashMap<>();
-        private Map<String, Map<String, Object>> compositeUniqueKeys = new HashMap<>();
 
         public void setPrimaryKey(String name, Object value) {
             this.primaryKeyName = name;
             this.primaryKeyValue = value;
         }
 
-        public void addSingleUniqueKey(String name, Object value) {
-            this.singleUniqueKeys.put(name, value);
-        }
-
-        public void addCompositeUniqueKey(String group, String fieldName, Object value, int order) {
-            compositeUniqueKeys.computeIfAbsent(group, k -> new LinkedHashMap<>())
-                .put(fieldName, value);
-        }
-
         public boolean isEmpty() {
-            return primaryKeyValue == null && singleUniqueKeys.isEmpty() && compositeUniqueKeys.isEmpty();
+            return primaryKeyValue == null;
         }
 
         public boolean hasPrimaryKey() {
@@ -336,13 +284,6 @@ public class LogicalDeleteInsertInterceptor implements Interceptor {
             return primaryKeyValue;
         }
 
-        public Map<String, Object> getSingleUniqueKeys() {
-            return singleUniqueKeys;
-        }
-
-        public Map<String, Map<String, Object>> getCompositeUniqueKeys() {
-            return compositeUniqueKeys;
-        }
     }
 
     /**

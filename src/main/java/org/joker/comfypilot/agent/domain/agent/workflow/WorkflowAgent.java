@@ -17,6 +17,7 @@ import org.joker.comfypilot.agent.infrastructure.tool.TodoWriteTool;
 import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerAdvancedFeaturesDTO;
 import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerDTO;
 import org.joker.comfypilot.cfsvr.application.service.ComfyuiServerService;
+import org.joker.comfypilot.common.domain.content.ChatContent;
 import org.joker.comfypilot.common.domain.message.PersistableChatMessage;
 import org.joker.comfypilot.common.enums.MessageRole;
 import org.joker.comfypilot.common.exception.BusinessException;
@@ -134,6 +135,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             StringBuilder userMessageBuilder = new StringBuilder();
             userMessageBuilder.append(WorkflowAgentPrompts.USER_QUERY_START_TOKEN).append(userMessage).append(WorkflowAgentPrompts.USER_QUERY_END_TOKEN).append("\n");
             String workflowContent = userMessageData.getWorkflowContent();
+            List<ChatContent> multimodalContents = userMessageData.getMultimodalContents();
             userMessageBuilder.append(WorkflowAgentPrompts.USER_WORKFLOW_PROMPT.formatted(workflowContent)).append("\n");
 
             // Agent构建ComfyUI服务高级功能提示词和补充工具
@@ -226,12 +228,13 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                 }
 
                 try {
+                    ChatMessage langchainChatMessage = event.getMessage();
                     // 保存消息到数据库（仅保存 AI/Tool 消息，User 消息已在其他地方保存）
-                    MessageRole messageRole = switch (event.getMessage()) {
+                    MessageRole messageRole = switch (langchainChatMessage) {
                         case AiMessage aiMessage -> MessageRole.ASSISTANT;
                         case UserMessage message -> MessageRole.AGENT_PROMPT;
                         case ToolExecutionResultMessage toolExecutionResultMessage -> MessageRole.TOOL_EXECUTION_RESULT;
-                        default -> throw new BusinessException("未知的消息类型：" + event.getMessage().getClass());
+                        default -> throw new BusinessException("未知的消息类型：" + langchainChatMessage.getClass());
                     };
                     org.joker.comfypilot.session.domain.entity.ChatMessage dbMessage =
                             org.joker.comfypilot.session.domain.entity.ChatMessage.builder()
@@ -242,7 +245,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                                     .status(MessageStatus.ACTIVE)
                                     .metadata(new HashMap<>())
                                     .content("")
-                                    .chatContent(PersistableChatMessage.toJsonString(event.getMessage()))
+                                    .chatContent(PersistableChatMessage.toJsonString(langchainChatMessage))
                                     .build();
                     chatMessageRepository.save(dbMessage);
                     log.debug("消息已保存到数据库: sessionCode={}, messageType={}, iteration={}",

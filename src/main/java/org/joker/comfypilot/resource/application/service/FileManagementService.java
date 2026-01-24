@@ -3,6 +3,7 @@ package org.joker.comfypilot.resource.application.service;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.resource.domain.entity.FileResource;
+import org.joker.comfypilot.resource.domain.enums.FileSourceType;
 import org.joker.comfypilot.resource.domain.repository.FileResourceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,8 +27,8 @@ public class FileManagementService {
     /**
      * 删除文件（物理删除+逻辑删除）
      */
-    public void deleteFile(Long fileId, Long userId) {
-        FileResource fileResource = fileResourceRepository.findById(fileId)
+    public void deleteFile(String storedName, Long userId) {
+        FileResource fileResource = fileResourceRepository.findBySourceAndStoredName(storedName, FileSourceType.SERVER_LOCAL)
                 .orElseThrow(() -> new BusinessException("文件不存在"));
 
         // 验证权限：只有上传者可以删除
@@ -46,7 +47,7 @@ public class FileManagementService {
         }
 
         // 逻辑删除
-        fileResourceRepository.deleteById(fileId);
+        fileResourceRepository.deleteById(fileResource.getId());
     }
 
     /**

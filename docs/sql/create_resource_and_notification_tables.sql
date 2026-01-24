@@ -13,6 +13,8 @@ CREATE TABLE file_resource (
     file_size BIGINT NOT NULL,
     file_type VARCHAR(100),
     file_extension VARCHAR(50),
+    source_type VARCHAR(50) NOT NULL,
+    web_relative_path VARCHAR(500) NOT NULL,
     upload_user_id BIGINT NOT NULL,
     business_type VARCHAR(50),
     business_id BIGINT,
@@ -27,7 +29,7 @@ CREATE TABLE file_resource (
 -- 文件资源表索引
 CREATE INDEX idx_file_resource_upload_user_id ON file_resource(upload_user_id);
 CREATE INDEX idx_file_resource_business ON file_resource(business_type, business_id);
-CREATE UNIQUE INDEX idx_file_resource_stored_name ON file_resource(stored_name) WHERE is_deleted = 0;
+CREATE UNIQUE INDEX uk_file_resource_sources_stored_name ON file_resource(source_type, stored_name, is_deleted);
 CREATE INDEX idx_file_resource_create_time ON file_resource(create_time);
 
 -- 文件资源表注释

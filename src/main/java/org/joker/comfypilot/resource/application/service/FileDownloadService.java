@@ -3,6 +3,7 @@ package org.joker.comfypilot.resource.application.service;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.resource.domain.entity.FileResource;
+import org.joker.comfypilot.resource.domain.enums.FileSourceType;
 import org.joker.comfypilot.resource.domain.repository.FileResourceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,24 +25,10 @@ public class FileDownloadService {
     private FileResourceRepository fileResourceRepository;
 
     /**
-     * 根据ID下载文件
-     */
-    public FileResource downloadFile(Long fileId) {
-        FileResource fileResource = fileResourceRepository.findById(fileId)
-                .orElseThrow(() -> new BusinessException("文件不存在"));
-
-        // 增加下载次数
-        fileResource.incrementDownloadCount();
-        fileResourceRepository.save(fileResource);
-
-        return fileResource;
-    }
-
-    /**
      * 根据存储名下载文件
      */
     public FileResource downloadFileByStoredName(String storedName) {
-        FileResource fileResource = fileResourceRepository.findByStoredName(storedName)
+        FileResource fileResource = fileResourceRepository.findBySourceAndStoredName(storedName, FileSourceType.SERVER_LOCAL)
                 .orElseThrow(() -> new BusinessException("文件不存在"));
 
         // 增加下载次数

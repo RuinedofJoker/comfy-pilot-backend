@@ -3,6 +3,7 @@ package org.joker.comfypilot.resource.application.service;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.resource.domain.entity.FileResource;
+import org.joker.comfypilot.resource.domain.enums.FileSourceType;
 import org.joker.comfypilot.resource.domain.repository.FileResourceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,8 +34,8 @@ public class FileUploadService {
     @Value("${file.storage.root-path}")
     private String rootPath;
 
-    @Value("${file.storage.max-file-size}")
-    private Long maxFileSize;
+    @Value("${spring.servlet.multipart.max-file-size}")
+    private String maxFileSize;
 
     @Value("${file.storage.allowed-extensions}")
     private String allowedExtensions;
@@ -78,6 +79,8 @@ public class FileUploadService {
                 .fileSize(file.getSize())
                 .fileType(file.getContentType())
                 .fileExtension(extension)
+                .sourceType(FileSourceType.SERVER_LOCAL)
+                .webRelativePath("/api/v1/files/download/" + storedName)
                 .uploadUserId(userId)
                 .businessType(businessType)
                 .businessId(businessId)
@@ -136,8 +139,9 @@ public class FileUploadService {
         }
 
         // 验证文件大小
-        if (file.getSize() > maxFileSize) {
-            throw new BusinessException("文件大小超过限制：" + (maxFileSize / 1024 / 1024) + "MB");
+        long maxSizeBytes = parseSize(maxFileSize);
+        if (file.getSize() > maxSizeBytes) {
+            throw new BusinessException("文件大小超过限制：" + formatSize(maxSizeBytes));
         }
 
         // 验证文件扩展名
@@ -147,6 +151,48 @@ public class FileUploadService {
             if (!allowedList.contains(extension)) {
                 throw new BusinessException("不支持的文件类型：" + extension);
             }
+        }
+    }
+
+    /**
+     * 解析文件大小字符串（如 "10MB", "100KB"）为字节数
+     */
+    private long parseSize(String size) {
+        if (size == null || size.trim().isEmpty()) {
+            return Long.MAX_VALUE;
+        }
+
+        size = size.trim().toUpperCase();
+
+        try {
+            if (size.endsWith("KB")) {
+                return Long.parseLong(size.substring(0, size.length() - 2)) * 1024;
+            } else if (size.endsWith("MB")) {
+                return Long.parseLong(size.substring(0, size.length() - 2)) * 1024 * 1024;
+            } else if (size.endsWith("GB")) {
+                return Long.parseLong(size.substring(0, size.length() - 2)) * 1024 * 1024 * 1024;
+            } else {
+                // 纯数字，默认为字节
+                return Long.parseLong(size);
+            }
+        } catch (NumberFormatException e) {
+            log.warn("无法解析文件大小配置: {}, 使用默认值", size);
+            return 10 * 1024 * 1024; // 默认10MB
+        }
+    }
+
+    /**
+     * 格式化字节数为可读字符串
+     */
+    private String formatSize(long bytes) {
+        if (bytes >= 1024 * 1024 * 1024) {
+            return (bytes / (1024 * 1024 * 1024)) + "GB";
+        } else if (bytes >= 1024 * 1024) {
+            return (bytes / (1024 * 1024)) + "MB";
+        } else if (bytes >= 1024) {
+            return (bytes / 1024) + "KB";
+        } else {
+            return bytes + "B";
         }
     }
 }

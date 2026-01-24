@@ -3,7 +3,7 @@ package org.joker.comfypilot.common.infrastructure.persistence.annotation;
 import java.lang.annotation.*;
 
 /**
- * 唯一键注解
+ * 唯一键注解(目前就是一个标记作用)
  * 用于标记 PO 类中的唯一索引字段
  *
  * <p>使用场景：</p>

@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.joker.comfypilot.common.domain.content.ChatContent;
 import org.joker.comfypilot.session.application.dto.ClientToServerMessage;
 
 import java.util.List;
@@ -34,5 +35,11 @@ public class UserMessageRequestData implements ClientToServerMessage {
      */
     @Schema(description = "客户端MCP工具schema列表")
     private List<McpSchema.Tool> toolSchemas;
+
+    /**
+     * 多模态数据
+     */
+    @Schema(description = "多模态数据")
+    private List<ChatContent> multimodalContents;
 
 }

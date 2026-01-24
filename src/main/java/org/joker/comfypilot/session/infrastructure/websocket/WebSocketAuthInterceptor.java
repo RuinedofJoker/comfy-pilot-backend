@@ -72,15 +72,30 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
 
         log.info("WebSocket认证成功: userId={}", session.getUserId());
 
-        String sessionCode = String.valueOf(request.getAttributes().get(AuthConstants.SESSION_CODE_ATTRIBUTE));
+        // 5. 从查询参数中提取sessionCode（格式: /ws/chat?sessionCode=xxx）
+        String sessionCode = extractSessionCodeFromQuery(request.getURI().getQuery());
+
+        if (sessionCode == null || sessionCode.trim().isEmpty()) {
+            log.warn("WebSocket认证失败: 无法从查询参数中提取sessionCode, query={}", request.getURI().getQuery());
+            response.setStatusCode(HttpStatus.BAD_REQUEST);
+            return false;
+        }
+
+        // 6. 验证sessionCode是否属于该用户
         ChatSessionDTO chatSessionDTO = chatSessionService.getSessionByCode(sessionCode);
+        if (chatSessionDTO == null) {
+            log.warn("WebSocket认证失败: sessionCode不存在, sessionCode={}", sessionCode);
+            response.setStatusCode(HttpStatus.NOT_FOUND);
+            return false;
+        }
+
         if (!chatSessionDTO.getUserId().equals(session.getUserId())) {
             log.warn("WebSocket认证失败: 连接sessionCode不属于用户, userId={}, sessionCode={}", session.getUserId(), sessionCode);
             response.setStatusCode(HttpStatus.FORBIDDEN);
             return false; // 拒绝握手
         }
 
-        // 5. 将sessionCode存储到WebSocket会话属性中
+        // 7. 将sessionCode存储到WebSocket会话属性中
         attributes.put(AuthConstants.SESSION_CODE_ATTRIBUTE, sessionCode);
 
         return true; // 允许握手
@@ -92,5 +107,25 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
         if (exception != null) {
             log.error("WebSocket握手后异常", exception);
         }
+    }
+
+    /**
+     * 从查询参数中提取sessionCode
+     * 格式: /ws/chat?sessionCode=xxx&token=yyy
+     */
+    private String extractSessionCodeFromQuery(String query) {
+        if (query == null || query.isEmpty()) {
+            return null;
+        }
+
+        // 分割查询参数
+        String[] params = query.split("&");
+        for (String param : params) {
+            if (param.startsWith("sessionCode=")) {
+                return param.substring(12); // "sessionCode=".length()
+            }
+        }
+
+        return null;
     }
 }

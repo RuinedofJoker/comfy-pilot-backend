@@ -2,6 +2,7 @@ package org.joker.comfypilot.resource.infrastructure.persistence.repository;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.joker.comfypilot.resource.domain.entity.FileResource;
+import org.joker.comfypilot.resource.domain.enums.FileSourceType;
 import org.joker.comfypilot.resource.domain.repository.FileResourceRepository;
 import org.joker.comfypilot.resource.infrastructure.persistence.converter.FileResourceConverter;
 import org.joker.comfypilot.resource.infrastructure.persistence.mapper.FileResourceMapper;
@@ -31,9 +32,9 @@ public class FileResourceRepositoryImpl implements FileResourceRepository {
     }
 
     @Override
-    public Optional<FileResource> findByStoredName(String storedName) {
+    public Optional<FileResource> findBySourceAndStoredName(String storedName, FileSourceType sourceType) {
         LambdaQueryWrapper<FileResourcePO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(FileResourcePO::getStoredName, storedName);
+        wrapper.eq(FileResourcePO::getSourceType, sourceType.name()).eq(FileResourcePO::getStoredName, storedName);
         FileResourcePO po = fileResourceMapper.selectOne(wrapper);
         return Optional.ofNullable(fileResourceConverter.toDomain(po));
     }

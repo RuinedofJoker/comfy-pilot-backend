@@ -1,6 +1,7 @@
 package org.joker.comfypilot.resource.domain.repository;
 
 import org.joker.comfypilot.resource.domain.entity.FileResource;
+import org.joker.comfypilot.resource.domain.enums.FileSourceType;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,9 +17,9 @@ public interface FileResourceRepository {
     Optional<FileResource> findById(Long id);
 
     /**
-     * 根据存储文件名查询
+     * 根据存储文件来源和文件名查询
      */
-    Optional<FileResource> findByStoredName(String storedName);
+    Optional<FileResource> findBySourceAndStoredName(String storedName, FileSourceType sourceType);
 
     /**
      * 查询用户上传的文件列表

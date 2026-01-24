@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.joker.comfypilot.common.application.dto.BaseDTO;
+import org.joker.comfypilot.resource.domain.enums.FileSourceType;
 
 /**
  * 文件资源DTO
@@ -35,6 +36,15 @@ public class FileResourceDTO extends BaseDTO {
 
     @Schema(description = "文件扩展名")
     private String fileExtension;
+
+    @Schema(description = "文件来源类型")
+    private FileSourceType sourceType;
+
+    @Schema(description = "文件Web相对路径")
+    private String webRelativePath;
+
+    @Schema(description = "文件Web路径")
+    private String webPath;
 
     @Schema(description = "业务类型")
     private String businessType;
