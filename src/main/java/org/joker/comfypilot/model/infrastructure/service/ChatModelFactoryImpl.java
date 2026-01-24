@@ -160,10 +160,7 @@ public class ChatModelFactoryImpl extends AbstractChatModelFactory implements Ch
         }
 
         // 从 agentConfig 中获取提供商类型，默认为 OPENAI
-        ProviderType providerType = ProviderType.OPENAI;
-        if (agentConfig != null && agentConfig.containsKey("providerType")) {
-            providerType = ProviderType.fromCode((String) agentConfig.get("providerType"));
-        }
+        ProviderType providerType = model.getProviderType();
 
         log.debug("使用提供商类型: providerType={}", providerType);
 

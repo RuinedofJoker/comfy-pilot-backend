@@ -46,6 +46,7 @@ public class AgentExecutorImpl implements AgentExecutor {
 
         // 2. 创建执行日志
         AgentExecutionLog executionLog = AgentExecutionLog.builder()
+                .agentId(agentConfig.getId())
                 .sessionId(request.getSessionId())
                 .input(request.getUserMessage())
                 .status(ExecutionStatus.RUNNING)

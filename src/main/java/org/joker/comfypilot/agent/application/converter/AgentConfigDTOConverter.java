@@ -32,8 +32,11 @@ public interface AgentConfigDTOConverter {
 
     @Named("mapToString")
     default String mapToString(Map<String, Object> map) {
-        if (map == null || map.isEmpty()) {
+        if (map == null) {
             return "";
+        }
+        if (map.isEmpty()) {
+            return "{}";
         }
         try {
             ObjectMapper objectMapper = new ObjectMapper();

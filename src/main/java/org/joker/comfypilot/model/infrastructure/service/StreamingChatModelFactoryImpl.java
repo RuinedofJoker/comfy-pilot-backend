@@ -163,7 +163,7 @@ public class StreamingChatModelFactoryImpl extends AbstractChatModelFactory impl
             throw new BusinessException("本地接入方式必须在模型配置中指定 apiBaseUrl");
         }
 
-        ProviderType providerType = ProviderType.fromCode((String) agentConfig.get("providerType"));
+        ProviderType providerType = model.getProviderType();
 
         return switch (providerType) {
             case OPENAI -> createOpenAiModel(model, null, config);
