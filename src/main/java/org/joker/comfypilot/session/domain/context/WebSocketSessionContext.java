@@ -60,7 +60,7 @@ public class WebSocketSessionContext {
      * 检查是否可以执行
      */
     public boolean canExecute() {
-        return !executing.get() && !interrupted.get();
+        return !executing.get();
     }
 
     /**
@@ -76,6 +76,7 @@ public class WebSocketSessionContext {
      */
     public void completeExecution() {
         executing.set(false);
+        interrupted.set(false);
         agentExecutionContext.set(null);
     }
 
@@ -84,6 +85,7 @@ public class WebSocketSessionContext {
      */
     public void completeInterrupt() {
         executing.set(false);
+        interrupted.set(false);
         agentExecutionContext.set(null);
     }
 

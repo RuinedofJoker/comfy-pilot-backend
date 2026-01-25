@@ -294,6 +294,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                             event.getContext().getSessionCode(), event.getMessageType(), event.getIteration());
                 } catch (Exception e) {
                     log.error("保存消息到数据库失败: sessionCode={}", event.getContext().getSessionCode(), e);
+                    throw new BusinessException("保存消息到数据库失败");
                 }
             });
 

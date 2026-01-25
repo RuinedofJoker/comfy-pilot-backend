@@ -55,7 +55,6 @@ public class AgentEventPublisher {
     public <T extends AgentEvent> void publishEvent(T event) {
         List<AgentEventListener<? extends AgentEvent>> eventListeners = listeners.get(event.getEventType());
         if (eventListeners != null && !eventListeners.isEmpty()) {
-            log.debug("发布事件: eventType={}, listenerCount={}", event.getEventType(), eventListeners.size());
             for (AgentEventListener<? extends AgentEvent> listener : eventListeners) {
                 try {
                     ((AgentEventListener<T>) listener).onEvent(event);

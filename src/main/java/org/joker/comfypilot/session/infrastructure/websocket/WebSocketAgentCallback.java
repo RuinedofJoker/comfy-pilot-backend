@@ -64,6 +64,10 @@ public class WebSocketAgentCallback implements AgentCallback {
                 .timestamp(System.currentTimeMillis())
                 .build();
 
+        if (AgentPromptType.ERROR.equals(promptType)) {
+            onInterrupted();
+        }
+
         sendWebSocketMessage(wsMessage);
     }
 

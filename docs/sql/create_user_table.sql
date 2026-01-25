@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS "user" (
     username VARCHAR(100) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     avatar_url VARCHAR(500),
-    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
     last_login_time TIMESTAMP,
     last_login_ip VARCHAR(50),
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

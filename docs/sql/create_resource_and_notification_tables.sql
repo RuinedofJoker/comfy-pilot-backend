@@ -59,7 +59,7 @@ CREATE TABLE email_log (
     recipient VARCHAR(255) NOT NULL,
     subject VARCHAR(500) NOT NULL,
     content TEXT NOT NULL,
-    send_status VARCHAR(20) NOT NULL,
+    send_status VARCHAR(50) NOT NULL,
     error_message TEXT,
     send_time TIMESTAMP,
     retry_count INT DEFAULT 0,
