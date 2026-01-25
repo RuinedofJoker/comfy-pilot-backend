@@ -63,7 +63,11 @@ public class EmbeddedRedisConfig {
         }
 
         this.redisServer = redisServerBuilder.build();
-        this.redisServer.start();
+        try {
+            this.redisServer.start();
+        } catch (Exception e) {
+            log.error("Embedded redis启动失败", e);
+        }
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             if (redisServer != null && redisServer.isActive()) {

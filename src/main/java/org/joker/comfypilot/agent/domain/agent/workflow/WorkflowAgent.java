@@ -221,7 +221,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             ChatRequest chatRequest = ChatRequest.builder()
                     .messages(agentCallback.getMemoryMessages())
                     .toolSpecifications(toolSpecs)
-                    .toolChoice(ToolChoice.AUTO)
+                    .toolChoice(ToolChoice.REQUIRED)
                     .build();
 
             // 初始化事件发布器

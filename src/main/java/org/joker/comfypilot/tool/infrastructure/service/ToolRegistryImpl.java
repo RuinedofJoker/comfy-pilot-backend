@@ -2,7 +2,6 @@ package org.joker.comfypilot.tool.infrastructure.service;
 
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.agent.tool.ToolSpecifications;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.common.annotation.ToolSet;
 import org.joker.comfypilot.common.exception.BusinessException;
@@ -10,6 +9,7 @@ import org.joker.comfypilot.tool.domain.service.Tool;
 import org.joker.comfypilot.tool.domain.service.ToolRegistry;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Slf4j
 @Component
-public class ToolRegistryImpl implements ToolRegistry, ApplicationContextAware {
+public class ToolRegistryImpl implements CommandLineRunner, ToolRegistry, ApplicationContextAware {
 
     /**
      * 工具映射表
@@ -55,8 +55,7 @@ public class ToolRegistryImpl implements ToolRegistry, ApplicationContextAware {
      * 在所有 Bean 初始化完成后扫描并注册工具
      * 使用 @PostConstruct 避免循环依赖问题
      */
-    @PostConstruct
-    public void init() {
+    public void run(String... args) throws Exception {
         // 获取所有 Spring Bean
         String[] beanNames = applicationContext.getBeanDefinitionNames();
         log.info("开始扫描工具 Bean，共 {} 个 Bean", beanNames.length);
