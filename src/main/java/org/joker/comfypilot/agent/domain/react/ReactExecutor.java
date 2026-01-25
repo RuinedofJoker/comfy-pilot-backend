@@ -10,6 +10,7 @@ import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.joker.comfypilot.agent.domain.callback.AgentCallback;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.joker.comfypilot.agent.domain.event.*;
@@ -230,7 +231,7 @@ public class ReactExecutor {
                                     ChatRequest nextRequest = ChatRequest.builder()
                                             .messages(context.getAgentCallback().getMemoryMessages())
                                             .toolSpecifications(chatRequest.toolSpecifications())
-                                            .toolChoice(ToolChoice.AUTO)
+                                            .toolChoice(ToolChoice.REQUIRED)
                                             .build();
 
                                     // 7. 递归执行下一轮迭代
@@ -412,7 +413,7 @@ public class ReactExecutor {
         }
 
         if (!Boolean.TRUE.equals(responseData.getSuccess())) {
-            return "工具执行失败: " + responseData.getError();
+            return "工具执行失败: " + responseData.getError() + (StringUtils.isNotBlank(responseData.getResult()) ? "\n" + responseData.getResult() : "");
         }
 
         return responseData.getResult();

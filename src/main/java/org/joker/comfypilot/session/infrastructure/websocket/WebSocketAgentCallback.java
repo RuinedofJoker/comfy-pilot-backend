@@ -77,8 +77,8 @@ public class WebSocketAgentCallback implements AgentCallback {
     }
 
     @Override
-    public void onToolCall(boolean isClientTool, String toolCallId, String toolName, String toolArgs) {
-        log.info("Agent调用工具: sessionCode={}, tool={}, args={}, isClientTool={}", sessionCode, toolName, toolArgs, isClientTool);
+    public void onToolCall(boolean isClientTool, boolean isMcpTool, String toolCallId, String toolName, String toolArgs) {
+        log.info("Agent调用工具: sessionCode={}, tool={}, args={}, isClientTool={}, isMcpTool={}", sessionCode, toolName, toolArgs, isClientTool, isMcpTool);
 
         // 构建工具调用请求数据
         AgentToolCallRequestData requestData = AgentToolCallRequestData.builder()
@@ -86,6 +86,7 @@ public class WebSocketAgentCallback implements AgentCallback {
                 .toolName(toolName)
                 .toolArgs(toolArgs)
                 .isClientTool(isClientTool)
+                .isMcpTool(isMcpTool)
                 .build();
 
         WebSocketMessage<AgentToolCallRequestData> message = WebSocketMessage.<AgentToolCallRequestData>builder()

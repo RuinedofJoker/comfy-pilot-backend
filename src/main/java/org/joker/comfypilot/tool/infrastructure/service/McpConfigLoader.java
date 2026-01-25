@@ -50,25 +50,9 @@ public class McpConfigLoader {
             return tools;
         }
 
-        // 检查配置文件路径
-        String configPath = mcpProperties.getConfigPath();
-        if (configPath == null || configPath.trim().isEmpty()) {
-            log.info("未配置 MCP 配置文件路径，跳过 MCP 工具加载");
-            return tools;
-        }
-
-        // 检查文件是否存在
-        Path path = Paths.get(configPath);
-        if (!Files.exists(path)) {
-            log.warn("MCP 配置文件不存在: {}", configPath);
-            return tools;
-        }
-
         try {
-            log.info("开始加载 MCP 配置文件: {}", configPath);
-
             // 读取并解析配置文件
-            String content = Files.readString(path);
+            String content = "";
             Map<String, McpServerConfig> serverConfigs = parseMcpConfig(content);
 
             log.info("解析到 {} 个 MCP 服务器配置", serverConfigs.size());

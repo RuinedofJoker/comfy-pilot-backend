@@ -27,8 +27,14 @@ public class UserMessageRequestData implements ClientToServerMessage {
     /**
      * 客户端MCP工具列表
      */
-    @Schema(description = "客户端MCP工具schema列表")
+    @Schema(description = "客户端工具schema列表")
     private List<McpSchema.Tool> toolSchemas;
+
+    /**
+     * 客户端MCP配置(mcp.json文件内容)
+     */
+    @Schema(description = "客户端MCP配置(mcp.json文件内容)")
+    private String mcpConfig;
 
     /**
      * 多模态数据

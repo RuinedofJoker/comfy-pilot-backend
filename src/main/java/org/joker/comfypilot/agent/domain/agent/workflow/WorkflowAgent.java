@@ -258,7 +258,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
 
             // 工具调用通知事件 -> AgentCallback.onToolCall()
             eventPublisher.addEventListener(AgentEventType.TOOL_CALL_NOTIFY, (ToolCallNotifyEvent event) -> {
-                agentCallback.onToolCall(executionContext.getClientToolNames().contains(event.getToolName()), event.getToolCallId(), event.getToolName(), event.getToolArgs());
+                agentCallback.onToolCall(executionContext.getClientToolNames().contains(event.getToolName()), false, event.getToolCallId(), event.getToolName(), event.getToolArgs());
             });
 
             // 消息添加后事件 -> 保存到数据库

@@ -281,7 +281,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             }
 
             AgentToolCallResponseData responseData = (AgentToolCallResponseData) dataObj;
-            if (Boolean.TRUE.equals(responseData.getIsAllow()) && Boolean.FALSE.equals(responseData.getIsClientTool())) {
+            if (Boolean.FALSE.equals(responseData.getIsMcpTool()) && Boolean.FALSE.equals(responseData.getIsClientTool())) {
                 Tool serverTool = SpringContextUtil.getBean(ToolRegistry.class).getToolByName(responseData.getToolName());
                 if (serverTool != null) {
                     try {
@@ -299,6 +299,12 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                 } else {
                     responseData.setSuccess(false);
                     responseData.setError("找不到该工具");
+                }
+            } else if (Boolean.TRUE.equals(responseData.getIsMcpTool())) {
+                if (Boolean.TRUE.equals(responseData.getIsAllow())) {
+                    // 允许执行mcp工具 todo
+                    responseData.setSuccess(true);
+                    responseData.setResult("执行成功");
                 }
             }
 

@@ -18,10 +18,9 @@ public class McpProperties {
     private Boolean enabled = true;
 
     /**
-     * mcp.json 配置文件路径
-     * 如果为空或文件不存在，则跳过 MCP 工具注册
+     * 是否只允许url方式的mcp tool
      */
-    private String configPath;
+    private Boolean onlyAllowUrlTool = true;
 
     /**
      * 连接超时时间（毫秒）
