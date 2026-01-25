@@ -293,6 +293,12 @@ public class ReactExecutor {
     ) {
         CompletableFuture<ChatResponse> future = new CompletableFuture<>();
 
+        // 发布思考中提示事件
+        if (context.getEventPublisher() != null) {
+            PromptEvent promptEvent = new PromptEvent(context, 0, AgentPromptType.THINKING, null);
+            context.getEventPublisher().publishEvent(promptEvent);
+        }
+
         streamingModel.chat(chatRequest, new StreamingChatResponseHandler() {
             @Override
             public void onPartialResponse(String partialResponse) {
