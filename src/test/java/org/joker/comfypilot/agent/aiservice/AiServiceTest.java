@@ -50,7 +50,7 @@ public class AiServiceTest extends BaseTest {
 
         System.out.println(assistant.chat("帮我同时用特殊的加法法则计算1+1等于几和2+2等于几"));
 
-        System.out.println(assistant.chat("你发现这个特殊的加法法则规律了吗"));
+//        System.out.println(assistant.chat("你发现这个特殊的加法法则规律了吗"));
 
         System.out.println(chatMemoryStore.getMessages("12345").size());
 

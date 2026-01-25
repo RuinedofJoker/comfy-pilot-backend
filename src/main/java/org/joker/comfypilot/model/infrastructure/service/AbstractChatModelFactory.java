@@ -74,47 +74,6 @@ public abstract class AbstractChatModelFactory {
                 apiKey = provider.getApiKey();
             }
 
-            // 2. 使用 agentConfig 覆盖模型配置
-            if (agentConfig != null && !agentConfig.isEmpty()) {
-                log.debug("应用 Agent 配置覆盖: {}", agentConfig);
-
-                // 覆盖 apiBaseUrl
-                if (agentConfig.containsKey("apiBaseUrl")) {
-                    String value = getStringValue(agentConfig, "apiBaseUrl");
-                    if (StringUtils.isNotBlank(value)) {
-                        apiBaseUrl = value;
-                    }
-                }
-
-                // 覆盖 apiKey
-                if (agentConfig.containsKey("apiKey")) {
-                    String value = getStringValue(agentConfig, "apiKey");
-                    if (StringUtils.isNotBlank(value)) {
-                        apiKey = value;
-                    }
-                }
-
-                // 覆盖 temperature
-                if (agentConfig.containsKey("temperature")) {
-                    temperature = Optional.ofNullable(convertToDouble(agentConfig.get("temperature"), "temperature")).orElse(temperature);
-                }
-
-                // 覆盖 maxTokens
-                if (agentConfig.containsKey("maxTokens")) {
-                    maxTokens = Optional.ofNullable(convertToInteger(agentConfig.get("maxTokens"), "maxTokens")).orElse(maxTokens);
-                }
-
-                // 覆盖 topP
-                if (agentConfig.containsKey("topP")) {
-                    topP = Optional.ofNullable(convertToDouble(agentConfig.get("topP"), "topP")).orElse(topP);
-                }
-
-                // 覆盖 timeout
-                if (agentConfig.containsKey("timeout")) {
-                    timeoutSeconds = Optional.ofNullable(convertToInteger(agentConfig.get("timeout"), "timeout")).orElse(timeoutSeconds);
-                }
-            }
-
             return new ModelConfig(apiKey, temperature, maxTokens, topP, timeoutSeconds, apiBaseUrl);
 
         } catch (Exception e) {

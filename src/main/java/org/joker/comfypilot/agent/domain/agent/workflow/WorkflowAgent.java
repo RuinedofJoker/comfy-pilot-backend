@@ -31,6 +31,7 @@ import org.joker.comfypilot.model.domain.service.StreamingChatModelFactory;
 import org.joker.comfypilot.session.application.dto.ChatSessionDTO;
 import org.joker.comfypilot.session.application.dto.client2server.UserMessageRequestData;
 import org.joker.comfypilot.session.application.service.ChatSessionService;
+import org.joker.comfypilot.session.domain.enums.AgentPromptType;
 import org.joker.comfypilot.session.domain.enums.MessageStatus;
 import org.joker.comfypilot.session.domain.repository.ChatMessageRepository;
 import org.joker.comfypilot.tool.domain.service.Tool;
@@ -88,21 +89,13 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
     @Override
     public List<AgentConfigDefinition> getConfigDefinitions() {
         return List.of(
-                AgentConfigDefinition.modelValue("llmModelIdentifier", "使用的LLM模型", true, true, ModelCallingType.API_LLM),
-                AgentConfigDefinition.stringValue("apiKey", "模型调用apiKey", false, true, ""),
-                AgentConfigDefinition.floatValue("temperature", "模型调用温度", false, true, 0D, 1D),
-                AgentConfigDefinition.intValue("maxTokens", "模型的最大Token数", false, true, 0, 200_000),
-                AgentConfigDefinition.intValue("maxMessages", "上下文的最大消息数", true, false, 0, 1000)
+                AgentConfigDefinition.modelValue("llmModelIdentifier", "使用的LLM模型", true, true, ModelCallingType.API_LLM)
         );
     }
 
     @Override
     public Map<String, Object> getAgentConfig() {
-        Map<String, Object> config = new HashMap<>();
-        config.put("temperature", 0.7);
-        config.put("maxTokens", 200_000);
-        config.put("maxMessages", 1000);
-        return config;
+        return new LinkedHashMap<>();
     }
 
     @Override
@@ -112,7 +105,15 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
         return config;
     }
 
-    protected void executeWithStreaming(AgentExecutionContext executionContext) throws Exception {
+    protected  void executeWithStreaming(AgentExecutionContext executionContext) throws Exception {
+        try {
+            executeWithAgentStreaming(executionContext);
+        } catch (Exception e) {
+            executionContext.getAgentCallback().onPrompt(AgentPromptType.ERROR, "执行过程中发生错误，" + e.getMessage());
+        }
+    }
+
+    private void executeWithAgentStreaming(AgentExecutionContext executionContext) throws Exception {
         AgentCallback agentCallback = executionContext.getAgentCallback();
 
         AgentExecutionRequest request = executionContext.getRequest();
@@ -140,9 +141,33 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             // 构建用户消息+Agent提示词
             StringBuilder userMessageBuilder = new StringBuilder();
             userMessageBuilder.append(WorkflowAgentPrompts.USER_QUERY_START_TOKEN).append(userMessage).append(WorkflowAgentPrompts.USER_QUERY_END_TOKEN).append("\n");
-            String workflowContent = userMessageData.getWorkflowContent();
             List<ChatContent> multimodalContents = userMessageData.getMultimodalContents();
-            userMessageBuilder.append(WorkflowAgentPrompts.USER_WORKFLOW_PROMPT.formatted(workflowContent)).append("\n");
+
+            // 从 ToolRegistry 获取工具列表
+            List<Tool> todoTools = toolRegistry.getToolsByClass(TodoWriteTool.class);
+            List<Tool> statusTools = toolRegistry.getToolsByClass(StatusUpdateTool.class);
+
+            // 准备工具规范
+            List<ToolSpecification> toolSpecs = new ArrayList<>();
+
+            // 添加客户端的工具
+            if (userMessageData.getToolSchemas() != null && !userMessageData.getToolSchemas().isEmpty()) {
+                toolSpecs.addAll(executionContext.getClientTools().stream().map(Tool::toolSpecification).toList());
+            }
+
+            // 添加内置工具
+            for (Tool serverTool : todoTools) {
+                if (executionContext.getClientToolNames().contains(serverTool.toolName())) {
+                    throw new BusinessException("客户端工具" + serverTool.toolName() + "与服务内部工具重名");
+                }
+            }
+            for (Tool serverTool : statusTools) {
+                if (executionContext.getClientToolNames().contains(serverTool.toolName())) {
+                    throw new BusinessException("客户端工具" + serverTool.toolName() + "与服务内部工具重名");
+                }
+            }
+            toolSpecs.addAll(todoTools.stream().map(Tool::toolSpecification).toList());
+            toolSpecs.addAll(statusTools.stream().map(Tool::toolSpecification).toList());
 
             // Agent构建ComfyUI服务高级功能提示词和补充工具
             ChatSessionDTO chatSessionDTO = chatSessionService.getSessionByCode(executionContext.getSessionCode());
@@ -150,7 +175,9 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             if (Boolean.TRUE.equals(comfyuiServerDTO.getAdvancedFeaturesEnabled()) && comfyuiServerDTO.getAdvancedFeatures() != null) {
                 ComfyuiServerAdvancedFeaturesDTO advancedFeatures = comfyuiServerDTO.getAdvancedFeatures();
 
-                //
+                // 添加高级功能的系统提示词
+                StringBuilder systemMessageBuilder = new StringBuilder(agentScope.get("SystemPrompt").toString()).append("\n");
+                agentScope.put("SystemPrompt", systemMessageBuilder.toString());
             }
 
             // 添加系统提示词
@@ -189,32 +216,6 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                         .build();
                 chatMessageRepository.save(systemChatMessage);
             }, null);
-
-            // 从 ToolRegistry 获取工具列表
-            List<Tool> todoTools = toolRegistry.getToolsByClass(TodoWriteTool.class);
-            List<Tool> statusTools = toolRegistry.getToolsByClass(StatusUpdateTool.class);
-
-            // 准备工具规范
-            List<ToolSpecification> toolSpecs = new ArrayList<>();
-
-            // 添加用户提供的 MCP 工具
-            if (userMessageData.getToolSchemas() != null && !userMessageData.getToolSchemas().isEmpty()) {
-                toolSpecs.addAll(executionContext.getClientTools().stream().map(Tool::toolSpecification).toList());
-            }
-
-            // 添加内置工具
-            for (Tool serverTool : todoTools) {
-                if (executionContext.getClientToolNames().contains(serverTool.toolName())) {
-                    throw new BusinessException("客户端工具" + serverTool.toolName() + "与服务内部工具重名");
-                }
-            }
-            for (Tool serverTool : statusTools) {
-                if (executionContext.getClientToolNames().contains(serverTool.toolName())) {
-                    throw new BusinessException("客户端工具" + serverTool.toolName() + "与服务内部工具重名");
-                }
-            }
-            toolSpecs.addAll(todoTools.stream().map(Tool::toolSpecification).toList());
-            toolSpecs.addAll(statusTools.stream().map(Tool::toolSpecification).toList());
 
             // 构建 ChatRequest
             ChatRequest chatRequest = ChatRequest.builder()
