@@ -5,6 +5,7 @@ import org.joker.comfypilot.model.domain.entity.AiModel;
 import org.joker.comfypilot.model.domain.enums.ModelAccessType;
 import org.joker.comfypilot.model.domain.enums.ModelCallingType;
 import org.joker.comfypilot.model.domain.enums.ModelType;
+import org.joker.comfypilot.model.domain.enums.ProviderType;
 import org.joker.comfypilot.model.domain.repository.AiModelRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -60,6 +61,7 @@ public class ModelInitializer implements CommandLineRunner {
                 .accessType(ModelAccessType.REMOTE_API)
                 .modelType(ModelType.LLM)
                 .modelCallingType(ModelCallingType.API_LLM)
+                .providerType(ProviderType.OPENAI)
                 .modelConfig(new HashMap<>())
                 .description(description)
                 .apiBaseUrl(apiBaseUrl)
