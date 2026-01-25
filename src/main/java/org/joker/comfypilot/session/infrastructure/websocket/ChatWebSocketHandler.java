@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.langchain4j.data.message.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.joker.comfypilot.agent.domain.context.AgentExecutionContextHolder;
 import org.joker.comfypilot.agent.infrastructure.memory.ChatMemoryChatMemoryStore;
 import org.joker.comfypilot.common.constant.AuthConstants;
 import org.joker.comfypilot.common.domain.message.PersistableChatMessage;
@@ -295,6 +296,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                 Tool serverTool = SpringContextUtil.getBean(ToolRegistry.class).getToolByName(responseData.getToolName());
                 if (serverTool != null) {
                     try {
+                        AgentExecutionContextHolder.setAgentExecutionContext(context.getAgentExecutionContext().get());
                         String executeResult = serverTool.executeTool(responseData.getToolCallId(), responseData.getToolName(), responseData.getToolArgs());
                         responseData.setSuccess(true);
                         responseData.setResult(executeResult);
@@ -302,6 +304,8 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                         log.error("服务端工具执行失败", e);
                         responseData.setSuccess(false);
                         responseData.setError(e.getMessage());
+                    } finally {
+                        AgentExecutionContextHolder.clear();
                     }
                 } else {
                     responseData.setSuccess(false);

@@ -230,12 +230,12 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
 
             // ==================== 注册事件监听器 ====================
 
-            // 1. 流式输出事件 -> AgentCallback.onStream()
+            // 流式输出事件 -> AgentCallback.onStream()
             eventPublisher.addEventListener(AgentEventType.STREAM, (StreamEvent event) -> {
                 agentCallback.onStream(event.getChunk());
             });
 
-            // 2. 流式输出完成事件 -> AgentCallback.onStreamComplete()
+            // 流式输出完成事件 -> AgentCallback.onStreamComplete()
             eventPublisher.addEventListener(AgentEventType.STREAM_COMPLETE, (StreamCompleteEvent event) -> {
                 if (event.isSuccess()) {
                     agentCallback.onStreamComplete(event.getFullContent());
@@ -246,17 +246,22 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                 }
             });
 
-            // 3. 提示消息事件 -> AgentCallback.onPrompt()
+            // 提示消息事件 -> AgentCallback.onPrompt()
             eventPublisher.addEventListener(AgentEventType.PROMPT, (PromptEvent event) -> {
-                agentCallback.onPrompt(event.getPromptType(), event.getMessage());
+                AgentPromptType promptType = event.getPromptType();
+                // 中断处理完成
+                if (AgentPromptType.INTERRUPTED.equals(promptType)) {
+                    agentCallback.onInterrupted();
+                }
+                agentCallback.onPrompt(promptType, event.getMessage());
             });
 
-            // 4. 工具调用通知事件 -> AgentCallback.onToolCall()
+            // 工具调用通知事件 -> AgentCallback.onToolCall()
             eventPublisher.addEventListener(AgentEventType.TOOL_CALL_NOTIFY, (ToolCallNotifyEvent event) -> {
                 agentCallback.onToolCall(executionContext.getClientToolNames().contains(event.getToolName()), event.getToolCallId(), event.getToolName(), event.getToolArgs());
             });
 
-            // 5. 消息添加后事件 -> 保存到数据库
+            // 消息添加后事件 -> 保存到数据库
             eventPublisher.addEventListener(AgentEventType.AFTER_MESSAGE_ADD, (AfterMessageAddEvent event) -> {
                 if (!event.isSuccess()) {
                     log.error("消息添加到内存失败: sessionCode={}, messageType={}",

@@ -51,9 +51,6 @@ public class AgentTest extends BaseTest {
         // 1. 从环境变量加载 API Key
         String DEEPSEEK_API_KEY = System.getProperty("DEEPSEEK_API_KEY");
 
-        // 2. 构建 JsonSchema 约束响应格式
-        JsonObjectSchema rootSchemaElement = (JsonObjectSchema) JsonSchemaElementUtils.jsonSchemaElementFrom(Response.class);
-
         // 3. 构建 OpenAI 同步模型（使用 DeepSeek API）
         OpenAiChatModel model = OpenAiChatModel.builder()
                 .baseUrl("https://api.deepseek.com")
@@ -66,7 +63,7 @@ public class AgentTest extends BaseTest {
 
         // 5. 构建消息列表（系统提示词 + 用户消息）
         List<ChatMessage> messages = new ArrayList<>();
-        messages.add(SystemMessage.systemMessage("你是一个猫娘。你现在的返回结果需要严格按照以下JsonSchema返回：\n" + Json.toJson(rootSchemaElement) + "\n"));
+        messages.add(SystemMessage.systemMessage("你是一个猫娘。"));
         messages.add(UserMessage.userMessage("""
                 给我讲一个关于你的名字的笑话
                 """));

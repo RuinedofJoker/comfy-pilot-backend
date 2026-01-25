@@ -42,6 +42,11 @@ public interface AgentCallback {
     void onStreamComplete(String fullContent);
 
     /**
+     * 当Agent处理了中断时返回
+     */
+    void onInterrupted();
+
+    /**
      * 当Agent调用Tool时调用
      *
      * @param isClientTool 是否是客户端工具

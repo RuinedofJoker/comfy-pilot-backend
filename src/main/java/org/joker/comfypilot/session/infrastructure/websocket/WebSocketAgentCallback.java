@@ -69,7 +69,6 @@ public class WebSocketAgentCallback implements AgentCallback {
 
     @Override
     public void onStream(String chunk) {
-        log.debug("Agent流式输出: sessionCode={}, chunk={}", sessionCode, chunk);
         sendMessage(WebSocketMessageType.AGENT_STREAM, chunk);
     }
 
@@ -114,6 +113,11 @@ public class WebSocketAgentCallback implements AgentCallback {
 
         // 标记执行完成
         sessionContext.completeExecution();
+    }
+
+    @Override
+    public void onInterrupted() {
+        sessionContext.completeInterrupt();
     }
 
     @Override

@@ -2,9 +2,11 @@ package org.joker.comfypilot.session.domain.context;
 
 import lombok.Builder;
 import lombok.Data;
+import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * WebSocket会话执行上下文
@@ -42,12 +44,17 @@ public class WebSocketSessionContext {
     /**
      * 创建时间
      */
-    private Long createTime;
+    private volatile Long createTime;
 
     /**
      * 最后活跃时间
      */
     private Long lastActiveTime;
+
+    /**
+     * 当前Agent执行上下文
+     */
+    private AtomicReference<AgentExecutionContext> agentExecutionContext;
 
     /**
      * 检查是否可以执行
@@ -69,6 +76,15 @@ public class WebSocketSessionContext {
      */
     public void completeExecution() {
         executing.set(false);
+        agentExecutionContext.set(null);
+    }
+
+    /**
+     * 完成中断
+     */
+    public void completeInterrupt() {
+        executing.set(false);
+        agentExecutionContext.set(null);
     }
 
     /**

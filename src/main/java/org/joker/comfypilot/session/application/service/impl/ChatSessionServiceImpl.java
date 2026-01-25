@@ -236,6 +236,11 @@ public class ChatSessionServiceImpl implements ChatSessionService {
             executionContext.setWsSessionId(wsContext.getWebSocketSession().getId());
             executionContext.setWebSocketSessionContext(wsContext);
 
+            // 替换上下文
+            if (!wsContext.getAgentExecutionContext().compareAndSet(null, executionContext)) {
+                throw new BusinessException("当前会话有正在执行的Agent");
+            }
+
             // 创建流式回调
             WebSocketAgentCallback agentCallback = new WebSocketAgentCallback(
                     webSocketSession, wsContext, executionContext, sessionCode, requestId, objectMapper

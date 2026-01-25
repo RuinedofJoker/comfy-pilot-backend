@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * WebSocket会话管理器
@@ -39,6 +40,7 @@ public class WebSocketSessionManager {
                 .executing(new AtomicBoolean(false))
                 .interrupted(new AtomicBoolean(false))
                 .createTime(System.currentTimeMillis())
+                .agentExecutionContext(new AtomicReference<>(null))
                 .lastActiveTime(System.currentTimeMillis())
                 .build();
 

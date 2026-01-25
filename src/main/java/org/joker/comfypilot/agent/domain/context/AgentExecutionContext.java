@@ -1,6 +1,5 @@
 package org.joker.comfypilot.agent.domain.context;
 
-import dev.langchain4j.data.message.ChatMessage;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,7 +17,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
 
 /**
  * Agent执行上下文
