@@ -54,6 +54,7 @@ public class ToolRegistryImpl implements CommandLineRunner, ToolRegistry, Applic
     /**
      * 在所有 Bean 初始化完成后扫描并注册工具
      */
+    @Override
     public void run(String... args) throws Exception {
         // 获取所有 Spring Bean
         String[] beanNames = applicationContext.getBeanDefinitionNames();
