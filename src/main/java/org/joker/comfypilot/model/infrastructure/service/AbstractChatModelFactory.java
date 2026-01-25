@@ -1,7 +1,5 @@
 package org.joker.comfypilot.model.infrastructure.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -10,7 +8,6 @@ import org.joker.comfypilot.model.domain.entity.AiModel;
 import org.joker.comfypilot.model.domain.entity.ModelProvider;
 
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * ChatModel 工厂抽象基类
@@ -19,18 +16,6 @@ import java.util.Optional;
  */
 @Slf4j
 public abstract class AbstractChatModelFactory {
-
-    protected static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
-    /**
-     * 默认超时时间（秒）
-     */
-    protected static final int DEFAULT_TIMEOUT_SECONDS = 60;
-
-    /**
-     * 默认温度参数
-     */
-    protected static final double DEFAULT_TEMPERATURE = 0.7;
 
     /**
      * 解析模型配置 JSON
@@ -47,18 +32,18 @@ public abstract class AbstractChatModelFactory {
         try {
             // 1. 解析模型默认配置
             String apiKey = null;
-            Double temperature = DEFAULT_TEMPERATURE;
+            Double temperature = null;
             Integer maxTokens = null;
             Double topP = null;
-            Integer timeoutSeconds = DEFAULT_TIMEOUT_SECONDS;
+            Integer timeoutSeconds = null;
             String apiBaseUrl = null;
 
             if (modelConfig != null) {
                 apiKey = getStringValue(modelConfig, "apiKey");
-                temperature = getDoubleValue(modelConfig, "temperature", DEFAULT_TEMPERATURE);
+                temperature = getDoubleValue(modelConfig, "temperature");
                 maxTokens = getIntegerValue(modelConfig, "maxTokens");
-                topP = getDoubleValue(modelConfig, "topP", null);
-                timeoutSeconds = getIntegerValue(modelConfig, "timeout", DEFAULT_TIMEOUT_SECONDS);
+                topP = getDoubleValue(modelConfig, "topP");
+                timeoutSeconds = getIntegerValue(modelConfig, "timeout");
                 apiBaseUrl = getStringValue(modelConfig, "apiBaseUrl");
             }
             if (StringUtils.isBlank(apiBaseUrl) && StringUtils.isNotBlank(model.getApiBaseUrl())) {
@@ -102,21 +87,11 @@ public abstract class AbstractChatModelFactory {
     }
 
     /**
-     * 从配置中获取整数值（带默认值）
+     * 从配置中获取整数值
      */
-    protected Integer getIntegerValue(Map<String, Object> config, String fieldName, Integer defaultValue) {
+    protected Double getDoubleValue(Map<String, Object> config, String fieldName) {
         Object value = config.get(fieldName);
-        Integer result = convertToInteger(value, fieldName);
-        return result != null ? result : defaultValue;
-    }
-
-    /**
-     * 从配置中获取双精度浮点数值（带默认值）
-     */
-    protected Double getDoubleValue(Map<String, Object> config, String fieldName, Double defaultValue) {
-        Object value = config.get(fieldName);
-        Double result = convertToDouble(value, fieldName);
-        return result != null ? result : defaultValue;
+        return convertToDouble(value, fieldName);
     }
 
     /**

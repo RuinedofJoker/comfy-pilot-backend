@@ -112,12 +112,10 @@ public class StreamingChatModelFactoryImpl extends AbstractChatModelFactory impl
      */
     private StreamingChatModel createOpenAiModel(AiModel model, @Nullable ModelProvider provider, ModelConfig config) {
         log.debug("创建 OpenAI 模型: modelIdentifier={}, apiBaseUrl={}",
-                model.getModelIdentifier(), Optional.ofNullable(provider).map(ModelProvider::getApiBaseUrl).orElse(config.apiBaseUrl()));
+                model.getModelName(), Optional.ofNullable(provider).map(ModelProvider::getApiBaseUrl).orElse(config.apiBaseUrl()));
 
         OpenAiStreamingChatModel.OpenAiStreamingChatModelBuilder builder = OpenAiStreamingChatModel.builder()
-                .modelName(model.getModelIdentifier())
-                .temperature(config.temperature())
-                .timeout(Duration.ofSeconds(config.timeoutSeconds()));
+                .modelName(model.getModelName());
 
         // 设置模型 URL（如果提供商配置了使用提供商的）
         if (config.apiBaseUrl() != null && !config.apiBaseUrl().isBlank()) {
@@ -135,6 +133,12 @@ public class StreamingChatModelFactoryImpl extends AbstractChatModelFactory impl
         }
 
         // 设置可选参数
+        if (config.timeoutSeconds() != null) {
+            builder.timeout(Duration.ofSeconds(config.timeoutSeconds()));
+        }
+        if (config.temperature() != null) {
+            builder.temperature(config.temperature());
+        }
         if (config.maxTokens() != null) {
             builder.maxTokens(config.maxTokens());
         }
