@@ -10,7 +10,7 @@ import org.joker.comfypilot.agent.domain.context.AgentExecutionContextHolder;
 import org.joker.comfypilot.agent.infrastructure.memory.ChatMemoryChatMemoryStore;
 import org.joker.comfypilot.common.constant.AuthConstants;
 import org.joker.comfypilot.common.domain.message.PersistableChatMessage;
-import org.joker.comfypilot.common.enums.MessageRole;
+import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.util.SpringContextUtil;
 import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
 import org.joker.comfypilot.session.application.dto.WebSocketMessage;
@@ -166,7 +166,9 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private void initHistoryChatMemory(String wsSessionId, WebSocketSession webSocketSession, Long userId, String sessionCode) throws JsonProcessingException {
         List<ChatMessageDTO> messageHistory = chatSessionService.getMessageHistory(sessionCode);
         if (messageHistory == null || messageHistory.isEmpty()) {
-            chatMemoryChatMemoryStore.updateMessages(wsSessionId, new ArrayList<>());
+            if (chatMemoryChatMemoryStore.updateMessages(wsSessionId, new ArrayList<>())) {
+                throw new BusinessException("当前会话已中断");
+            }
             return;
         }
 
@@ -184,7 +186,9 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             historyMessages.add(chatMessage);
         }
 
-        chatMemoryChatMemoryStore.updateMessages(wsSessionId, historyMessages);
+        if (chatMemoryChatMemoryStore.updateMessages(wsSessionId, historyMessages)) {
+            throw new BusinessException("当前会话已中断");
+        }
     }
 
     /**
