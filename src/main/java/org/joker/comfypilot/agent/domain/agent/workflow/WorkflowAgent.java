@@ -299,7 +299,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             });
 
             // 执行 ReAct 循环（响应式，非阻塞）
-            reactExecutor.executeReactLoop(streamingModel, chatRequest, executionContext, 10);
+            reactExecutor.executeReactLoop(streamingModel, chatRequest, executionContext, 100);
         }
     }
 

@@ -231,7 +231,7 @@ public class ReactExecutor {
                                     ChatRequest nextRequest = ChatRequest.builder()
                                             .messages(context.getAgentCallback().getMemoryMessages())
                                             .toolSpecifications(chatRequest.toolSpecifications())
-                                            .toolChoice(ToolChoice.REQUIRED)
+                                            .toolChoice(ToolChoice.AUTO)
                                             .build();
 
                                     // 7. 递归执行下一轮迭代
