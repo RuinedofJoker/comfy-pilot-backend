@@ -27,12 +27,20 @@ public interface ChatMessageRepository {
     Optional<ChatMessage> findById(Long id);
 
     /**
+     * 根据会话ID查询客户端显示的消息列表
+     *
+     * @param sessionId 会话ID
+     * @return 消息列表（按创建时间升序）
+     */
+    List<ChatMessage> findClientMessagesBySessionId(Long sessionId);
+
+    /**
      * 根据会话ID查询消息列表
      *
      * @param sessionId 会话ID
      * @return 消息列表（按创建时间升序）
      */
-    List<ChatMessage> findBySessionId(Long sessionId);
+    List<ChatMessage> findMessagesBySessionId(Long sessionId);
 
     /**
      * 根据会话ID查询消息列表（分页）

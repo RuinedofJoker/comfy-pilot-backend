@@ -181,22 +181,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             if (persistableChatMessage != null) {
                 chatMessage = PersistableChatMessage.toLangChain4j(persistableChatMessage);
             }
-
-            Set<String> canBeHistoryRoles = Set.of(
-                    MessageRole.USER.name(),
-                    MessageRole.AGENT_PROMPT.name(),
-                    MessageRole.ASSISTANT.name(),
-                    MessageRole.SUMMARY.name(),
-                    MessageRole.TOOL_EXECUTION_RESULT.name(),
-                    MessageRole.AGENT_PLAN.name()
-            );
-            if (canBeHistoryRoles.contains(messageHistoryItem.getRole())) {
-                if (chatMessage != null) {
-                    historyMessages.add(chatMessage);
-                } else {
-                    log.warn("消息有存入历史的角色{}但没有内容,id={}", messageHistoryItem.getRole(), messageHistoryItem.getId());
-                }
-            }
+            historyMessages.add(chatMessage);
         }
 
         chatMemoryChatMemoryStore.updateMessages(wsSessionId, historyMessages);

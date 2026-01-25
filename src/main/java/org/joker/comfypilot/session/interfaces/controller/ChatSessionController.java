@@ -77,7 +77,7 @@ public class ChatSessionController {
     public Result<List<ChatMessageDTO>> getMessageHistory(
             @Parameter(description = "会话编码", required = true)
             @PathVariable String sessionCode) {
-        List<ChatMessageDTO> messages = chatSessionService.getMessageHistory(sessionCode);
+        List<ChatMessageDTO> messages = chatSessionService.getClientMessageHistory(sessionCode);
         return Result.success(messages);
     }
 

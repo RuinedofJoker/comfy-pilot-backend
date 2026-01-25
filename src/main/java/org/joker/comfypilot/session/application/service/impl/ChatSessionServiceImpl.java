@@ -155,6 +155,21 @@ public class ChatSessionServiceImpl implements ChatSessionService {
     }
 
     @Override
+    public List<ChatMessageDTO> getClientMessageHistory(String sessionCode) {
+        log.info("查询会话消息历史: sessionCode={}", sessionCode);
+
+        // 查询会话
+        ChatSession chatSession = chatSessionRepository.findBySessionCode(sessionCode)
+                .orElseThrow(() -> new BusinessException("会话不存在: " + sessionCode));
+
+        // 查询消息列表
+        List<ChatMessage> messages = chatMessageRepository.findClientMessagesBySessionId(chatSession.getId());
+        return messages.stream()
+                .map(dtoConverter::toMessageDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<ChatMessageDTO> getMessageHistory(String sessionCode) {
         log.info("查询会话消息历史: sessionCode={}", sessionCode);
 
@@ -163,7 +178,7 @@ public class ChatSessionServiceImpl implements ChatSessionService {
                 .orElseThrow(() -> new BusinessException("会话不存在: " + sessionCode));
 
         // 查询消息列表
-        List<ChatMessage> messages = chatMessageRepository.findBySessionId(chatSession.getId());
+        List<ChatMessage> messages = chatMessageRepository.findMessagesBySessionId(chatSession.getId());
         return messages.stream()
                 .map(dtoConverter::toMessageDTO)
                 .collect(Collectors.toList());

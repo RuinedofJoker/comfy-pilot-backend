@@ -147,8 +147,6 @@ public class ToolRegistryImpl implements CommandLineRunner, ToolRegistry, Applic
                     toolName = toolPrefix + toolName;
                 }
 
-                toolName = Tool.SERVER_TOOL_PREFIX + toolName;
-
                 if (toolMap.containsKey(toolName)) {
                     throw new BusinessException("注册工具出错:工具名:" + toolName + " 重复！");
                 }

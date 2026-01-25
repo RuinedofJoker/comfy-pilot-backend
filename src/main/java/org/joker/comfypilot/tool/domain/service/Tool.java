@@ -41,8 +41,6 @@ import java.lang.reflect.Method;
  */
 public interface Tool {
 
-    String SERVER_TOOL_PREFIX = "cp_server_tool_";
-
     /**
      * 获取工具名称
      * <p>

@@ -2,7 +2,9 @@ package org.joker.comfypilot.session.infrastructure.persistence.repository;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.joker.comfypilot.common.enums.MessageRole;
 import org.joker.comfypilot.session.domain.entity.ChatMessage;
+import org.joker.comfypilot.session.domain.enums.MessageStatus;
 import org.joker.comfypilot.session.domain.repository.ChatMessageRepository;
 import org.joker.comfypilot.session.infrastructure.persistence.converter.ChatMessageConverter;
 import org.joker.comfypilot.session.infrastructure.persistence.mapper.ChatMessageMapper;
@@ -39,9 +41,31 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
     }
 
     @Override
-    public List<ChatMessage> findBySessionId(Long sessionId) {
+    public List<ChatMessage> findClientMessagesBySessionId(Long sessionId) {
         LambdaQueryWrapper<ChatMessagePO> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ChatMessagePO::getSessionId, sessionId)
+                .in(ChatMessagePO::getRole, List.of(
+                        MessageRole.USER.name(), MessageRole.ASSISTANT.name()
+                ))
+                .orderByAsc(ChatMessagePO::getRequestId, ChatMessagePO::getCreateTime);
+        return chatMessageMapper.selectList(wrapper).stream()
+                .map(chatMessageConverter::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ChatMessage> findMessagesBySessionId(Long sessionId) {
+        LambdaQueryWrapper<ChatMessagePO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ChatMessagePO::getSessionId, sessionId)
+                .in(ChatMessagePO::getRole, List.of(
+                        MessageRole.USER.name(),
+                        MessageRole.AGENT_PROMPT.name(),
+                        MessageRole.ASSISTANT.name(),
+                        MessageRole.SUMMARY.name(),
+                        MessageRole.TOOL_EXECUTION_RESULT.name(),
+                        MessageRole.AGENT_PLAN.name()
+                ))
+                .eq(ChatMessagePO::getStatus, MessageStatus.ACTIVE.name())
                 .orderByAsc(ChatMessagePO::getRequestId, ChatMessagePO::getCreateTime);
         return chatMessageMapper.selectList(wrapper).stream()
                 .map(chatMessageConverter::toDomain)

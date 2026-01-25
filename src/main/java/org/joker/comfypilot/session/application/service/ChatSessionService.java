@@ -75,6 +75,14 @@ public interface ChatSessionService {
     void sendMessageAsync(String sessionCode, String requestId, WebSocketMessage<?> wsMessage, WebSocketSessionContext context, WebSocketSession session);
 
     /**
+     * 查询客户端显示的会话消息历史
+     *
+     * @param sessionCode 会话编码
+     * @return 消息列表
+     */
+    List<ChatMessageDTO> getClientMessageHistory(String sessionCode);
+
+    /**
      * 查询会话消息历史
      *
      * @param sessionCode 会话编码

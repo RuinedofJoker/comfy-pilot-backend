@@ -94,7 +94,7 @@ public class McpServerTool implements Tool {
         this.serverName = serverName;
         this.toolSchema = toolSchema;
         this.originalToolName = toolSchema.name();
-        this.toolName = Tool.SERVER_TOOL_PREFIX + "mcp_" + serverName + "_" + originalToolName;
+        this.toolName = "mcp_" + serverName + "_" + originalToolName;
         this.webClient = webClient;
         this.callTimeout = callTimeout;
         this.retryAttempts = retryAttempts;
