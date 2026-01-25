@@ -53,7 +53,6 @@ public class ToolRegistryImpl implements CommandLineRunner, ToolRegistry, Applic
 
     /**
      * 在所有 Bean 初始化完成后扫描并注册工具
-     * 使用 @PostConstruct 避免循环依赖问题
      */
     public void run(String... args) throws Exception {
         // 获取所有 Spring Bean
