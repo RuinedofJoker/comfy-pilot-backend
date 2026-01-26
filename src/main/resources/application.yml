@@ -152,3 +152,30 @@ springdoc:
       paths-to-match: /api/v1/monitor/**, /api/v1/health/**
     - group: 12-审计日志模块
       paths-to-match: /api/v1/audit-logs/**
+
+# 脚本运行时配置
+script:
+  python:
+    # 是否启用 Python 支持
+    enabled: true
+    # Python 可执行文件路径（默认自动检测）
+    # Windows: python 或 python.exe
+    # Linux/Mac: python3
+    # 也可以指定绝对路径，如: /usr/local/bin/python3
+    # 推荐使用venv虚拟环境的python
+    executable: C:/code/comfy-pilot/.venv/Scripts/python.exe
+    # 是否在启动时检查版本
+    version-check: true
+    # 最低版本要求
+    min-version: "3.8"
+    # 版本检测超时时间（毫秒）
+    timeout: 5000
+    # 脚本执行超时时间（秒）
+    script-timeout: 30
+  node:
+    # Node.js 支持（预留，未来扩展）
+    enabled: false
+    executable: "node"
+    version-check: true
+    min-version: "14.0"
+    timeout: 5000
