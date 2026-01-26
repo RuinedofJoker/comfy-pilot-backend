@@ -32,6 +32,11 @@ public class WebSocketSessionContext {
     private Long userId;
 
     /**
+     * 当前执行中的requestId
+     */
+    private AtomicReference<String> currentRequestId;
+
+    /**
      * 是否正在执行
      */
     private AtomicBoolean executing;

@@ -34,6 +34,7 @@ import org.joker.comfypilot.model.application.dto.AiModelDTO;
 import org.joker.comfypilot.model.application.service.AiModelService;
 import org.joker.comfypilot.model.domain.enums.ModelCallingType;
 import org.joker.comfypilot.model.domain.service.StreamingChatModelFactory;
+import org.joker.comfypilot.script.context.ScriptRuntimeContext;
 import org.joker.comfypilot.session.application.dto.ChatSessionDTO;
 import org.joker.comfypilot.session.application.dto.client2server.UserMessageRequestData;
 import org.joker.comfypilot.session.application.service.ChatSessionService;
@@ -193,6 +194,16 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             }
             toolSpecs.addAll(comfyuiServerTools.stream().map(Tool::toolSpecification).toList());
 
+            if (ScriptRuntimeContext.isPythonAvailable()) {
+                // 添加python脚本的系统提示词
+                StringBuilder systemMessageBuilder = new StringBuilder(agentScope.get("SystemPrompt").toString()).append("\n");
+
+                systemMessageBuilder.append(WorkflowAgentPrompts.SERVER_FILE_TOOL_PROMPT).append("\n");
+                systemMessageBuilder.append(WorkflowAgentPrompts.SERVER_PYTHON_TOOL_PROMPT).append("\n");
+
+                agentScope.put("SystemPrompt", systemMessageBuilder.toString());
+            }
+
             // Agent构建ComfyUI服务高级功能提示词和补充工具
             ChatSessionDTO chatSessionDTO = chatSessionService.getSessionByCode(executionContext.getSessionCode());
             ComfyuiServerDTO comfyuiServerDTO = comfyuiServerService.getById(chatSessionDTO.getComfyuiServerId());
@@ -323,6 +334,10 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                     executionLog.setExecutionTimeMs(executionContext.getStartTime() != null ? System.currentTimeMillis() - executionContext.getStartTime() : null);
                     executionLog.setOutput(messageIds.toString());
                     executionLogRepository.update(executionLog);
+                }
+
+                if (!event.isWillContinue()) {
+//                    executionContext.getWebSocketSessionContext()
                 }
             });
 
