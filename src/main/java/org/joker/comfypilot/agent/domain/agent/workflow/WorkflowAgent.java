@@ -54,6 +54,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -314,6 +315,14 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                 agentCallback.onStreamComplete(event.getCompleteResponse().aiMessage().text());
             });
 
+            AtomicBoolean isStarted = new AtomicBoolean(false);
+            // 迭代开始事件
+            eventPublisher.addEventListener(AgentEventType.ITERATION_START, (IterationStartEvent event) -> {
+                if (isStarted.compareAndSet(false, true)) {
+                    agentCallback.onPrompt(AgentPromptType.STARTED, null);
+                }
+            });
+
             // 迭代结束事件
             eventPublisher.addEventListener(AgentEventType.ITERATION_END, (IterationEndEvent event) -> {
                 // 发生中断
@@ -355,7 +364,9 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                 }
 
                 if (!event.isWillContinue()) {
-                    executionContext.getWebSocketSessionContext().completeExecution(executionContext.getRequestId());
+                    if (executionContext.getWebSocketSessionContext().completeExecution(executionContext.getRequestId())) {
+                        agentCallback.onPrompt(AgentPromptType.COMPLETE, null);
+                    }
                 }
             });
 

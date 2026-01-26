@@ -35,6 +35,11 @@ public enum AgentPromptType {
     SUMMARY_COMPLETE("摘要完成", "摘要已生成完成"),
 
     /**
+     * 执行开始
+     */
+    STARTED("执行开始", "执行开始"),
+
+    /**
      * 执行被中断
      */
     INTERRUPTED("执行中断", "执行已被中断"),
@@ -42,7 +47,13 @@ public enum AgentPromptType {
     /**
      * 执行错误
      */
-    ERROR("执行错误", "执行过程中发生错误");
+    ERROR("执行错误", "执行过程中发生错误"),
+
+    /**
+     * 执行完成
+     */
+    COMPLETE("执行完成", "执行完成"),
+    ;
 
     /**
      * 提示类型名称

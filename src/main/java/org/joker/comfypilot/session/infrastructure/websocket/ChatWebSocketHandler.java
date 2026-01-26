@@ -273,11 +273,21 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                 return;
             }
 
+            AgentExecutionContext executionContext = context.getAgentExecutionContext().get();
+            if (executionContext == null || !StringUtils.equals(executionContext.getRequestId(),  wsMessage.getRequestId())) {
+                throw new BusinessException("当前Agent执行上下文不正确");
+            }
+
+            // 中断调用
+            if (executionContext.isInterrupted()) {
+                toolCallWaitManager.cancelWait(responseData.getToolCallId(), responseData.getToolName());
+            }
+
             if (Boolean.FALSE.equals(responseData.getIsMcpTool()) && Boolean.FALSE.equals(responseData.getIsClientTool())) {
                 Tool serverTool = SpringContextUtil.getBean(ToolRegistry.class).getToolByName(responseData.getToolName());
                 if (serverTool != null) {
                     try {
-                        AgentExecutionContextHolder.set(context.getAgentExecutionContext().get());
+                        AgentExecutionContextHolder.set(executionContext);
                         String executeResult = serverTool.executeTool(responseData.getToolCallId(), responseData.getToolName(), responseData.getToolArgs());
                         responseData.setSuccess(true);
                         responseData.setResult(executeResult);

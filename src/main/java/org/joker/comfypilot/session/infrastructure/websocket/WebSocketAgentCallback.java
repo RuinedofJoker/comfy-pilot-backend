@@ -173,9 +173,11 @@ public class WebSocketAgentCallback implements AgentCallback {
                 webSocketSession.sendMessage(new TextMessage(json));
             } else {
                 log.warn("WebSocket连接已关闭,无法发送消息: sessionCode={}", sessionCode);
+                throw new BusinessException("WebSocket连接已关闭,无法发送消息");
             }
         } catch (Exception e) {
             log.error("发送WebSocket消息失败: sessionCode={}, error={}", sessionCode, e.getMessage(), e);
+            throw new BusinessException("发送WebSocket消息失败");
         }
     }
 }
