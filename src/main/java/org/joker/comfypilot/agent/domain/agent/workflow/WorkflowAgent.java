@@ -11,7 +11,10 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
 import org.joker.comfypilot.agent.domain.callback.AgentCallback;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
+import org.joker.comfypilot.agent.domain.entity.AgentExecutionLog;
+import org.joker.comfypilot.agent.domain.enums.ExecutionStatus;
 import org.joker.comfypilot.agent.domain.event.*;
+import org.joker.comfypilot.agent.domain.repository.AgentExecutionLogRepository;
 import org.joker.comfypilot.agent.domain.service.AbstractAgent;
 import org.joker.comfypilot.agent.domain.service.Agent;
 import org.joker.comfypilot.agent.domain.service.AgentConfigDefinition;
@@ -25,6 +28,7 @@ import org.joker.comfypilot.common.domain.content.*;
 import org.joker.comfypilot.common.domain.message.PersistableChatMessage;
 import org.joker.comfypilot.common.enums.MessageRole;
 import org.joker.comfypilot.common.exception.BusinessException;
+import org.joker.comfypilot.common.util.TraceIdUtil;
 import org.joker.comfypilot.model.application.dto.AiModelDTO;
 import org.joker.comfypilot.model.application.service.AiModelService;
 import org.joker.comfypilot.model.domain.enums.ModelCallingType;
@@ -44,6 +48,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -72,6 +77,8 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
     private WebSocketSessionManager sessionManager;
     @Autowired
     private ToolCallWaitManager toolCallWaitManager;
+    @Autowired
+    private AgentExecutionLogRepository executionLogRepository;
 
     @Override
     public String getAgentCode() {
@@ -145,6 +152,8 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
         } else {
             // Agent执行
 
+            ConcurrentLinkedQueue<String> messageIds = new ConcurrentLinkedQueue<>();
+
             // 构建用户消息+Agent提示词
             StringBuilder userMessageBuilder = new StringBuilder();
             userMessageBuilder.append(WorkflowAgentPrompts.USER_QUERY_START_TOKEN).append(userMessage).append(WorkflowAgentPrompts.USER_QUERY_END_TOKEN).append("\n");
@@ -211,7 +220,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                     userMessageContent
             ), (chatMessage) -> {
                 // 保存用户消息
-                org.joker.comfypilot.session.domain.entity.ChatMessage systemChatMessage = org.joker.comfypilot.session.domain.entity.ChatMessage.builder()
+                org.joker.comfypilot.session.domain.entity.ChatMessage userChatMessage = org.joker.comfypilot.session.domain.entity.ChatMessage.builder()
                         .sessionId(executionContext.getSessionId())
                         .sessionCode(executionContext.getSessionCode())
                         .requestId(executionContext.getRequestId())
@@ -221,7 +230,8 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                         .content(userMessage)
                         .chatContent(PersistableChatMessage.toJsonString(chatMessage))
                         .build();
-                chatMessageRepository.save(systemChatMessage);
+                chatMessageRepository.save(userChatMessage);
+                messageIds.add(userChatMessage.getId() + "");
             }, null);
 
             // 构建 ChatRequest
@@ -293,6 +303,19 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                 } else if (!event.isSuccess() && !event.isWillContinue()) {
                     agentCallback.onPrompt(AgentPromptType.ERROR, event.getException() != null ? event.getException().getMessage() : "未知错误");
                 }
+
+                if (!event.isWillContinue() && executionContext.getExecutionLog() != null) {
+                    // 记录日志
+                    AgentExecutionLog executionLog = executionContext.getExecutionLog();
+                    executionLog.setStatus(event.getContext().isInterrupted() ? ExecutionStatus.INTERRUPTED : (event.isSuccess() ? ExecutionStatus.SUCCESS : ExecutionStatus.FAILED));
+                    if (event.getException() != null) {
+                        log.error("Agent执行失败", event.getException());
+                        executionLog.setErrorMessage("traceId: " + TraceIdUtil.getTraceId() + " ; " + event.getException().getMessage());
+                    }
+                    executionLog.setExecutionTimeMs(executionContext.getStartTime() != null ? System.currentTimeMillis() - executionContext.getStartTime() : null);
+                    executionLog.setOutput(messageIds.toString());
+                    executionLogRepository.update(executionLog);
+                }
             });
 
             // 工具调用通知事件 -> AgentCallback.onToolCall()
@@ -335,6 +358,9 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                     chatMessageRepository.save(dbMessage);
                     log.debug("消息已保存到数据库: sessionCode={}, messageType={}, iteration={}",
                             event.getContext().getSessionCode(), event.getMessageType(), event.getIteration());
+                    if (messageRole.equals(MessageRole.ASSISTANT)) {
+                        messageIds.add(dbMessage.getId() + "");
+                    }
                 } catch (Exception e) {
                     log.error("保存消息到数据库失败: sessionCode={}", event.getContext().getSessionCode(), e);
                     throw new BusinessException("保存消息到数据库失败");
