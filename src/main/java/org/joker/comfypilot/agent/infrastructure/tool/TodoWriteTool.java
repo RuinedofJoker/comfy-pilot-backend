@@ -159,13 +159,17 @@ public class TodoWriteTool {
     /**
      * 清空待办事项列表
      *
-     * @param sessionId 会话ID
      * @return 操作结果
      */
     @Tool("清空当前会话的所有待办事项")
-    public String clearTodos(String sessionId) {
-        log.info("调用工具: clearTodos, sessionId: {}", sessionId);
-        String redisKey = buildRedisKey(sessionId);
+    public String clearTodos() {
+        AgentExecutionContext executionContext = AgentExecutionContextHolder.get();
+        if (executionContext == null) {
+            throw new BusinessException("找不到当前工具执行上下文");
+        }
+        String sessionCode = executionContext.getSessionCode();
+        log.info("调用工具: clearTodos, sessionCode: {}", sessionCode);
+        String redisKey = buildRedisKey(sessionCode);
         redisUtil.del(redisKey);
         return "待办事项列表已清空";
     }
