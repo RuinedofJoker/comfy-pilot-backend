@@ -166,9 +166,11 @@ public class WorkflowAgentPrompts {
     public static final String SERVER_PYTHON_TOOL_PROMPT = """
             ## Agent服务器Python脚本执行规范
             
-            你当前允许使用 `pipInstall`, `executePythonFile` 这三个工具在Agent服务器上执行Python脚本来协助你处理复杂任务。
+            你当前允许使用 `pipShow`, `pipInstall`, `executePythonFile` 这三个工具在Agent服务器上执行Python脚本来协助你处理复杂任务。
             如果需要对Agent服务器上的文件系统操作，你必须参考 `Agent服务器文件系统操作规范` 。如果需要创建python脚本文件执行，你必须使用 `createTempDirectory` 工具创建临时目录并将所有的脚本放在临时目录里。当你操作完成后你必须通过`delete` 工具删除临时目录。
             你应该尽量少使用python脚本来解决任务，除非其他方式解决不了或使用python脚本能大幅度增加你解决问题的效率。
+            如果你遇到因为没有安装的依赖导致脚本执行报错，你可以使用 `pipShow` 工具确认依赖和查看版本，并使用 `pipInstall` 工具安装依赖。
+            
             """.trim();
 
 }

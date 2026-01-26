@@ -39,67 +39,6 @@ public class PythonScriptTools {
     private final ScriptRuntimeConfig config;
 
     /**
-     * 执行 Python 脚本字符串
-     *
-     * @param scriptContent Python 脚本内容
-     * @return 脚本执行输出
-     * @throws IllegalStateException 如果 Python 不可用
-     * @throws IOException           如果执行失败
-     */
-//    @Tool(name = "executePythonScript", value = "执行一段 Python 脚本代码字符串，返回执行输出结果")
-    public String executeScript(
-            @P(value = "要执行的 Python 脚本内容", required = true) String scriptContent
-    ) throws IOException {
-
-        // 检查 Python 是否可用
-        ScriptRuntimeContext.requirePython();
-
-        String pythonExecutable = ScriptRuntimeContext.getPythonExecutable();
-        log.info("开始执行 Python 脚本，使用解释器: {}", pythonExecutable);
-        log.debug("脚本内容长度: {} 字符", scriptContent.length());
-
-        try {
-            // 构建命令：python -c "script content"
-            ProcessBuilder pb = new ProcessBuilder(
-                    pythonExecutable,
-                    "-c",
-                    scriptContent
-            );
-            pb.redirectErrorStream(true);
-
-            // 执行脚本
-            Process process = pb.start();
-
-            // 等待执行完成，带超时
-            int timeoutSeconds = config.getPython().getScriptTimeout();
-            boolean finished = process.waitFor(timeoutSeconds, TimeUnit.SECONDS);
-
-            if (!finished) {
-                process.destroyForcibly();
-                String errorMsg = String.format("脚本执行超时（超过 %d 秒）", timeoutSeconds);
-                log.error(errorMsg);
-                throw new IOException(errorMsg);
-            }
-
-            // 读取输出
-            String output = readProcessOutput(process);
-            int exitCode = process.exitValue();
-
-            if (exitCode != 0) {
-                log.error("脚本执行失败，退出码: {}, 输出: {}", exitCode, output);
-                throw new IOException("脚本执行失败（退出码: " + exitCode + "）\n输出:\n" + output);
-            }
-
-            log.info("脚本执行成功，输出长度: {} 字符", output.length());
-            return output;
-
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IOException("脚本执行被中断", e);
-        }
-    }
-
-    /**
      * 读取进程输出
      *
      * @param process 进程对象
@@ -127,7 +66,7 @@ public class PythonScriptTools {
      * @throws IllegalStateException 如果 Python 不可用
      * @throws IOException           如果安装失败
      */
-    @Tool(name = "pipInstall", value = "使用 pip 安装 Python 包，支持指定版本和额外参数")
+    @Tool(name = "pipInstall", value = "Agent服务器上使用 pip 安装 Python 包，支持指定版本和额外参数")
     public String pipInstall(
             @P(value = "要安装的包名称或规范，例如: requests, numpy==1.21.0", required = true) String packageSpec,
             @P(value = "额外的 pip 参数，例如: --upgrade --no-cache-dir", required = false) String extraArgs
@@ -199,6 +138,71 @@ public class PythonScriptTools {
     }
 
     /**
+     * 使用 pip show 查看已安装 Python 包的详细信息
+     *
+     * @param packageName 包名称，例如: "requests", "numpy"
+     * @return pip show 输出，包含包的版本、位置、依赖等详细信息
+     * @throws IllegalStateException 如果 Python 不可用
+     * @throws IOException           如果查询失败或包未安装
+     */
+    @Tool(name = "pipShow", value = "Agent服务器上查看已安装 Python 包的详细信息，包括版本、位置、依赖等")
+    public String pipShow(
+            @P(value = "要查询的包名称，例如: requests, numpy", required = true) String packageName
+    ) throws IOException {
+
+        // 检查 Python 是否可用
+        ScriptRuntimeContext.requirePython();
+
+        String pythonExecutable = ScriptRuntimeContext.getPythonExecutable();
+        log.info("查询 Python 包信息: {}", packageName);
+
+        try {
+            // 构建命令：python -m pip show <package>
+            List<String> command = new ArrayList<>();
+            command.add(pythonExecutable);
+            command.add("-m");
+            command.add("pip");
+            command.add("show");
+            command.add(packageName);
+
+            log.debug("执行命令: {}", String.join(" ", command));
+
+            ProcessBuilder pb = new ProcessBuilder(command);
+            pb.redirectErrorStream(true);
+
+            // 执行命令
+            Process process = pb.start();
+
+            // 等待执行完成，带超时
+            int timeoutSeconds = config.getPython().getScriptTimeout();
+            boolean finished = process.waitFor(timeoutSeconds, TimeUnit.SECONDS);
+
+            if (!finished) {
+                process.destroyForcibly();
+                String errorMsg = String.format("pip show 超时（超过 %d 秒）", timeoutSeconds);
+                log.error(errorMsg);
+                throw new IOException(errorMsg);
+            }
+
+            // 读取输出
+            String output = readProcessOutput(process);
+            int exitCode = process.exitValue();
+
+            if (exitCode != 0) {
+                log.warn("pip show 失败，退出码: {}, 可能包未安装: {}", exitCode, packageName);
+                throw new IOException("包未安装或查询失败: " + packageName + "\n输出:\n" + output);
+            }
+
+            log.info("成功查询包信息: {}", packageName);
+            return output;
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("pip show 被中断", e);
+        }
+    }
+
+    /**
      * 执行指定路径的 Python 脚本文件
      *
      * @param scriptPath 脚本文件的完整路径
@@ -207,7 +211,7 @@ public class PythonScriptTools {
      * @throws IllegalStateException 如果 Python 不可用
      * @throws IOException           如果文件不存在或执行失败
      */
-    @Tool(name = "executePythonFile", value = "执行指定路径的 Python 脚本文件，支持传递命令行参数")
+    @Tool(name = "executePythonFile", value = "Agent服务器上执行指定路径的 Python 脚本文件，支持传递命令行参数")
     public String executeFile(
             @P(value = "Python 脚本文件的完整路径", required = true) String scriptPath,
             @P(value = "传递给脚本的命令行参数，多个参数用空格分隔", required = false) String args
