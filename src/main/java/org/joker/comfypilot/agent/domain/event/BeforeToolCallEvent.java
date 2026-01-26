@@ -5,8 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 
-import java.util.List;
-
 /**
  * 工具调用前事件
  * 可以修改工具调用参数或取消调用
@@ -21,14 +19,14 @@ public class BeforeToolCallEvent extends AgentEvent {
     private final int iteration;
 
     /**
-     * 工具调用请求列表（可修改）
+     * 工具调用请求
      */
-    private List<ToolExecutionRequest> toolExecutionRequests;
+    private ToolExecutionRequest toolExecutionRequest;
 
     public BeforeToolCallEvent(AgentExecutionContext context, int iteration,
-                                List<ToolExecutionRequest> toolExecutionRequests) {
+                                ToolExecutionRequest toolExecutionRequest) {
         super(AgentEventType.BEFORE_TOOL_CALL, context);
         this.iteration = iteration;
-        this.toolExecutionRequests = toolExecutionRequests;
+        this.toolExecutionRequest = toolExecutionRequest;
     }
 }

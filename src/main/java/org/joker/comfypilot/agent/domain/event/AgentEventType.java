@@ -59,11 +59,6 @@ public enum AgentEventType {
     STREAM_COMPLETE("流式输出完成", StreamCompleteEvent.class),
 
     /**
-     * 提示消息
-     */
-    PROMPT("提示消息", PromptEvent.class),
-
-    /**
      * 工具调用通知
      */
     TOOL_CALL_NOTIFY("工具调用通知", ToolCallNotifyEvent.class);

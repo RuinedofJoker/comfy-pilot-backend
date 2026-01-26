@@ -22,7 +22,7 @@ public enum AgentPromptType {
     /**
      * 工具调用完成，准备下一轮思考
      */
-    TOOL_COMPLETE("工具完成", "工具调用已完成，继续分析..."),
+    TOOL_COMPLETE("工具调用完成", "工具调用已完成，继续分析..."),
 
     /**
      * Agent开始生成摘要

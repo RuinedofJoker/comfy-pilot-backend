@@ -26,11 +26,22 @@ public class IterationEndEvent extends AgentEvent {
      */
     private final boolean willContinue;
 
+    private final boolean isSuccess;
+
+    private final boolean cancelled;
+
+    private final Throwable exception;
+
     public IterationEndEvent(AgentExecutionContext context, int iteration,
-                            boolean hasToolCalls, boolean willContinue) {
+                            boolean hasToolCalls, boolean willContinue,
+                             boolean isSuccess, boolean cancelled, Throwable exception
+    ) {
         super(AgentEventType.ITERATION_END, context);
         this.iteration = iteration;
         this.hasToolCalls = hasToolCalls;
         this.willContinue = willContinue;
+        this.isSuccess = isSuccess;
+        this.cancelled = cancelled;
+        this.exception = exception;
     }
 }

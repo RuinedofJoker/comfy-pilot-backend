@@ -15,8 +15,8 @@ import org.joker.comfypilot.agent.domain.callback.AgentCallback;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.joker.comfypilot.agent.domain.event.*;
 import org.joker.comfypilot.agent.domain.toolcall.ToolCallWaitManager;
+import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.session.application.dto.AgentCallToolResult;
-import org.joker.comfypilot.session.domain.enums.AgentPromptType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -52,12 +52,6 @@ public class ReactExecutor {
     ) {
         AtomicInteger iteration = new AtomicInteger(0);
 
-        // 发布思考中提示事件
-        if (context.getEventPublisher() != null) {
-            PromptEvent promptEvent = new PromptEvent(context, 0, AgentPromptType.THINKING, null);
-            context.getEventPublisher().publishEvent(promptEvent);
-        }
-
         // 启动第一轮迭代
         executeNextIteration(streamingModel, chatRequest, context, iteration, maxIterations);
     }
@@ -72,39 +66,6 @@ public class ReactExecutor {
             AtomicInteger iteration,
             final int maxIterations
     ) {
-        // 检查终止条件
-        if (iteration.get() >= maxIterations) {
-            log.warn("ReAct 循环达到最大迭代次数: {}", maxIterations);
-            // 发布错误提示事件
-            if (context.getEventPublisher() != null) {
-                PromptEvent errorEvent = new PromptEvent(context, iteration.get(),
-                        AgentPromptType.ERROR, "达到最大迭代次数 " + maxIterations + "，执行终止");
-                context.getEventPublisher().publishEvent(errorEvent);
-
-                // 发布流式输出完成事件（失败）
-                StreamCompleteEvent completeEvent = StreamCompleteEvent.failure(context,
-                        "达到最大迭代次数");
-                context.getEventPublisher().publishEvent(completeEvent);
-            }
-            return;
-        }
-
-        // 检查是否被中断（通过 AgentCallback 查询）
-        if (context.getAgentCallback() != null && context.getAgentCallback().isInterrupted()) {
-            log.info("ReAct 循环被中断");
-            // 发布中断提示事件
-            if (context.getEventPublisher() != null) {
-                PromptEvent interruptEvent = new PromptEvent(context, iteration.get(),
-                        AgentPromptType.INTERRUPTED, "执行已被用户中断");
-                context.getEventPublisher().publishEvent(interruptEvent);
-
-                // 发布流式输出完成事件（中断）
-                StreamCompleteEvent completeEvent = StreamCompleteEvent.failure(context, "执行被中断");
-                context.getEventPublisher().publishEvent(completeEvent);
-            }
-            return;
-        }
-
         log.debug("ReAct 循环迭代: iteration={}, sessionCode={}",
                 iteration.get(), context.getSessionCode());
 
@@ -114,11 +75,33 @@ public class ReactExecutor {
             context.getEventPublisher().publishEvent(startEvent);
             if (startEvent.isCancelled()) {
                 log.info("迭代被事件监听器取消");
-                // 发布流式输出完成事件（取消）
-                StreamCompleteEvent completeEvent = StreamCompleteEvent.failure(context, "迭代被取消");
-                context.getEventPublisher().publishEvent(completeEvent);
+                // 发布迭代结束事件
+                IterationEndEvent iterationEndEvent = new IterationEndEvent(context, iteration.get(), false, false, false, true, null);
+                context.getEventPublisher().publishEvent(iterationEndEvent);
                 return;
             }
+        }
+
+        // 检查终止条件
+        if (iteration.get() >= maxIterations) {
+            log.warn("ReAct 循环达到最大迭代次数: {}", maxIterations);
+            // 发布迭代结束事件
+            if (context.getEventPublisher() != null) {
+                IterationEndEvent iterationEndEvent = new IterationEndEvent(context, iteration.get(), false, false, false, false, new BusinessException(new InterruptedException("循环达到最大迭代次数，强制中断")));
+                context.getEventPublisher().publishEvent(iterationEndEvent);
+            }
+            return;
+        }
+
+        // 检查是否被中断（通过 AgentCallback 查询）
+        if (context.getAgentCallback() != null && context.getAgentCallback().isInterrupted()) {
+            log.info("ReAct 循环被中断");
+            // 发布迭代结束事件
+            if (context.getEventPublisher() != null) {
+                IterationEndEvent iterationEndEvent = new IterationEndEvent(context, iteration.get(), false, false, false, false, new BusinessException(new InterruptedException("迭代被手动中断")));
+                context.getEventPublisher().publishEvent(iterationEndEvent);
+            }
+            return;
         }
 
         // 发布 LLM 调用前事件（可修改消息和工具）
@@ -131,10 +114,10 @@ public class ReactExecutor {
             BeforeLlmCallEvent beforeLlmEvent = new BeforeLlmCallEvent(context, iteration.get(), requestBuilder, chatRequest);
             context.getEventPublisher().publishEvent(beforeLlmEvent);
             if (beforeLlmEvent.isCancelled()) {
-                log.info("LLM 调用被事件监听器取消");
-                // 发布流式输出完成事件（取消）
-                StreamCompleteEvent completeEvent = StreamCompleteEvent.failure(context, "LLM 调用被取消");
-                context.getEventPublisher().publishEvent(completeEvent);
+                log.info("迭代被事件监听器取消");
+                // 发布迭代结束事件
+                IterationEndEvent iterationEndEvent = new IterationEndEvent(context, iteration.get(), false, false, false, true, null);
+                context.getEventPublisher().publishEvent(iterationEndEvent);
                 return;
             }
             // 使用修改后的请求
@@ -144,21 +127,6 @@ public class ReactExecutor {
         // 1. 异步调用 LLM
         callLlmStreamingAsync(streamingModel, finalRequest, context, iteration.get())
                 .thenAccept(response -> {
-                    if (response == null) {
-                        log.warn("LLM 返回空响应");
-                        // 发布错误提示事件
-                        if (context.getEventPublisher() != null) {
-                            PromptEvent errorEvent = new PromptEvent(context, iteration.get(),
-                                    AgentPromptType.ERROR, "LLM 返回空响应");
-                            context.getEventPublisher().publishEvent(errorEvent);
-
-                            // 发布流式输出完成事件（失败）
-                            StreamCompleteEvent completeEvent = StreamCompleteEvent.failure(context, "LLM 返回空响应");
-                            context.getEventPublisher().publishEvent(completeEvent);
-                        }
-                        return;
-                    }
-
                     AiMessage aiMessage = response.aiMessage();
 
                     // 发布 LLM 调用后事件
@@ -185,20 +153,18 @@ public class ReactExecutor {
                     if (aiMessage.hasToolExecutionRequests()) {
                         log.info("检测到工具调用请求: count={}", aiMessage.toolExecutionRequests().size());
 
-                        // 发布工具调用中提示事件
-                        if (context.getEventPublisher() != null) {
-                            PromptEvent toolCallingEvent = new PromptEvent(context, iteration.get(),
-                                    AgentPromptType.TOOL_CALLING,
-                                    String.format("检测到 %d 个工具调用", aiMessage.toolExecutionRequests().size()));
-                            context.getEventPublisher().publishEvent(toolCallingEvent);
-                        }
-
                         // 3. 将 AI 消息添加到历史（带事件）
                         addMessageWithEvent(context, iteration.get(), aiMessage);
 
                         // 4. 异步处理工具调用
                         handleToolCallsAsync(aiMessage.toolExecutionRequests(), context, iteration.get())
                                 .thenAccept(toolResults -> {
+                                    // 发布工具调用后
+                                    if (context.getEventPublisher() != null) {
+                                        AfterToolCallEvent afterToolCallEvent = new AfterToolCallEvent(context, iteration.get(), false, toolResults, null);
+                                        context.getEventPublisher().publishEvent(afterToolCallEvent);
+                                    }
+
                                     // 5. 将工具结果添加到历史（带事件）
                                     for (ToolExecutionResultMessage toolResult : toolResults) {
                                         addMessageWithEvent(context, iteration.get(), toolResult);
@@ -207,25 +173,7 @@ public class ReactExecutor {
                                     // 检查是否被中断
                                     if (context.isInterrupted()) {
                                         log.info("工具返回后被中断");
-                                        // 发布中断提示事件
-                                        if (context.getEventPublisher() != null) {
-                                            PromptEvent interruptEvent = new PromptEvent(context, iteration.get(),
-                                                    AgentPromptType.INTERRUPTED, "工具执行完成后被用户中断");
-                                            context.getEventPublisher().publishEvent(interruptEvent);
-
-                                            // 发布流式输出完成事件（中断）
-                                            StreamCompleteEvent completeEvent = StreamCompleteEvent.failure(context, "工具执行完成后被中断");
-                                            context.getEventPublisher().publishEvent(completeEvent);
-                                        }
-                                        return;
-                                    }
-
-                                    // 发布工具完成提示事件
-                                    if (context.getEventPublisher() != null) {
-                                        PromptEvent toolCompleteEvent = new PromptEvent(context, iteration.get(),
-                                                AgentPromptType.TOOL_COMPLETE,
-                                                String.format("已完成 %d 个工具调用，继续分析...", toolResults.size()));
-                                        context.getEventPublisher().publishEvent(toolCompleteEvent);
+                                        throw new BusinessException(new InterruptedException("迭代被手动中断"));
                                     }
 
                                     // 6. 构建下一轮请求
@@ -237,20 +185,24 @@ public class ReactExecutor {
 
                                     // 7. 递归执行下一轮迭代
                                     iteration.incrementAndGet();
+                                    if (context.getEventPublisher() != null) {
+                                        IterationEndEvent iterationEndEvent = new IterationEndEvent(context, iteration.get(), true, true, true, false, null);
+                                        context.getEventPublisher().publishEvent(iterationEndEvent);
+                                    }
                                     executeNextIteration(streamingModel, nextRequest, context, iteration, maxIterations);
                                 })
                                 .exceptionally(ex -> {
                                     log.error("处理工具调用失败", ex);
-                                    // 发布错误提示事件
-                                    if (context.getEventPublisher() != null) {
-                                        PromptEvent errorEvent = new PromptEvent(context, iteration.get(),
-                                                AgentPromptType.ERROR, "工具调用处理失败: " + ex.getMessage());
-                                        context.getEventPublisher().publishEvent(errorEvent);
 
-                                        // 发布流式输出完成事件（失败）
-                                        StreamCompleteEvent completeEvent = StreamCompleteEvent.failure(context,
-                                                "工具调用处理失败: " + ex.getMessage());
-                                        context.getEventPublisher().publishEvent(completeEvent);
+                                    // 发布工具调用后
+                                    if (context.getEventPublisher() != null) {
+                                        AfterToolCallEvent afterToolCallEvent = new AfterToolCallEvent(context, iteration.get(), true, null, ex);
+                                        context.getEventPublisher().publishEvent(afterToolCallEvent);
+                                    }
+
+                                    if (context.getEventPublisher() != null) {
+                                        IterationEndEvent iterationEndEvent = new IterationEndEvent(context, iteration.get(), true, false, false, false, ex);
+                                        context.getEventPublisher().publishEvent(iterationEndEvent);
                                     }
                                     return null;
                                 });
@@ -259,25 +211,19 @@ public class ReactExecutor {
                         log.info("ReAct 循环完成: iterations={}", iteration.get());
                         addMessageWithEvent(context, iteration.get(), aiMessage);
 
-                        // 发布流式输出完成事件（成功）
+                        // 发布迭代结束事件
                         if (context.getEventPublisher() != null) {
-                            StreamCompleteEvent completeEvent = StreamCompleteEvent.success(context, null);
-                            context.getEventPublisher().publishEvent(completeEvent);
+                            IterationEndEvent iterationEndEvent = new IterationEndEvent(context, iteration.get(), false, false, true, false, null);
+                            context.getEventPublisher().publishEvent(iterationEndEvent);
                         }
                     }
                 })
                 .exceptionally(ex -> {
                     log.error("LLM 调用失败", ex);
-                    // 发布错误提示事件
+                    // 发布迭代结束事件
                     if (context.getEventPublisher() != null) {
-                        PromptEvent errorEvent = new PromptEvent(context, iteration.get(),
-                                AgentPromptType.ERROR, "LLM 调用失败: " + ex.getMessage());
-                        context.getEventPublisher().publishEvent(errorEvent);
-
-                        // 发布流式输出完成事件（失败）
-                        StreamCompleteEvent completeEvent = StreamCompleteEvent.failure(context,
-                                "LLM 调用失败: " + ex.getMessage());
-                        context.getEventPublisher().publishEvent(completeEvent);
+                        IterationEndEvent iterationEndEvent = new IterationEndEvent(context, iteration.get(), false, false, false, false, ex);
+                        context.getEventPublisher().publishEvent(iterationEndEvent);
                     }
                     return null;
                 });
@@ -294,20 +240,13 @@ public class ReactExecutor {
     ) {
         CompletableFuture<ChatResponse> future = new CompletableFuture<>();
 
-        // 发布思考中提示事件
-        if (context.getEventPublisher() != null) {
-            PromptEvent promptEvent = new PromptEvent(context, 0, AgentPromptType.THINKING, null);
-            context.getEventPublisher().publishEvent(promptEvent);
-        }
-
         streamingModel.chat(chatRequest, new StreamingChatResponseHandler() {
             @Override
             public void onPartialResponse(String partialResponse) {
                 // 检查是否被中断
                 if (context.isInterrupted()) {
                     log.info("流式输出被中断");
-                    future.completeExceptionally(new InterruptedException("流式输出被用户中断"));
-                    return;
+                    throw new BusinessException(new InterruptedException("迭代被手动中断"));
                 }
 
                 // 发布流式输出事件
@@ -321,6 +260,11 @@ public class ReactExecutor {
             @Override
             public void onCompleteResponse(ChatResponse completeResponse) {
                 log.debug("LLM 流式调用完成");
+                // 发布流式输出完成事件
+                if (context.getEventPublisher() != null) {
+                    StreamCompleteEvent completeEvent = new StreamCompleteEvent(context, completeResponse);
+                    context.getEventPublisher().publishEvent(completeEvent);
+                }
                 future.complete(completeResponse);
             }
 
@@ -350,7 +294,7 @@ public class ReactExecutor {
             if (context.isInterrupted()) {
                 log.info("工具调用被中断");
                 CompletableFuture<ToolExecutionResultMessage> interruptedFuture = new CompletableFuture<>();
-                interruptedFuture.completeExceptionally(new InterruptedException("工具调用被用户中断"));
+                interruptedFuture.completeExceptionally(new InterruptedException("迭代被手动中断"));
                 toolFutures.add(interruptedFuture);
                 continue;
             }
@@ -360,6 +304,12 @@ public class ReactExecutor {
             String toolCallId = request.id();
 
             log.info("处理工具调用: toolName={}, toolCallId={}", toolName, toolCallId);
+
+            // 发布工具调用前事件
+            if (context.getEventPublisher() != null) {
+                BeforeToolCallEvent beforeToolCallEvent = new BeforeToolCallEvent(context, iteration, request);
+                context.getEventPublisher().publishEvent(beforeToolCallEvent);
+            }
 
             // 创建异步等待回调
             CompletableFuture<AgentCallToolResult> responseFuture = toolCallWaitManager.createWait(
@@ -398,7 +348,8 @@ public class ReactExecutor {
             // 发布工具调用通知事件
             if (context.getEventPublisher() != null) {
                 ToolCallNotifyEvent notifyEvent = new ToolCallNotifyEvent(
-                        context, iteration, toolName, toolArgs, toolCallId);
+                        context, iteration, toolName, toolArgs, toolCallId
+                );
                 context.getEventPublisher().publishEvent(notifyEvent);
             }
         }

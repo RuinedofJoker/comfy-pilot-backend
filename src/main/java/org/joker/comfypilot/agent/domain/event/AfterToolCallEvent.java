@@ -21,14 +21,30 @@ public class AfterToolCallEvent extends AgentEvent {
     private final int iteration;
 
     /**
+     * 是否发生了异常
+     */
+    private final boolean isException;
+
+    /**
      * 工具调用结果列表
      */
     private final List<ToolExecutionResultMessage> toolResults;
 
+    /**
+     * 具体异常
+     */
+    private final Throwable ex;
+
     public AfterToolCallEvent(AgentExecutionContext context, int iteration,
-                              List<ToolExecutionResultMessage> toolResults) {
+                              boolean isException,
+                              List<ToolExecutionResultMessage> toolResults,
+                              Throwable ex
+    ) {
         super(AgentEventType.AFTER_TOOL_CALL, context);
+        this.isException = isException;
         this.iteration = iteration;
         this.toolResults = toolResults;
+        this.ex = ex;
     }
+
 }

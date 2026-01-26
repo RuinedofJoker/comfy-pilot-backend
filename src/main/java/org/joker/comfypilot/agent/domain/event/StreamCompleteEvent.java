@@ -1,5 +1,6 @@
 package org.joker.comfypilot.agent.domain.event;
 
+import dev.langchain4j.model.chat.response.ChatResponse;
 import lombok.Getter;
 import lombok.Setter;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
@@ -13,38 +14,13 @@ import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 public class StreamCompleteEvent extends AgentEvent {
 
     /**
-     * 完整内容（可能为 null）
+     * 返回消息
      */
-    private final String fullContent;
+    private final ChatResponse completeResponse;
 
-    /**
-     * 是否成功完成
-     */
-    private final boolean success;
-
-    /**
-     * 错误信息（如果失败）
-     */
-    private final String errorMessage;
-
-    public StreamCompleteEvent(AgentExecutionContext context, String fullContent, boolean success, String errorMessage) {
+    public StreamCompleteEvent(AgentExecutionContext context, ChatResponse completeResponse) {
         super(AgentEventType.STREAM_COMPLETE, context);
-        this.fullContent = fullContent;
-        this.success = success;
-        this.errorMessage = errorMessage;
+        this.completeResponse = completeResponse;
     }
 
-    /**
-     * 成功完成的构造方法
-     */
-    public static StreamCompleteEvent success(AgentExecutionContext context, String fullContent) {
-        return new StreamCompleteEvent(context, fullContent, true, null);
-    }
-
-    /**
-     * 失败的构造方法
-     */
-    public static StreamCompleteEvent failure(AgentExecutionContext context, String errorMessage) {
-        return new StreamCompleteEvent(context, null, false, errorMessage);
-    }
 }

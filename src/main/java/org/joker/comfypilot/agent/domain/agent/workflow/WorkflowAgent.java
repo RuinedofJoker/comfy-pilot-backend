@@ -240,7 +240,16 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             // ==================== 注册事件监听器 ====================
             // LLM调用前事件
             eventPublisher.addEventListener(AgentEventType.BEFORE_LLM_CALL, (BeforeLlmCallEvent event) -> {
-                streamOutputBuilder.set(new StringBuilder());
+                streamOutputBuilder.compareAndSet(null, new StringBuilder());
+                agentCallback.onPrompt(AgentPromptType.THINKING, null);
+            });
+
+            eventPublisher.addEventListener(AgentEventType.BEFORE_TOOL_CALL, (BeforeToolCallEvent event) -> {
+                agentCallback.onPrompt(AgentPromptType.TOOL_CALLING, null);
+            });
+
+            eventPublisher.addEventListener(AgentEventType.AFTER_TOOL_CALL, (AfterToolCallEvent event) -> {
+                agentCallback.onPrompt(AgentPromptType.TOOL_COMPLETE, null);
             });
 
             // 流式输出事件 -> AgentCallback.onStream()
@@ -253,42 +262,37 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
 
             // 流式输出完成事件 -> AgentCallback.onStreamComplete()
             eventPublisher.addEventListener(AgentEventType.STREAM_COMPLETE, (StreamCompleteEvent event) -> {
-                streamOutputBuilder.set(null);
-                if (event.isSuccess()) {
-                    agentCallback.onStreamComplete(event.getFullContent());
-                } else {
-                    log.error("流式输出失败: sessionCode={}, error={}",
-                            event.getContext().getSessionCode(), event.getErrorMessage());
-                    agentCallback.onStreamComplete(null);
-                }
+                streamOutputBuilder.compareAndSet(streamOutputBuilder.get(), null);
+                agentCallback.onStreamComplete(event.getCompleteResponse().aiMessage().text());
             });
 
-            // 提示消息事件 -> AgentCallback.onPrompt()
-            eventPublisher.addEventListener(AgentEventType.PROMPT, (PromptEvent event) -> {
-                AgentPromptType promptType = event.getPromptType();
-                // 中断处理完成
-                if (AgentPromptType.INTERRUPTED.equals(promptType)) {
+            // 迭代结束事件
+            eventPublisher.addEventListener(AgentEventType.ITERATION_END, (IterationEndEvent event) -> {
+                // 发生中断
+                if (!event.isSuccess() && !event.isWillContinue() && event.getContext().isInterrupted() && streamOutputBuilder.get() != null) {
                     agentCallback.onInterrupted();
                     StringBuilder streamOutput = streamOutputBuilder.get();
-                    streamOutputBuilder.set(null);
-
-                    // 保存输出到一半的消息
-                    if (streamOutput != null && !streamOutput.isEmpty()) {
-                        org.joker.comfypilot.session.domain.entity.ChatMessage dbMessage =
-                                org.joker.comfypilot.session.domain.entity.ChatMessage.builder()
-                                        .sessionId(event.getContext().getSessionId())
-                                        .sessionCode(event.getContext().getSessionCode())
-                                        .requestId(event.getContext().getRequestId())
-                                        .role(MessageRole.ASSISTANT)
-                                        .status(MessageStatus.ACTIVE)
-                                        .metadata(new HashMap<>())
-                                        .content("")
-                                        .chatContent(PersistableChatMessage.toJsonString(AiMessage.aiMessage(streamOutput.toString())))
-                                        .build();
-                        chatMessageRepository.save(dbMessage);
+                    if (streamOutputBuilder.compareAndSet(streamOutput, null)) {
+                        // 保存输出到一半的消息
+                        if (streamOutput != null && !streamOutput.isEmpty()) {
+                            org.joker.comfypilot.session.domain.entity.ChatMessage dbMessage =
+                                    org.joker.comfypilot.session.domain.entity.ChatMessage.builder()
+                                            .sessionId(event.getContext().getSessionId())
+                                            .sessionCode(event.getContext().getSessionCode())
+                                            .requestId(event.getContext().getRequestId())
+                                            .role(MessageRole.ASSISTANT)
+                                            .status(MessageStatus.ACTIVE)
+                                            .metadata(new HashMap<>())
+                                            .content("")
+                                            .chatContent(PersistableChatMessage.toJsonString(AiMessage.aiMessage(streamOutput.toString())))
+                                            .build();
+                            chatMessageRepository.save(dbMessage);
+                        }
                     }
+                    agentCallback.onPrompt(AgentPromptType.INTERRUPTED, null);
+                } else if (!event.isSuccess() && !event.isWillContinue()) {
+                    agentCallback.onPrompt(AgentPromptType.ERROR, event.getException() != null ? event.getException().getMessage() : "未知错误");
                 }
-                agentCallback.onPrompt(promptType, event.getMessage());
             });
 
             // 工具调用通知事件 -> AgentCallback.onToolCall()
