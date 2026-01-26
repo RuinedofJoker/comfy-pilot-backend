@@ -30,6 +30,7 @@ import org.joker.comfypilot.common.domain.content.*;
 import org.joker.comfypilot.common.domain.message.PersistableChatMessage;
 import org.joker.comfypilot.common.enums.MessageRole;
 import org.joker.comfypilot.common.exception.BusinessException;
+import org.joker.comfypilot.common.tool.filesystem.ServerFileSystemTools;
 import org.joker.comfypilot.common.util.TraceIdUtil;
 import org.joker.comfypilot.model.application.dto.AiModelDTO;
 import org.joker.comfypilot.model.application.service.AiModelService;
@@ -167,6 +168,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             List<Tool> todoTools = toolRegistry.getToolsByClass(TodoWriteTool.class);
             List<Tool> statusTools = toolRegistry.getToolsByClass(StatusUpdateTool.class);
             List<Tool> comfyuiServerTools = toolRegistry.getToolsByClass(ComfyUIServerTool.class);
+            List<Tool> serverFileSystemTools = toolRegistry.getToolsByClass(ServerFileSystemTools.class);
             List<Tool> pythonScriptTools = toolRegistry.getToolsByClass(PythonScriptTools.class);
 
             // 准备工具规范
@@ -203,6 +205,13 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
 
                 systemMessageBuilder.append(WorkflowAgentPrompts.SERVER_FILE_TOOL_PROMPT).append("\n");
                 systemMessageBuilder.append(WorkflowAgentPrompts.SERVER_PYTHON_TOOL_PROMPT).append("\n");
+
+                for (Tool serverFileSystemTool : serverFileSystemTools) {
+                    if (executionContext.getClientToolNames().contains(serverFileSystemTool.toolName())) {
+                        throw new BusinessException("客户端工具" + serverFileSystemTool.toolName() + "与服务内部工具重名");
+                    }
+                }
+                toolSpecs.addAll(serverFileSystemTools.stream().map(Tool::toolSpecification).toList());
 
                 for (Tool pythonScriptTool : pythonScriptTools) {
                     if (executionContext.getClientToolNames().contains(pythonScriptTool.toolName())) {

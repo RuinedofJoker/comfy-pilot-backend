@@ -46,7 +46,7 @@ public class PythonScriptTools {
      * @throws IllegalStateException 如果 Python 不可用
      * @throws IOException           如果执行失败
      */
-    @Tool(name = "executePythonScript", value = "执行一段 Python 脚本代码字符串，返回执行输出结果")
+//    @Tool(name = "executePythonScript", value = "执行一段 Python 脚本代码字符串，返回执行输出结果")
     public String executeScript(
             @P(value = "要执行的 Python 脚本内容", required = true) String scriptContent
     ) throws IOException {
