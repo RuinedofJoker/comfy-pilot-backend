@@ -94,7 +94,7 @@ public class ReactExecutor {
         }
 
         // 检查是否被中断（通过 AgentCallback 查询）
-        if (context.getAgentCallback() != null && context.getAgentCallback().isInterrupted()) {
+        if (context.getAgentCallback() != null && context.isInterrupted()) {
             log.info("ReAct 循环被中断");
             // 发布迭代结束事件
             if (context.getEventPublisher() != null) {
@@ -127,93 +127,101 @@ public class ReactExecutor {
         // 1. 异步调用 LLM
         callLlmStreamingAsync(streamingModel, finalRequest, context, iteration.get())
                 .thenAccept(response -> {
-                    AiMessage aiMessage = response.aiMessage();
+                    try {
+                        AiMessage aiMessage = response.aiMessage();
 
-                    // 发布 LLM 调用后事件
-                    if (context.getEventPublisher() != null) {
-                        AfterLlmCallEvent afterLlmEvent = new AfterLlmCallEvent(context, iteration.get(), response);
-                        context.getEventPublisher().publishEvent(afterLlmEvent);
+                        // 发布 LLM 调用后事件
+                        if (context.getEventPublisher() != null) {
+                            AfterLlmCallEvent afterLlmEvent = new AfterLlmCallEvent(context, iteration.get(), response);
+                            context.getEventPublisher().publishEvent(afterLlmEvent);
 
-                        // 记录 token 消费统计
-                        if (response.tokenUsage() != null) {
-                            log.info("LLM 调用完成 - iteration={}, inputTokens={}, outputTokens={}, totalTokens={}, messageCount={}",
-                                    iteration.get(),
-                                    response.tokenUsage().inputTokenCount(),
-                                    response.tokenUsage().outputTokenCount(),
-                                    response.tokenUsage().totalTokenCount(),
-                                    context.getAgentCallback().getMemoryMessages().size() + 1);
-                        } else {
-                            log.info("LLM 调用完成 - iteration={}, messageCount={} (token统计不可用)",
-                                    iteration.get(),
-                                    context.getAgentCallback().getMemoryMessages().size() + 1);
+                            // 记录 token 消费统计
+                            if (response.tokenUsage() != null) {
+                                log.info("LLM 调用完成 - iteration={}, inputTokens={}, outputTokens={}, totalTokens={}, messageCount={}",
+                                        iteration.get(),
+                                        response.tokenUsage().inputTokenCount(),
+                                        response.tokenUsage().outputTokenCount(),
+                                        response.tokenUsage().totalTokenCount(),
+                                        context.getAgentCallback().getMemoryMessages().size() + 1);
+                            } else {
+                                log.info("LLM 调用完成 - iteration={}, messageCount={} (token统计不可用)",
+                                        iteration.get(),
+                                        context.getAgentCallback().getMemoryMessages().size() + 1);
+                            }
                         }
-                    }
 
-                    // 2. 检查是否有工具调用
-                    if (aiMessage.hasToolExecutionRequests()) {
-                        log.info("检测到工具调用请求: count={}", aiMessage.toolExecutionRequests().size());
+                        // 2. 检查是否有工具调用
+                        if (aiMessage.hasToolExecutionRequests()) {
+                            log.info("检测到工具调用请求: count={}", aiMessage.toolExecutionRequests().size());
 
-                        // 3. 将 AI 消息添加到历史（带事件）
-                        addMessageWithEvent(context, iteration.get(), aiMessage);
+                            // 3. 将 AI 消息添加到历史（带事件）
+                            addMessageWithEvent(context, iteration.get(), aiMessage);
 
-                        // 4. 异步处理工具调用
-                        handleToolCallsAsync(aiMessage.toolExecutionRequests(), context, iteration.get())
-                                .thenAccept(toolResults -> {
-                                    // 发布工具调用后
-                                    if (context.getEventPublisher() != null) {
-                                        AfterToolCallEvent afterToolCallEvent = new AfterToolCallEvent(context, iteration.get(), false, toolResults, null);
-                                        context.getEventPublisher().publishEvent(afterToolCallEvent);
-                                    }
+                            // 4. 异步处理工具调用
+                            handleToolCallsAsync(aiMessage.toolExecutionRequests(), context, iteration.get())
+                                    .thenAccept(toolResults -> {
+                                        // 发布工具调用后
+                                        if (context.getEventPublisher() != null) {
+                                            AfterToolCallEvent afterToolCallEvent = new AfterToolCallEvent(context, iteration.get(), false, toolResults, null);
+                                            context.getEventPublisher().publishEvent(afterToolCallEvent);
+                                        }
 
-                                    // 5. 将工具结果添加到历史（带事件）
-                                    for (ToolExecutionResultMessage toolResult : toolResults) {
-                                        addMessageWithEvent(context, iteration.get(), toolResult);
-                                    }
+                                        // 5. 将工具结果添加到历史（带事件）
+                                        for (ToolExecutionResultMessage toolResult : toolResults) {
+                                            addMessageWithEvent(context, iteration.get(), toolResult);
+                                        }
 
-                                    // 检查是否被中断
-                                    if (context.isInterrupted()) {
-                                        log.info("工具返回后被中断");
-                                        throw new BusinessException(new InterruptedException("迭代被手动中断"));
-                                    }
+                                        // 检查是否被中断
+                                        if (context.isInterrupted()) {
+                                            log.info("工具返回后被中断");
+                                            throw new BusinessException(new InterruptedException("迭代被手动中断"));
+                                        }
 
-                                    // 6. 构建下一轮请求
-                                    ChatRequest nextRequest = ChatRequest.builder()
-                                            .messages(context.getAgentCallback().getMemoryMessages())
-                                            .toolSpecifications(chatRequest.toolSpecifications())
-                                            .toolChoice(ToolChoice.AUTO)
-                                            .build();
+                                        // 6. 构建下一轮请求
+                                        ChatRequest nextRequest = ChatRequest.builder()
+                                                .messages(context.getAgentCallback().getMemoryMessages())
+                                                .toolSpecifications(chatRequest.toolSpecifications())
+                                                .toolChoice(ToolChoice.AUTO)
+                                                .build();
 
-                                    // 7. 递归执行下一轮迭代
-                                    iteration.incrementAndGet();
-                                    if (context.getEventPublisher() != null) {
-                                        IterationEndEvent iterationEndEvent = new IterationEndEvent(context, iteration.get(), true, true, true, false, null);
-                                        context.getEventPublisher().publishEvent(iterationEndEvent);
-                                    }
-                                    executeNextIteration(streamingModel, nextRequest, context, iteration, maxIterations);
-                                })
-                                .exceptionally(ex -> {
-                                    log.error("处理工具调用失败", ex);
+                                        // 7. 递归执行下一轮迭代
+                                        iteration.incrementAndGet();
+                                        if (context.getEventPublisher() != null) {
+                                            IterationEndEvent iterationEndEvent = new IterationEndEvent(context, iteration.get(), true, true, true, false, null);
+                                            context.getEventPublisher().publishEvent(iterationEndEvent);
+                                        }
+                                        executeNextIteration(streamingModel, nextRequest, context, iteration, maxIterations);
+                                    })
+                                    .exceptionally(ex -> {
+                                        log.error("处理工具调用失败", ex);
 
-                                    // 发布工具调用后
-                                    if (context.getEventPublisher() != null) {
-                                        AfterToolCallEvent afterToolCallEvent = new AfterToolCallEvent(context, iteration.get(), true, null, ex);
-                                        context.getEventPublisher().publishEvent(afterToolCallEvent);
-                                    }
+                                        // 发布工具调用后
+                                        if (context.getEventPublisher() != null) {
+                                            AfterToolCallEvent afterToolCallEvent = new AfterToolCallEvent(context, iteration.get(), true, null, ex);
+                                            context.getEventPublisher().publishEvent(afterToolCallEvent);
+                                        }
 
-                                    if (context.getEventPublisher() != null) {
-                                        IterationEndEvent iterationEndEvent = new IterationEndEvent(context, iteration.get(), true, false, false, false, ex);
-                                        context.getEventPublisher().publishEvent(iterationEndEvent);
-                                    }
-                                    return null;
-                                });
-                    } else {
-                        // 没有工具调用，对话完成
-                        log.info("ReAct 循环完成: iterations={}", iteration.get());
-                        addMessageWithEvent(context, iteration.get(), aiMessage);
+                                        if (context.getEventPublisher() != null) {
+                                            IterationEndEvent iterationEndEvent = new IterationEndEvent(context, iteration.get(), true, false, false, false, ex);
+                                            context.getEventPublisher().publishEvent(iterationEndEvent);
+                                        }
+                                        return null;
+                                    });
+                        } else {
+                            // 没有工具调用，对话完成
+                            log.info("ReAct 循环完成: iterations={}", iteration.get());
+                            addMessageWithEvent(context, iteration.get(), aiMessage);
 
+                            // 发布迭代结束事件
+                            if (context.getEventPublisher() != null) {
+                                IterationEndEvent iterationEndEvent = new IterationEndEvent(context, iteration.get(), false, false, true, false, null);
+                                context.getEventPublisher().publishEvent(iterationEndEvent);
+                            }
+                        }
+                    } catch (Exception e) {
                         // 发布迭代结束事件
                         if (context.getEventPublisher() != null) {
-                            IterationEndEvent iterationEndEvent = new IterationEndEvent(context, iteration.get(), false, false, true, false, null);
+                            IterationEndEvent iterationEndEvent = new IterationEndEvent(context, iteration.get(), false, false, false, false, e);
                             context.getEventPublisher().publishEvent(iterationEndEvent);
                         }
                     }
@@ -293,10 +301,7 @@ public class ReactExecutor {
             // 检查是否被中断
             if (context.isInterrupted()) {
                 log.info("工具调用被中断");
-                CompletableFuture<ToolExecutionResultMessage> interruptedFuture = new CompletableFuture<>();
-                interruptedFuture.completeExceptionally(new InterruptedException("迭代被手动中断"));
-                toolFutures.add(interruptedFuture);
-                continue;
+                throw new BusinessException(new InterruptedException("迭代被手动中断"));
             }
 
             String toolName = request.name();

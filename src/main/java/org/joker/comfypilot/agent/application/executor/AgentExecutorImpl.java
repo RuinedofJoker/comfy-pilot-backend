@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Agent执行器实现
@@ -83,6 +84,7 @@ public class AgentExecutorImpl implements AgentExecutor {
                 .clientTools(clientTools)
                 .clientToolNames(clientToolNames)
                 .executionLog(executionLog)
+                .interrupted(new AtomicBoolean(false))
                 .build();
     }
 

@@ -17,6 +17,7 @@ import org.joker.comfypilot.tool.domain.service.Tool;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Agent执行上下文
@@ -66,7 +67,7 @@ public class AgentExecutionContext {
     /**
      * 当前执行请求ID(一般是请求时的时间戳)
      */
-    private String requestId;
+    private volatile String requestId;
 
     /**
      * 所属用户ID
@@ -128,10 +129,15 @@ public class AgentExecutionContext {
     private AgentEventPublisher eventPublisher;
 
     /**
+     * 是否中断
+     */
+    private AtomicBoolean interrupted;
+
+    /**
      * 检查是否被中断
      */
     public boolean isInterrupted() {
-        return agentCallback != null && agentCallback.isInterrupted();
+        return interrupted.get();
     }
 
 }

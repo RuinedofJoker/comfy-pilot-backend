@@ -299,7 +299,6 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             eventPublisher.addEventListener(AgentEventType.ITERATION_END, (IterationEndEvent event) -> {
                 // 发生中断
                 if (!event.isSuccess() && !event.isWillContinue() && event.getContext().isInterrupted() && streamOutputBuilder.get() != null) {
-                    agentCallback.onInterrupted();
                     StringBuilder streamOutput = streamOutputBuilder.get();
                     if (streamOutputBuilder.compareAndSet(streamOutput, null)) {
                         // 保存输出到一半的消息
@@ -318,7 +317,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                             chatMessageRepository.save(dbMessage);
                         }
                     }
-                    agentCallback.onPrompt(AgentPromptType.INTERRUPTED, null);
+                    agentCallback.onInterrupted();
                 } else if (!event.isSuccess() && !event.isWillContinue()) {
                     agentCallback.onPrompt(AgentPromptType.ERROR, event.getException() != null ? event.getException().getMessage() : "未知错误");
                 }
@@ -337,7 +336,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                 }
 
                 if (!event.isWillContinue()) {
-//                    executionContext.getWebSocketSessionContext()
+                    executionContext.getWebSocketSessionContext().completeExecution(executionContext.getRequestId());
                 }
             });
 

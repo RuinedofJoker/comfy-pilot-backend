@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.langchain4j.data.message.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContextHolder;
 import org.joker.comfypilot.agent.infrastructure.memory.ChatMemoryChatMemoryStore;
 import org.joker.comfypilot.common.constant.AuthConstants;
@@ -37,6 +38,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * 聊天WebSocket处理器
@@ -233,12 +235,6 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
-        // 检查是否可以执行
-        if (!context.canExecute()) {
-            context.requestInterrupt();
-            return;
-        }
-
         // 异步执行Agent（传递agentCode）
         chatSessionService.sendMessageAsync(wsMessage.getSessionCode(), wsMessage.getRequestId(), wsMessage, context, session);
     }
@@ -251,12 +247,6 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         String content = wsMessage.getContent();
         if (!allowOrders.contains(content)) {
             sendErrorMessage(session, "命令格式不合法", wsMessage.getSessionCode(), wsMessage.getRequestId());
-            return;
-        }
-
-        // 检查是否可以执行
-        if (!context.canExecute()) {
-            context.requestInterrupt();
             return;
         }
 
@@ -347,7 +337,11 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
      * 处理中断消息
      */
     private void handleInterrupt(WebSocketSession session, WebSocketSessionContext context, WebSocketMessage<?> wsMessage) {
-        sessionManager.requestInterrupt(session.getId());
+        String requestId = wsMessage.getRequestId();
+        AgentExecutionContext executionContext = context.getAgentExecutionContext().get();
+        if (StringUtils.isNotBlank(requestId) && StringUtils.equals(requestId, executionContext.getRequestId())) {
+            executionContext.getInterrupted().set(true);
+        }
         log.info("执行申请中断: sessionId={}", session.getId());
     }
 

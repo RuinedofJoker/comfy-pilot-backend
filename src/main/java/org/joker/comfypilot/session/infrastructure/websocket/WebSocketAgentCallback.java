@@ -64,10 +64,6 @@ public class WebSocketAgentCallback implements AgentCallback {
                 .timestamp(System.currentTimeMillis())
                 .build();
 
-        if (AgentPromptType.ERROR.equals(promptType)) {
-            onInterrupted();
-        }
-
         sendWebSocketMessage(wsMessage);
     }
 
@@ -103,7 +99,7 @@ public class WebSocketAgentCallback implements AgentCallback {
 
     @Override
     public void onComplete(String fullContent) {
-        log.info("Agent执行完成: sessionCode={}", sessionCode);
+        log.info("Agent输出执行完成: sessionCode={}", sessionCode);
 
         // 非流式调用需要返回
         throw new BusinessException("暂不支持非流式调用");
@@ -111,23 +107,22 @@ public class WebSocketAgentCallback implements AgentCallback {
 
     @Override
     public void onStreamComplete(String fullContent) {
-        log.info("Agent流式执行完成: sessionCode={}", sessionCode);
+        log.info("Agent流式输出执行完成: sessionCode={}", sessionCode);
 
         // 流式调用不需要返回
         sendMessage(WebSocketMessageType.AGENT_COMPLETE, null);
-
-        // 标记执行完成
-        sessionContext.completeExecution();
     }
 
     @Override
     public void onInterrupted() {
-        sessionContext.completeInterrupt();
+        if (sessionContext.completeExecution(requestId)) {
+            onPrompt(AgentPromptType.INTERRUPTED, null);
+        }
     }
 
     @Override
     public boolean isInterrupted() {
-        return sessionContext.isInterrupted();
+        return agentExecutionContext.getInterrupted().get();
     }
 
     @Override

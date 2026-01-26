@@ -37,8 +37,7 @@ public class WebSocketSessionManager {
                 .webSocketSession(webSocketSession)
                 .userId(userId)
                 .sessionCode(sessionCode)
-                .executing(new AtomicBoolean(false))
-                .interrupted(new AtomicBoolean(false))
+                .currentRequestId(new AtomicReference<>(null))
                 .createTime(System.currentTimeMillis())
                 .agentExecutionContext(new AtomicReference<>(null))
                 .lastActiveTime(System.currentTimeMillis())
@@ -97,17 +96,6 @@ public class WebSocketSessionManager {
                 callback.run();
                 callback = removedCallbacks.poll();
             }
-        }
-    }
-
-    /**
-     * 请求中断会话执行
-     */
-    public void requestInterrupt(String sessionId) {
-        WebSocketSessionContext context = sessions.get(sessionId);
-        if (context != null) {
-            context.requestInterrupt();
-            log.info("请求中断会话执行: sessionId={}", sessionId);
         }
     }
 

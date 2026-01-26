@@ -37,16 +37,6 @@ public class WebSocketSessionContext {
     private AtomicReference<String> currentRequestId;
 
     /**
-     * 是否正在执行
-     */
-    private AtomicBoolean executing;
-
-    /**
-     * 中断标志
-     */
-    private AtomicBoolean interrupted;
-
-    /**
      * 创建时间
      */
     private volatile Long createTime;
@@ -62,57 +52,21 @@ public class WebSocketSessionContext {
     private AtomicReference<AgentExecutionContext> agentExecutionContext;
 
     /**
-     * 检查是否可以执行
-     */
-    public boolean canExecute() {
-        return !executing.get();
-    }
-
-    /**
      * 开始执行
      */
-    public void startExecution() {
-        executing.set(true);
-        interrupted.set(false);
+    public boolean startExecution(String requestId) {
+        return currentRequestId.compareAndSet(null, requestId);
     }
 
     /**
      * 完成执行
      */
-    public void completeExecution() {
-        executing.set(false);
-        interrupted.set(false);
-        agentExecutionContext.set(null);
-    }
-
-    /**
-     * 完成中断
-     */
-    public void completeInterrupt() {
-        executing.set(false);
-        interrupted.set(false);
-        agentExecutionContext.set(null);
-    }
-
-    /**
-     * 请求中断
-     */
-    public void requestInterrupt() {
-        interrupted.set(true);
-    }
-
-    /**
-     * 检查是否在执行
-     */
-    public boolean isExecuting() {
-        return executing.get();
-    }
-
-    /**
-     * 检查是否被中断
-     */
-    public boolean isInterrupted() {
-        return interrupted.get();
+    public boolean completeExecution(String requestId) {
+        if (currentRequestId.compareAndSet(requestId, null)) {
+            agentExecutionContext.set(null);
+            return true;
+        }
+        return false;
     }
 
     /**
