@@ -41,7 +41,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * 聊天WebSocket处理器
@@ -246,7 +245,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
      * 处理用户命令
      */
     private void handleUserOrder(WebSocketSession session, WebSocketSessionContext context, WebSocketMessage<?> wsMessage) {
-        Set<String> allowOrders = Set.of("/compact");
+        Set<String> allowOrders = Set.of("/help", "/clear", "/compact");
         String content = wsMessage.getContent();
         if (!allowOrders.contains(content)) {
             sendErrorMessage(session, "命令格式不合法", wsMessage.getSessionCode(), wsMessage.getRequestId());

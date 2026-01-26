@@ -9,6 +9,7 @@ import org.joker.comfypilot.agent.infrastructure.memory.ChatMemoryChatMemoryStor
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.util.SpringContextUtil;
 import org.joker.comfypilot.session.application.dto.WebSocketMessage;
+import org.joker.comfypilot.session.application.dto.server2client.AgentCompleteResponseData;
 import org.joker.comfypilot.session.application.dto.server2client.AgentPromptData;
 import org.joker.comfypilot.session.application.dto.server2client.AgentToolCallRequestData;
 import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
@@ -18,6 +19,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -106,11 +108,27 @@ public class WebSocketAgentCallback implements AgentCallback {
     }
 
     @Override
-    public void onStreamComplete(String fullContent) {
+    public void onStreamComplete(Map<String, Object> agentScope, String fullContent, Integer inputTokens, Integer outputTokens, Integer totalTokens, Integer messageCount) {
         log.info("Agent流式输出执行完成: sessionCode={}", sessionCode);
 
         // 流式调用不需要返回
-        sendMessage(WebSocketMessageType.AGENT_COMPLETE, null);
+        WebSocketMessage<?> message = WebSocketMessage.builder()
+                .type(WebSocketMessageType.AGENT_COMPLETE.name())
+                .sessionCode(sessionCode)
+                .requestId(requestId)
+                .content(null)
+                .data(AgentCompleteResponseData.builder()
+                        .maxTokens(Integer.parseInt(agentScope.get("maxTokens").toString()))
+                        .maxMessages(Integer.parseInt(agentScope.get("maxMessages").toString()))
+                        .inputTokens(inputTokens)
+                        .outputTokens(outputTokens)
+                        .totalTokens(totalTokens)
+                        .messageCount(messageCount)
+                        .build())
+                .timestamp(System.currentTimeMillis())
+                .build();
+
+        sendWebSocketMessage(message);
     }
 
     @Override

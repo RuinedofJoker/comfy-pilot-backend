@@ -4,6 +4,7 @@ import dev.langchain4j.data.message.ChatMessage;
 import org.joker.comfypilot.session.domain.enums.AgentPromptType;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -39,7 +40,7 @@ public interface AgentCallback {
      *
      * @param fullContent 完整内容
      */
-    void onStreamComplete(String fullContent);
+    void onStreamComplete(Map<String, Object> agentScope, String fullContent, Integer inputTokens, Integer outputTokens, Integer totalTokens, Integer messageCount);
 
     /**
      * 当Agent处理了中断时返回

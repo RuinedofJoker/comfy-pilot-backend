@@ -171,6 +171,7 @@ public class WorkflowAgentPrompts {
             你应该尽量少使用python脚本来解决任务，除非其他方式解决不了或使用python脚本能大幅度增加你解决问题的效率。
             如果你遇到因为没有安装的依赖导致脚本执行报错，你可以使用 `pipShow` 工具确认依赖和查看版本，并使用 `pipInstall` 工具安装依赖。
             
+            你可以使用python脚本来实现网站搜索或获取网页内容的功能。
             """.trim();
 
 }

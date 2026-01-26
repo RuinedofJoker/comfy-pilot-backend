@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -77,7 +78,7 @@ public class AgentExecutorImpl implements AgentExecutor {
                 .agentCode(agentCode)
                 .agent(agent)
                 .agentConfig(agentRuntimeConfig)
-                .agentScope(new HashMap<>(agentConfig.getAgentScopeConfig()))
+                .agentScope(new ConcurrentHashMap<>(agentConfig.getAgentScopeConfig()))
                 .userId(request.getUserId())
                 .requestId(request.getRequestId())
                 .sessionId(request.getSessionId())

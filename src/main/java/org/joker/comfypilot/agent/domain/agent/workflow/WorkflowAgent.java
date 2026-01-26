@@ -6,6 +6,7 @@ import dev.langchain4j.data.message.*;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.request.ToolChoice;
+import dev.langchain4j.model.output.TokenUsage;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
@@ -146,6 +147,12 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
         ObjectMapper objectMapper = JacksonConfig.getObjectMapper();
         Map<String, Object> modelConfig = objectMapper.readValue(llmModel.getModelConfig(), new TypeReference<>() {
         });
+
+        Integer maxTokens = modelConfig.get("maxTokens") != null ? Integer.parseInt(modelConfig.get("maxTokens").toString()) : 200_000;
+        Integer maxMessages = modelConfig.get("maxMessages") != null ? Integer.parseInt(modelConfig.get("maxMessages").toString()) : 500;
+
+        agentScope.put("maxTokens", maxTokens);
+        agentScope.put("maxMessages", maxMessages);
 
         // 创建流式聊天模型（工具规范将在调用时通过 ChatRequest 传递）
         StreamingChatModel streamingModel = streamingChatModelFactory.createStreamingChatModel(
@@ -312,7 +319,8 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             // 流式输出完成事件 -> AgentCallback.onStreamComplete()
             eventPublisher.addEventListener(AgentEventType.STREAM_COMPLETE, (StreamCompleteEvent event) -> {
                 streamOutputBuilder.compareAndSet(streamOutputBuilder.get(), null);
-                agentCallback.onStreamComplete(event.getCompleteResponse().aiMessage().text());
+                TokenUsage tokenUsage = event.getCompleteResponse().tokenUsage();
+                agentCallback.onStreamComplete(agentScope, event.getCompleteResponse().aiMessage().text(), tokenUsage.inputTokenCount(), tokenUsage.outputTokenCount(), tokenUsage.totalTokenCount(), agentCallback.getMemoryMessages().size());
             });
 
             AtomicBoolean isStarted = new AtomicBoolean(false);
