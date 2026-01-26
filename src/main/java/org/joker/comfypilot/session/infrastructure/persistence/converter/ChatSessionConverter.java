@@ -3,6 +3,7 @@ package org.joker.comfypilot.session.infrastructure.persistence.converter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.joker.comfypilot.common.config.JacksonConfig;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.session.domain.entity.ChatSession;
 import org.joker.comfypilot.session.domain.enums.SessionStatus;
@@ -55,7 +56,7 @@ public interface ChatSessionConverter {
             return null;
         }
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = JacksonConfig.getObjectMapper();
             objectMapper.findAndRegisterModules();
             return objectMapper.readValue(json, new TypeReference<>() {
             });
@@ -73,7 +74,7 @@ public interface ChatSessionConverter {
             return "{}";
         }
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = JacksonConfig.getObjectMapper();
             objectMapper.findAndRegisterModules();
             return objectMapper.writeValueAsString(map);
         } catch (JsonProcessingException e) {

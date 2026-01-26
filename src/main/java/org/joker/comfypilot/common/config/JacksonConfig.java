@@ -12,6 +12,8 @@ import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalTimeSerializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 import java.math.BigInteger;
@@ -23,8 +25,13 @@ import java.time.format.DateTimeFormatter;
 /**
  * Jackson 配置类
  * 配置 JSON 序列化和反序列化规则
+ * <p>
+ * 使用方式：
+ * 1. Spring Bean 注入：@Autowired private ObjectMapper objectMapper;
+ * 2. 静态工具方法：JacksonConfig.getObjectMapper()
  */
 @Configuration
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class JacksonConfig {
 
     /**
@@ -33,6 +40,11 @@ public class JacksonConfig {
     private static final String DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
     private static final String DATE_FORMAT = "yyyy-MM-dd";
     private static final String TIME_FORMAT = "HH:mm:ss";
+
+    /**
+     * 全局 ObjectMapper 实例（用于静态访问）
+     */
+    private static volatile ObjectMapper globalObjectMapper;
 
     /**
      * 配置 ObjectMapper
@@ -76,6 +88,21 @@ public class JacksonConfig {
 
         objectMapper.registerModule(javaTimeModule);
 
+        // 保存到静态变量，供静态方法使用
+        globalObjectMapper = objectMapper;
+
         return objectMapper;
+    }
+
+    /**
+     * 获取全局 ObjectMapper 实例
+     * <p>
+     * 注意：此方法仅在无法使用依赖注入时使用（如静态方法、工具类等）
+     * 优先使用 Spring 依赖注入方式
+     *
+     * @return ObjectMapper 实例
+     */
+    public static ObjectMapper getObjectMapper() {
+        return globalObjectMapper;
     }
 }

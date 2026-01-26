@@ -23,7 +23,7 @@ import java.util.List;
  */
 @Slf4j
 @Component
-@ToolSet("comfyui_server_")
+@ToolSet("")
 public class ComfyUIServerTool {
 
     @Autowired

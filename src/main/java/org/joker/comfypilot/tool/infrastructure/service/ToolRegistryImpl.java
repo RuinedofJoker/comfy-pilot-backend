@@ -72,7 +72,7 @@ public class ToolRegistryImpl implements CommandLineRunner, ToolRegistry, Applic
             }
         }
 
-        log.info("本地工具注册完成，共注册 {} 个工具类", toolCount);
+        log.info("本地工具注册完成，共注册 {} 个工具类，工具列表：{}", toolCount, toolMap.keySet());
     }
 
     /**

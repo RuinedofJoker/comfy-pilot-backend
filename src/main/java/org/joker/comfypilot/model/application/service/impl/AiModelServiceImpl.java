@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.extern.slf4j.Slf4j;
+import org.joker.comfypilot.common.config.JacksonConfig;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.exception.ResourceNotFoundException;
 import org.joker.comfypilot.model.application.converter.AiModelDTOConverter;
@@ -256,7 +257,7 @@ public class AiModelServiceImpl implements AiModelService {
             Map<String, Object> configFormat = template.configFormat();
 
             // 5. 将Map转换为JSON字符串
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = JacksonConfig.getObjectMapper();
             objectMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
             return objectMapper.writeValueAsString(configFormat);
         } catch (Exception e) {
@@ -303,7 +304,7 @@ public class AiModelServiceImpl implements AiModelService {
             return Map.of(); // 返回空 Map
         }
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = JacksonConfig.getObjectMapper();
             objectMapper.findAndRegisterModules();
             return objectMapper.readValue(json, new TypeReference<>() {
             });

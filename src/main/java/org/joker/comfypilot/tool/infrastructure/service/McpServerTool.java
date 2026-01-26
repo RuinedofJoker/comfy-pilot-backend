@@ -1,15 +1,14 @@
 package org.joker.comfypilot.tool.infrastructure.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import io.modelcontextprotocol.spec.McpSchema;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
+import org.joker.comfypilot.common.config.JacksonConfig;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.tool.domain.service.Tool;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
 import java.time.Duration;
@@ -31,11 +30,6 @@ import java.util.Map;
 @Slf4j
 @EqualsAndHashCode(callSuper = false)
 public class McpServerTool implements Tool {
-
-    /**
-     * JSON 序列化/反序列化工具
-     */
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     /**
      * 工具名称（带前缀）
@@ -135,7 +129,7 @@ public class McpServerTool implements Tool {
                     "method", "tools/call",
                     "params", Map.of(
                             "name", originalToolName,
-                            "arguments", OBJECT_MAPPER.readValue(arguments, Map.class)
+                            "arguments", JacksonConfig.getObjectMapper().readValue(arguments, Map.class)
                     )
             );
 
@@ -204,10 +198,10 @@ public class McpServerTool implements Tool {
 
         try {
             // 将 McpSchema.JsonSchema 序列化为 JSON 字符串
-            String schemaJson = OBJECT_MAPPER.writeValueAsString(inputSchema);
+            String schemaJson = JacksonConfig.getObjectMapper().writeValueAsString(inputSchema);
 
             // 再反序列化为 JsonNode
-            com.fasterxml.jackson.databind.JsonNode schemaNode = OBJECT_MAPPER.readTree(schemaJson);
+            com.fasterxml.jackson.databind.JsonNode schemaNode = JacksonConfig.getObjectMapper().readTree(schemaJson);
 
             // 使用 JsonObjectSchema.builder() 构建
             // 注意：JsonObjectSchema 可能需要通过其他方式构建，这里先返回 null

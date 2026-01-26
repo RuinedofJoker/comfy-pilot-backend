@@ -25,6 +25,7 @@ import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerAdvancedFeaturesD
 import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerDTO;
 import org.joker.comfypilot.cfsvr.application.service.ComfyuiServerService;
 import org.joker.comfypilot.cfsvr.application.tool.ComfyUIServerTool;
+import org.joker.comfypilot.common.config.JacksonConfig;
 import org.joker.comfypilot.common.domain.content.*;
 import org.joker.comfypilot.common.domain.message.PersistableChatMessage;
 import org.joker.comfypilot.common.enums.MessageRole;
@@ -35,6 +36,7 @@ import org.joker.comfypilot.model.application.service.AiModelService;
 import org.joker.comfypilot.model.domain.enums.ModelCallingType;
 import org.joker.comfypilot.model.domain.service.StreamingChatModelFactory;
 import org.joker.comfypilot.script.context.ScriptRuntimeContext;
+import org.joker.comfypilot.script.tool.PythonScriptTools;
 import org.joker.comfypilot.session.application.dto.ChatSessionDTO;
 import org.joker.comfypilot.session.application.dto.client2server.UserMessageRequestData;
 import org.joker.comfypilot.session.application.service.ChatSessionService;
@@ -139,7 +141,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
         Map<String, Object> agentScope = executionContext.getAgentScope();
 
         AiModelDTO llmModel = aiModelService.getByModelIdentifier((String) agentConfig.get("llmModelIdentifier"));
-        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectMapper objectMapper = JacksonConfig.getObjectMapper();
         Map<String, Object> modelConfig = objectMapper.readValue(llmModel.getModelConfig(), new TypeReference<>() {
         });
 
@@ -165,6 +167,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             List<Tool> todoTools = toolRegistry.getToolsByClass(TodoWriteTool.class);
             List<Tool> statusTools = toolRegistry.getToolsByClass(StatusUpdateTool.class);
             List<Tool> comfyuiServerTools = toolRegistry.getToolsByClass(ComfyUIServerTool.class);
+            List<Tool> pythonScriptTools = toolRegistry.getToolsByClass(PythonScriptTools.class);
 
             // 准备工具规范
             List<ToolSpecification> toolSpecs = new ArrayList<>();
@@ -200,6 +203,13 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
 
                 systemMessageBuilder.append(WorkflowAgentPrompts.SERVER_FILE_TOOL_PROMPT).append("\n");
                 systemMessageBuilder.append(WorkflowAgentPrompts.SERVER_PYTHON_TOOL_PROMPT).append("\n");
+
+                for (Tool pythonScriptTool : pythonScriptTools) {
+                    if (executionContext.getClientToolNames().contains(pythonScriptTool.toolName())) {
+                        throw new BusinessException("客户端工具" + pythonScriptTool.toolName() + "与服务内部工具重名");
+                    }
+                }
+                toolSpecs.addAll(pythonScriptTools.stream().map(Tool::toolSpecification).toList());
 
                 agentScope.put("SystemPrompt", systemMessageBuilder.toString());
             }

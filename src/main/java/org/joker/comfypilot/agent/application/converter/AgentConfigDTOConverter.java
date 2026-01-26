@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.joker.comfypilot.agent.application.dto.AgentConfigDTO;
 import org.joker.comfypilot.agent.domain.entity.AgentConfig;
+import org.joker.comfypilot.common.config.JacksonConfig;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -39,7 +40,7 @@ public interface AgentConfigDTOConverter {
             return "{}";
         }
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = JacksonConfig.getObjectMapper();
             objectMapper.findAndRegisterModules();
             return objectMapper.writeValueAsString(map);
         } catch (JsonProcessingException e) {

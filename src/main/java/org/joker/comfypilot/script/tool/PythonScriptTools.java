@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @Component
-@ToolSet("server_")
+@ToolSet
 @RequiredArgsConstructor
 public class PythonScriptTools {
 

@@ -1,11 +1,11 @@
 package org.joker.comfypilot.tool.infrastructure.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
+import org.joker.comfypilot.common.config.JacksonConfig;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.tool.domain.service.Tool;
 
@@ -71,17 +71,6 @@ import java.lang.reflect.Parameter;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
 public class ServerTool implements Tool {
-
-    /**
-     * JSON 序列化/反序列化工具
-     * <p>
-     * 用于：
-     * <ul>
-     *   <li>解析 JSON 参数字符串为 Java 对象</li>
-     *   <li>序列化方法返回值为 JSON 字符串</li>
-     * </ul>
-     */
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     /**
      * 工具名称
@@ -165,7 +154,7 @@ public class ServerTool implements Tool {
             Object result = method.invoke(instance, args);
 
             // 3. 序列化结果
-            String resultJson = OBJECT_MAPPER.writeValueAsString(result);
+            String resultJson = JacksonConfig.getObjectMapper().writeValueAsString(result);
             log.debug("工具执行成功: toolName={}, result={}", name, resultJson);
 
             return resultJson;
@@ -252,7 +241,7 @@ public class ServerTool implements Tool {
             return new Object[0];
         }
 
-        JsonNode root = OBJECT_MAPPER.readTree(argumentsJson);
+        JsonNode root = JacksonConfig.getObjectMapper().readTree(argumentsJson);
         Object[] args = new Object[parameters.length];
 
         for (int i = 0; i < parameters.length; i++) {
@@ -273,7 +262,7 @@ public class ServerTool implements Tool {
                                 2. JSON 参数格式正确""", i)
                     );
                 }
-                args[i] = OBJECT_MAPPER.treeToValue(valueNode, p.getType());
+                args[i] = JacksonConfig.getObjectMapper().treeToValue(valueNode, p.getType());
             } else {
                 // 使用参数名从 JSON 中获取值
                 JsonNode valueNode = root.get(paramName);
@@ -282,7 +271,7 @@ public class ServerTool implements Tool {
                         String.format("缺少参数: %s (类型: %s)", paramName, p.getType().getSimpleName())
                     );
                 }
-                args[i] = OBJECT_MAPPER.treeToValue(valueNode, p.getType());
+                args[i] = JacksonConfig.getObjectMapper().treeToValue(valueNode, p.getType());
             }
 
             log.debug("参数解析: name={}, type={}, value={}", paramName, p.getType().getSimpleName(), args[i]);

@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContextHolder;
 import org.joker.comfypilot.agent.infrastructure.memory.ChatMemoryChatMemoryStore;
+import org.joker.comfypilot.common.config.JacksonConfig;
 import org.joker.comfypilot.common.constant.AuthConstants;
 import org.joker.comfypilot.common.domain.message.PersistableChatMessage;
 import org.joker.comfypilot.common.exception.BusinessException;
@@ -176,7 +177,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JacksonConfig.getObjectMapper();
         List<ChatMessage> historyMessages = new ArrayList<>();
         for (ChatMessageDTO messageHistoryItem : messageHistory) {
             PersistableChatMessage persistableChatMessage = null;

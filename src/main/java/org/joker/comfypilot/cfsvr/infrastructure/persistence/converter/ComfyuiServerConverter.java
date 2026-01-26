@@ -7,6 +7,7 @@ import org.joker.comfypilot.cfsvr.domain.entity.ComfyuiServerAdvancedFeatures;
 import org.joker.comfypilot.cfsvr.domain.enums.AuthMode;
 import org.joker.comfypilot.cfsvr.domain.enums.HealthStatus;
 import org.joker.comfypilot.cfsvr.infrastructure.persistence.po.ComfyuiServerPO;
+import org.joker.comfypilot.common.config.JacksonConfig;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -60,7 +61,7 @@ public interface ComfyuiServerConverter {
             return null;
         }
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = JacksonConfig.getObjectMapper();
             objectMapper.findAndRegisterModules();
             return objectMapper.readValue(json, ComfyuiServerAdvancedFeatures.class);
         } catch (JsonProcessingException e) {
@@ -74,7 +75,7 @@ public interface ComfyuiServerConverter {
             return null;
         }
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = JacksonConfig.getObjectMapper();
             objectMapper.findAndRegisterModules();
             return objectMapper.writeValueAsString(features);
         } catch (JsonProcessingException e) {

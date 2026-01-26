@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContextHolder;
 import org.joker.comfypilot.common.annotation.ToolSet;
+import org.joker.comfypilot.common.config.JacksonConfig;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.util.RedisUtil;
 import org.springframework.stereotype.Component;
@@ -30,7 +31,6 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class StatusUpdateTool {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
     private static final String REDIS_KEY_PREFIX = "agent:tool:serverTool:status:";
     private static final long REDIS_EXPIRE_HOURS = 24; // 24小时过期
@@ -223,7 +223,7 @@ public class StatusUpdateTool {
             }
 
             String json = (String) value;
-            return OBJECT_MAPPER.readValue(json, new TypeReference<>() {
+            return JacksonConfig.getObjectMapper().readValue(json, new TypeReference<>() {
             });
         } catch (Exception e) {
             log.error("从 Redis 获取状态历史失败, sessionCode: {}", sessionCode, e);
@@ -237,7 +237,7 @@ public class StatusUpdateTool {
     private void saveStatusHistoryToRedis(String sessionCode, List<StatusUpdate> history) {
         try {
             String redisKey = buildRedisKey(sessionCode);
-            String json = OBJECT_MAPPER.writeValueAsString(history);
+            String json = JacksonConfig.getObjectMapper().writeValueAsString(history);
             redisUtil.set(redisKey, json, REDIS_EXPIRE_HOURS, TimeUnit.HOURS);
             log.debug("状态历史已保存到 Redis, sessionCode: {}, count: {}", sessionCode, history.size());
         } catch (Exception e) {

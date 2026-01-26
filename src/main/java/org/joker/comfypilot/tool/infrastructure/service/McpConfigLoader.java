@@ -1,10 +1,10 @@
 package org.joker.comfypilot.tool.infrastructure.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.modelcontextprotocol.spec.McpSchema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.joker.comfypilot.common.config.JacksonConfig;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.tool.domain.service.Tool;
 import org.joker.comfypilot.tool.infrastructure.config.McpProperties;
@@ -12,10 +12,6 @@ import org.joker.comfypilot.tool.infrastructure.config.McpServerConfig;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,8 +27,6 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class McpConfigLoader {
-
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final McpProperties mcpProperties;
 
@@ -99,7 +93,7 @@ public class McpConfigLoader {
      * @return 服务器配置映射表
      */
     private Map<String, McpServerConfig> parseMcpConfig(String content) throws Exception {
-        JsonNode root = OBJECT_MAPPER.readTree(content);
+        JsonNode root = JacksonConfig.getObjectMapper().readTree(content);
         JsonNode mcpServers = root.get("mcpServers");
 
         if (mcpServers == null || !mcpServers.isObject()) {
@@ -113,7 +107,7 @@ public class McpConfigLoader {
             JsonNode serverNode = entry.getValue();
 
             try {
-                McpServerConfig config = OBJECT_MAPPER.treeToValue(serverNode, McpServerConfig.class);
+                McpServerConfig config = JacksonConfig.getObjectMapper().treeToValue(serverNode, McpServerConfig.class);
                 configs.put(serverName, config);
             } catch (Exception e) {
                 log.error("解析服务器配置失败: serverName={}, error={}", serverName, e.getMessage(), e);
@@ -219,7 +213,7 @@ public class McpConfigLoader {
                     .block();
 
             // 解析响应
-            JsonNode root = OBJECT_MAPPER.readTree(response);
+            JsonNode root = JacksonConfig.getObjectMapper().readTree(response);
             JsonNode toolsNode = root.get("result").get("tools");
 
             if (toolsNode == null || !toolsNode.isArray()) {
@@ -231,7 +225,7 @@ public class McpConfigLoader {
             List<McpSchema.Tool> tools = new ArrayList<>();
             for (JsonNode toolNode : toolsNode) {
                 try {
-                    McpSchema.Tool tool = OBJECT_MAPPER.treeToValue(toolNode, McpSchema.Tool.class);
+                    McpSchema.Tool tool = JacksonConfig.getObjectMapper().treeToValue(toolNode, McpSchema.Tool.class);
                     tools.add(tool);
                 } catch (Exception e) {
                     log.error("解析工具 Schema 失败: serverName={}, error={}", 

@@ -2,7 +2,6 @@ package org.joker.comfypilot.agent.infrastructure.tool;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.langchain4j.agent.tool.Tool;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContextHolder;
 import org.joker.comfypilot.common.annotation.ToolSet;
+import org.joker.comfypilot.common.config.JacksonConfig;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.util.RedisUtil;
 import org.springframework.stereotype.Component;
@@ -30,7 +30,6 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class TodoWriteTool {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final String REDIS_KEY_PREFIX = "agent:tool:serverTool:todo:";
     private static final long REDIS_EXPIRE_HOURS = 24; // 24小时过期
 
@@ -104,7 +103,7 @@ public class TodoWriteTool {
         try {
             // 解析 JSON
             @SuppressWarnings("unchecked")
-            List<Map<String, String>> todoMaps = OBJECT_MAPPER.readValue(todosJson, List.class);
+            List<Map<String, String>> todoMaps = JacksonConfig.getObjectMapper().readValue(todosJson, List.class);
 
             List<TodoItem> newTodos = new ArrayList<>();
             for (Map<String, String> todoMap : todoMaps) {
@@ -241,7 +240,7 @@ public class TodoWriteTool {
             }
 
             String json = (String) value;
-            return OBJECT_MAPPER.readValue(json, new TypeReference<>() {
+            return JacksonConfig.getObjectMapper().readValue(json, new TypeReference<>() {
             });
         } catch (Exception e) {
             log.error("从 Redis 获取待办事项失败, sessionId: {}", sessionId, e);
@@ -255,7 +254,7 @@ public class TodoWriteTool {
     private void saveTodosToRedis(String sessionCode, List<TodoItem> todos) {
         try {
             String redisKey = buildRedisKey(sessionCode);
-            String json = OBJECT_MAPPER.writeValueAsString(todos);
+            String json = JacksonConfig.getObjectMapper().writeValueAsString(todos);
             redisUtil.set(redisKey, json, REDIS_EXPIRE_HOURS, TimeUnit.HOURS);
             log.debug("待办事项已保存到 Redis, sessionCode: {}, count: {}", sessionCode, todos.size());
         } catch (Exception e) {

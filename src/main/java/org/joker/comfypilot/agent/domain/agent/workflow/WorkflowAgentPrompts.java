@@ -69,7 +69,7 @@ public class WorkflowAgentPrompts {
             2. 当你想要用户能够看到你当前更改的工具流内容，调用 `set_workflow` 工具 或 `load_workflow` 工具。
             3. 除非用户明确要求，否则不要输出工作流的json内容，而是应该通过 `set_workflow` 工具 或 `load_workflow` 工具在页面上调整工作流内容
             4. 每当你使用 `set_workflow` 工具 或 `load_workflow` 工具设置了用户页面上的工作流内容时，你都需要调用 `get_workflow` 工具来获取一次工作流内容，因为ComfyUI会自动调整工作流内不合法的格式。
-            4. 你可以通过以`comfyui_server_`开头的工具集来从服务端获取用户所在ComfyUI服务上的基本信息，如可用的模型文件夹列表、文件夹中的模型列表等。
+            4. 你可以通过以``开头的工具集来从服务端获取用户所在ComfyUI服务上的基本信息，如可用的模型文件夹列表、文件夹中的模型列表等。
             5. 当你想要直接操作客户端工作流时调用 `execute_workflow` 工具，调用工具前必须确认工作流上使用的模型是该ComfyUI服务中有的且是你想要调用的模型。
             
             ### ComfyUI使用规范
@@ -158,16 +158,16 @@ public class WorkflowAgentPrompts {
     public static final String SERVER_FILE_TOOL_PROMPT = """
             ## Agent服务器文件系统操作规范
             
-            你当前允许使用Agent服务器创建一些脚本文件执行，但是你对Agent服务器上的所有文件操作都必须通过 `server_filesystem_createTempDirectory` 工具获取到一个临时目录后，在此临时目录下执行。使用完该目录后你必须通过 `server_filesystem_delete` 工具将该目录删除掉。
+            你当前允许使用Agent服务器创建一些脚本文件执行，但是你对Agent服务器上的所有文件操作都必须通过 `createTempDirectory` 工具获取到一个临时目录后，在此临时目录下执行。使用完该目录后你必须通过 `delete` 工具将该目录删除掉。
             严禁对你获得的临时目录外的目录或文件进行读、写、执行等操作，你要执行的所有脚本文件以及脚本文件内的对Agent服务器文件系统的操作必须在该临时目录内进行。
-            你可以使用 `server_filesystem_` 开头的工具对Agent服务器上的文件系统进行操作。
+            你可以使用Agent服务器文件操作相关工具对Agent服务器上的文件系统进行操作。
             """.trim();
 
     public static final String SERVER_PYTHON_TOOL_PROMPT = """
             ## Agent服务器Python脚本执行规范
             
-            你当前允许使用 `server_executePythonScript`, `server_pipInstall`, `server_executePythonFile` 这三个工具在Agent服务器上执行Python脚本来协助你处理复杂任务。
-            如果需要对Agent服务器上的文件系统操作，你必须参考 `Agent服务器文件系统操作规范` 。如果需要创建python脚本文件执行，你必须使用 `server_filesystem_createTempDirectory` 工具创建临时目录并将所有的脚本放在临时目录里。当你操作完成后你必须通过`server_filesystem_delete` 工具删除临时目录。
+            你当前允许使用 `executePythonScript`, `pipInstall`, `executePythonFile` 这三个工具在Agent服务器上执行Python脚本来协助你处理复杂任务。
+            如果需要对Agent服务器上的文件系统操作，你必须参考 `Agent服务器文件系统操作规范` 。如果需要创建python脚本文件执行，你必须使用 `createTempDirectory` 工具创建临时目录并将所有的脚本放在临时目录里。当你操作完成后你必须通过`delete` 工具删除临时目录。
             你应该尽量少使用python脚本来解决任务，除非其他方式解决不了或使用python脚本能大幅度增加你解决问题的效率。
             """.trim();
 

@@ -3,6 +3,7 @@ package org.joker.comfypilot.model.infrastructure.persistence.converter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.joker.comfypilot.common.config.JacksonConfig;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.model.domain.entity.AiModel;
 import org.joker.comfypilot.model.domain.enums.ModelAccessType;
@@ -88,7 +89,7 @@ public interface AiModelConverter {
             return null;
         }
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = JacksonConfig.getObjectMapper();
             objectMapper.findAndRegisterModules();
             return objectMapper.readValue(json, new TypeReference<>() {
             });
@@ -106,7 +107,7 @@ public interface AiModelConverter {
             return "{}";
         }
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = JacksonConfig.getObjectMapper();
             objectMapper.findAndRegisterModules();
             return objectMapper.writeValueAsString(map);
         } catch (JsonProcessingException e) {

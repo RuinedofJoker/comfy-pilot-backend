@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.langchain4j.data.message.*;
 import org.apache.commons.lang3.StringUtils;
+import org.joker.comfypilot.common.config.JacksonConfig;
 import org.joker.comfypilot.common.exception.BusinessException;
 
 import java.io.Serializable;
@@ -71,7 +72,7 @@ public interface PersistableChatMessage extends Serializable {
         if (persistableMsg == null) {
             return "";
         }
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JacksonConfig.getObjectMapper();
         try {
             return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(persistableMsg);
         } catch (JsonProcessingException e) {
@@ -83,7 +84,7 @@ public interface PersistableChatMessage extends Serializable {
         if (StringUtils.isBlank(jsonString)) {
             return null;
         }
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JacksonConfig.getObjectMapper();
         try {
             return mapper.readValue(jsonString, PersistableChatMessage.class);
         } catch (JsonProcessingException e) {
@@ -97,7 +98,7 @@ public interface PersistableChatMessage extends Serializable {
         }
 
         PersistableChatMessage persistableMsg = from(message);
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JacksonConfig.getObjectMapper();
         try {
             return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(persistableMsg);
         } catch (JsonProcessingException e) {
@@ -109,7 +110,7 @@ public interface PersistableChatMessage extends Serializable {
         if (StringUtils.isBlank(jsonString)) {
             return null;
         }
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JacksonConfig.getObjectMapper();
         try {
             PersistableChatMessage persistableMsg = mapper.readValue(jsonString, PersistableChatMessage.class);
             return toLangChain4j(persistableMsg);

@@ -29,7 +29,7 @@ import java.util.stream.Stream;
  */
 @Slf4j
 @Component
-@ToolSet("server_filesystem_")
+@ToolSet("")
 public class ServerFileSystemTools {
 
     /**
