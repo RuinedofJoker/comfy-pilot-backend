@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.langchain4j.data.message.*;
+import dev.langchain4j.model.chat.response.ChatResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
@@ -39,6 +40,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -353,6 +355,11 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         if (StringUtils.isNotBlank(requestId) && StringUtils.equals(requestId, executionContext.getRequestId())) {
             executionContext.getInterrupted().set(true);
         }
+        CompletableFuture<ChatResponse> lastLLMFuture = executionContext.getLastLLMFuture().get();
+        if (lastLLMFuture != null) {
+            lastLLMFuture.cancel(true);
+        }
+
         log.info("执行申请中断: sessionId={}", session.getId());
     }
 

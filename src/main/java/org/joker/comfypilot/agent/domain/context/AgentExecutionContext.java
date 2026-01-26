@@ -1,5 +1,6 @@
 package org.joker.comfypilot.agent.domain.context;
 
+import dev.langchain4j.model.chat.response.ChatResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,7 +18,9 @@ import org.joker.comfypilot.tool.domain.service.Tool;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Agent执行上下文
@@ -132,6 +135,11 @@ public class AgentExecutionContext {
      * 是否中断
      */
     private AtomicBoolean interrupted;
+
+    /**
+     * 最后一次LLM执行
+     */
+    private AtomicReference<CompletableFuture<ChatResponse>> lastLLMFuture;
 
     /**
      * 检查是否被中断

@@ -273,6 +273,7 @@ public class ReactExecutor {
                     StreamCompleteEvent completeEvent = new StreamCompleteEvent(context, completeResponse);
                     context.getEventPublisher().publishEvent(completeEvent);
                 }
+                context.getLastLLMFuture().compareAndSet(future, null);
                 future.complete(completeResponse);
             }
 
@@ -282,6 +283,8 @@ public class ReactExecutor {
                 future.completeExceptionally(error);
             }
         });
+
+        context.getLastLLMFuture().compareAndSet(null, future);
 
         return future;
     }

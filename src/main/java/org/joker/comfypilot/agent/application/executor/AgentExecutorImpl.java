@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Agent执行器实现
@@ -85,6 +86,7 @@ public class AgentExecutorImpl implements AgentExecutor {
                 .clientToolNames(clientToolNames)
                 .executionLog(executionLog)
                 .interrupted(new AtomicBoolean(false))
+                .lastLLMFuture(new AtomicReference<>())
                 .build();
     }
 
