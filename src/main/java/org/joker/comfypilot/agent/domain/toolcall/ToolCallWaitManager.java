@@ -1,7 +1,7 @@
 package org.joker.comfypilot.agent.domain.toolcall;
 
 import lombok.extern.slf4j.Slf4j;
-import org.joker.comfypilot.session.application.dto.client2server.AgentToolCallResponseData;
+import org.joker.comfypilot.session.application.dto.AgentCallToolResult;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -19,27 +19,26 @@ public class ToolCallWaitManager {
 
     /**
      * 存储工具调用的Future
-     * Key: sessionCode + requestId + toolName
+     * Key: toolCallId + toolName
      * Value: CompletableFuture<AgentToolCallResponseData>
      */
-    private final Map<String, CompletableFuture<AgentToolCallResponseData>> waitingToolCalls = new ConcurrentHashMap<>();
+    private final Map<String, CompletableFuture<AgentCallToolResult>> waitingToolCalls = new ConcurrentHashMap<>(1024);
 
     /**
      * 默认超时时间（秒）
      */
-    private static final int DEFAULT_TIMEOUT_SECONDS = 300; // 5分钟
+    private static final int DEFAULT_TIMEOUT_SECONDS = 3600; // 一小时(连接断开时设置了回调，这个事件可以稍微长一点)
 
     /**
      * 创建工具调用等待
      *
-     * @param sessionCode 会话代码
-     * @param requestId   请求ID
-     * @param toolName    工具名称
+     * @param toolCallId 请求ID
+     * @param toolName   工具名称
      * @return CompletableFuture
      */
-    public CompletableFuture<AgentToolCallResponseData> createWait(String sessionCode, String requestId, String toolName) {
-        String key = buildKey(sessionCode, requestId, toolName);
-        CompletableFuture<AgentToolCallResponseData> future = new CompletableFuture<>();
+    public CompletableFuture<AgentCallToolResult> createWait(String toolCallId, String toolName) {
+        String key = buildKey(toolCallId, toolName);
+        CompletableFuture<AgentCallToolResult> future = new CompletableFuture<>();
         waitingToolCalls.put(key, future);
 
         log.debug("创建工具调用等待: key={}", key);
@@ -58,19 +57,18 @@ public class ToolCallWaitManager {
     /**
      * 完成工具调用等待
      *
-     * @param sessionCode  会话代码
-     * @param requestId    请求ID
-     * @param toolName     工具名称
-     * @param responseData 响应数据
+     * @param toolCallId     请求ID
+     * @param toolName       工具名称
+     * @param callToolResult 响应数据
      * @return 是否成功完成
      */
-    public boolean completeWait(String sessionCode, String requestId, String toolName, AgentToolCallResponseData responseData) {
-        String key = buildKey(sessionCode, requestId, toolName);
-        CompletableFuture<AgentToolCallResponseData> future = waitingToolCalls.remove(key);
+    public boolean completeWait(String toolCallId, String toolName, AgentCallToolResult callToolResult) {
+        String key = buildKey(toolCallId, toolName);
+        CompletableFuture<AgentCallToolResult> future = waitingToolCalls.remove(key);
 
         if (future != null) {
             log.debug("完成工具调用等待: key={}", key);
-            future.complete(responseData);
+            future.complete(callToolResult);
             return true;
         } else {
             log.warn("未找到对应的工具调用等待: key={}", key);
@@ -81,13 +79,12 @@ public class ToolCallWaitManager {
     /**
      * 取消工具调用等待
      *
-     * @param sessionCode 会话代码
-     * @param requestId   请求ID
-     * @param toolName    工具名称
+     * @param toolCallId 请求ID
+     * @param toolName   工具名称
      */
-    public void cancelWait(String sessionCode, String requestId, String toolName) {
-        String key = buildKey(sessionCode, requestId, toolName);
-        CompletableFuture<AgentToolCallResponseData> future = waitingToolCalls.remove(key);
+    public void cancelWait(String toolCallId, String toolName) {
+        String key = buildKey(toolCallId, toolName);
+        CompletableFuture<AgentCallToolResult> future = waitingToolCalls.remove(key);
 
         if (future != null) {
             log.debug("取消工具调用等待: key={}", key);
@@ -96,25 +93,9 @@ public class ToolCallWaitManager {
     }
 
     /**
-     * 取消会话的所有工具调用等待
-     *
-     * @param sessionCode 会话代码
-     */
-    public void cancelSessionWaits(String sessionCode) {
-        waitingToolCalls.entrySet().removeIf(entry -> {
-            if (entry.getKey().startsWith(sessionCode + ":")) {
-                log.debug("取消会话工具调用等待: key={}", entry.getKey());
-                entry.getValue().cancel(true);
-                return true;
-            }
-            return false;
-        });
-    }
-
-    /**
      * 构建唯一键
      */
-    private String buildKey(String sessionCode, String requestId, String toolName) {
-        return sessionCode + ":" + requestId + ":" + toolName;
+    private String buildKey(String requestId, String toolName) {
+        return requestId + ":" + toolName;
     }
 }

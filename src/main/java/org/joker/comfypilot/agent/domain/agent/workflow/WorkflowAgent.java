@@ -15,6 +15,7 @@ import org.joker.comfypilot.agent.domain.event.*;
 import org.joker.comfypilot.agent.domain.service.AbstractAgent;
 import org.joker.comfypilot.agent.domain.service.Agent;
 import org.joker.comfypilot.agent.domain.service.AgentConfigDefinition;
+import org.joker.comfypilot.agent.domain.toolcall.ToolCallWaitManager;
 import org.joker.comfypilot.agent.infrastructure.tool.StatusUpdateTool;
 import org.joker.comfypilot.agent.infrastructure.tool.TodoWriteTool;
 import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerAdvancedFeaturesDTO;
@@ -34,6 +35,7 @@ import org.joker.comfypilot.session.application.service.ChatSessionService;
 import org.joker.comfypilot.session.domain.enums.AgentPromptType;
 import org.joker.comfypilot.session.domain.enums.MessageStatus;
 import org.joker.comfypilot.session.domain.repository.ChatMessageRepository;
+import org.joker.comfypilot.session.infrastructure.websocket.WebSocketSessionManager;
 import org.joker.comfypilot.tool.domain.service.Tool;
 import org.joker.comfypilot.tool.domain.service.ToolRegistry;
 import org.joker.comfypilot.agent.domain.react.ReactExecutor;
@@ -42,6 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * 简单对话Agent
@@ -65,6 +68,10 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
     private ComfyuiServerService comfyuiServerService;
     @Autowired
     private ReactExecutor reactExecutor;
+    @Autowired
+    private WebSocketSessionManager sessionManager;
+    @Autowired
+    private ToolCallWaitManager toolCallWaitManager;
 
     @Override
     public String getAgentCode() {
@@ -224,19 +231,29 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                     .toolChoice(ToolChoice.REQUIRED)
                     .build();
 
+            AtomicReference<StringBuilder> streamOutputBuilder = new AtomicReference<>();
+
             // 初始化事件发布器
             AgentEventPublisher eventPublisher = new AgentEventPublisher();
             executionContext.setEventPublisher(eventPublisher);
 
             // ==================== 注册事件监听器 ====================
+            // LLM调用前事件
+            eventPublisher.addEventListener(AgentEventType.BEFORE_LLM_CALL, (BeforeLlmCallEvent event) -> {
+                streamOutputBuilder.set(new StringBuilder());
+            });
 
             // 流式输出事件 -> AgentCallback.onStream()
             eventPublisher.addEventListener(AgentEventType.STREAM, (StreamEvent event) -> {
                 agentCallback.onStream(event.getChunk());
+                if (streamOutputBuilder.get() != null) {
+                    streamOutputBuilder.get().append(event.getChunk());
+                }
             });
 
             // 流式输出完成事件 -> AgentCallback.onStreamComplete()
             eventPublisher.addEventListener(AgentEventType.STREAM_COMPLETE, (StreamCompleteEvent event) -> {
+                streamOutputBuilder.set(null);
                 if (event.isSuccess()) {
                     agentCallback.onStreamComplete(event.getFullContent());
                 } else {
@@ -252,6 +269,24 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                 // 中断处理完成
                 if (AgentPromptType.INTERRUPTED.equals(promptType)) {
                     agentCallback.onInterrupted();
+                    StringBuilder streamOutput = streamOutputBuilder.get();
+                    streamOutputBuilder.set(null);
+
+                    // 保存输出到一半的消息
+                    if (streamOutput != null && !streamOutput.isEmpty()) {
+                        org.joker.comfypilot.session.domain.entity.ChatMessage dbMessage =
+                                org.joker.comfypilot.session.domain.entity.ChatMessage.builder()
+                                        .sessionId(event.getContext().getSessionId())
+                                        .sessionCode(event.getContext().getSessionCode())
+                                        .requestId(event.getContext().getRequestId())
+                                        .role(MessageRole.ASSISTANT)
+                                        .status(MessageStatus.ACTIVE)
+                                        .metadata(new HashMap<>())
+                                        .content("")
+                                        .chatContent(PersistableChatMessage.toJsonString(AiMessage.aiMessage(streamOutput.toString())))
+                                        .build();
+                        chatMessageRepository.save(dbMessage);
+                    }
                 }
                 agentCallback.onPrompt(promptType, event.getMessage());
             });
@@ -259,6 +294,10 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             // 工具调用通知事件 -> AgentCallback.onToolCall()
             eventPublisher.addEventListener(AgentEventType.TOOL_CALL_NOTIFY, (ToolCallNotifyEvent event) -> {
                 agentCallback.onToolCall(executionContext.getClientToolNames().contains(event.getToolName()), false, event.getToolCallId(), event.getToolName(), event.getToolArgs());
+                // 连接断开时直接取消回调
+                sessionManager.addRemovedCallback(executionContext.getWsSessionId(), () -> {
+                    toolCallWaitManager.cancelWait(event.getToolCallId(), event.getToolName());
+                });
             });
 
             // 消息添加后事件 -> 保存到数据库

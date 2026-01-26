@@ -93,7 +93,7 @@ public class StatusUpdateTool {
 
             // 限制历史记录数量（保留最近100条）
             if (history.size() > 100) {
-                history.remove(0);
+                history.removeFirst();
             }
 
             return String.format("✓ 状态已更新 [%s]: %s",

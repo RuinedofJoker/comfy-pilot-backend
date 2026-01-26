@@ -12,6 +12,7 @@ import org.joker.comfypilot.common.constant.AuthConstants;
 import org.joker.comfypilot.common.domain.message.PersistableChatMessage;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.util.SpringContextUtil;
+import org.joker.comfypilot.session.application.dto.AgentCallToolResult;
 import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
 import org.joker.comfypilot.session.application.dto.WebSocketMessage;
 import org.joker.comfypilot.session.application.dto.WebSocketMessageData;
@@ -311,12 +312,23 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             log.info("收到工具调用响应: sessionId={}, toolName={}, isAllow={}, success={}",
                     session.getId(), responseData.getToolName(), responseData.getIsAllow(), responseData.getSuccess());
 
+            AgentCallToolResult callToolResult = AgentCallToolResult.builder()
+                    .toolCallId(responseData.getToolCallId())
+                    .toolName(responseData.getToolName())
+                    .isClientTool(responseData.getIsClientTool())
+                    .isMcpTool(responseData.getIsMcpTool())
+                    .toolArgs(responseData.getToolArgs())
+                    .result(responseData.getResult())
+                    .isAllow(responseData.getIsAllow())
+                    .success(responseData.getSuccess())
+                    .error(responseData.getError())
+                    .build();
+
             // 完成工具调用等待，唤醒等待的Agent线程
             boolean completed = toolCallWaitManager.completeWait(
-                    wsMessage.getSessionCode(),
-                    wsMessage.getRequestId(),
-                    responseData.getToolName(),
-                    responseData
+                    callToolResult.getToolCallId(),
+                    callToolResult.getToolName(),
+                    callToolResult
             );
 
             if (!completed) {

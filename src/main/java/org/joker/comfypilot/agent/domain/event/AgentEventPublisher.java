@@ -19,7 +19,7 @@ public class AgentEventPublisher {
      * Key: 事件类型
      * Value: 监听器列表
      */
-    private final Map<AgentEventType, List<AgentEventListener<? extends AgentEvent>>> listeners = new ConcurrentHashMap<>();
+    private final Map<AgentEventType, List<AgentEventListener<? extends AgentEvent>>> listeners = new ConcurrentHashMap<>(1024);
 
     /**
      * 注册事件监听器

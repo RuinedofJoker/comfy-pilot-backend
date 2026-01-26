@@ -1,5 +1,6 @@
 package org.joker.comfypilot.agent.domain.react;
 
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
@@ -8,15 +9,15 @@ import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.request.ToolChoice;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.joker.comfypilot.agent.domain.callback.AgentCallback;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.joker.comfypilot.agent.domain.event.*;
 import org.joker.comfypilot.agent.domain.toolcall.ToolCallWaitManager;
-import org.joker.comfypilot.session.application.dto.client2server.AgentToolCallResponseData;
+import org.joker.comfypilot.session.application.dto.AgentCallToolResult;
 import org.joker.comfypilot.session.domain.enums.AgentPromptType;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -30,10 +31,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class ReactExecutor {
 
-    private final ToolCallWaitManager toolCallWaitManager;
+    @Autowired
+    private ToolCallWaitManager toolCallWaitManager;
 
     /**
      * 执行 ReAct 循环（响应式，非阻塞）
@@ -337,14 +338,14 @@ public class ReactExecutor {
      * 异步处理工具调用
      */
     private CompletableFuture<List<ToolExecutionResultMessage>> handleToolCallsAsync(
-            List<dev.langchain4j.agent.tool.ToolExecutionRequest> toolExecutionRequests,
+            List<ToolExecutionRequest> toolExecutionRequests,
             AgentExecutionContext context,
             int iteration
     ) {
         // 创建所有工具调用的 Future 列表
         List<CompletableFuture<ToolExecutionResultMessage>> toolFutures = new ArrayList<>();
 
-        for (dev.langchain4j.agent.tool.ToolExecutionRequest request : toolExecutionRequests) {
+        for (ToolExecutionRequest request : toolExecutionRequests) {
             // 检查是否被中断
             if (context.isInterrupted()) {
                 log.info("工具调用被中断");
@@ -360,26 +361,18 @@ public class ReactExecutor {
 
             log.info("处理工具调用: toolName={}, toolCallId={}", toolName, toolCallId);
 
-            // 1. 发布工具调用通知事件
-            if (context.getEventPublisher() != null) {
-                ToolCallNotifyEvent notifyEvent = new ToolCallNotifyEvent(
-                        context, iteration, toolName, toolArgs, toolCallId);
-                context.getEventPublisher().publishEvent(notifyEvent);
-            }
-
-            // 2. 创建异步等待
-            CompletableFuture<AgentToolCallResponseData> responseFuture = toolCallWaitManager.createWait(
-                    context.getSessionCode(),
-                    context.getRequestId(),
+            // 创建异步等待回调
+            CompletableFuture<AgentCallToolResult> responseFuture = toolCallWaitManager.createWait(
+                    toolCallId,
                     toolName
             );
 
-            // 3. 将响应 Future 转换为结果消息 Future
+            // 将响应 Future 转换为结果消息 Future
             CompletableFuture<ToolExecutionResultMessage> resultFuture = responseFuture
                     .handle((responseData, ex) -> {
                         if (ex != null) {
                             log.error("等待工具调用响应失败: toolName={}", toolName, ex);
-                            responseData = AgentToolCallResponseData.builder()
+                            responseData = AgentCallToolResult.builder()
                                     .toolCallId(toolCallId)
                                     .toolName(toolName)
                                     .isAllow(false)
@@ -401,6 +394,13 @@ public class ReactExecutor {
                     });
 
             toolFutures.add(resultFuture);
+
+            // 发布工具调用通知事件
+            if (context.getEventPublisher() != null) {
+                ToolCallNotifyEvent notifyEvent = new ToolCallNotifyEvent(
+                        context, iteration, toolName, toolArgs, toolCallId);
+                context.getEventPublisher().publishEvent(notifyEvent);
+            }
         }
 
         // 5. 等待所有工具调用完成，组合成一个 Future
@@ -413,7 +413,7 @@ public class ReactExecutor {
     /**
      * 构建工具结果文本
      */
-    private String buildToolResultText(AgentToolCallResponseData responseData) {
+    private String buildToolResultText(AgentCallToolResult responseData) {
         if (!Boolean.TRUE.equals(responseData.getIsAllow())) {
             return "工具调用被拒绝";
         }
