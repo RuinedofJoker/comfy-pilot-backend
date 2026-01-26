@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.script.config.ScriptRuntimeConfig;
+import org.joker.comfypilot.script.context.ScriptRuntimeContext;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -81,6 +82,14 @@ public class PythonRuntimeDetector implements CommandLineRunner {
 
                 // 获取包安装路径
                 pythonSitePackages = getPythonSitePackages(candidate);
+
+                // 同步到全局上下文
+                ScriptRuntimeContext.setPythonRuntime(
+                        pythonAvailable,
+                        pythonVersion,
+                        pythonExecutable,
+                        pythonSitePackages
+                );
 
                 log.info("✓ Python 环境检测成功");
                 log.info("  - 可执行文件: {}", pythonExecutable);

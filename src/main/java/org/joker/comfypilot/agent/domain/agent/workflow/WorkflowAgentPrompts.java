@@ -150,4 +150,11 @@ public class WorkflowAgentPrompts {
             
             """.trim();
 
+    public static final String SERVER_FILE_TOOL_PROMPT = """
+            ## Agent服务器文件系统操作规范
+            你当前允许使用Agent服务器创建一些脚本文件执行，但是你对Agent服务器上的所有文件操作都必须通过 `server_filesystem_createTempDirectory` 工具获取到一个临时目录后，在此临时目录下执行。
+            你要执行的所有脚本文件以及脚本文件内的对Agent服务器文件系统的操作都严禁对你获得的临时目录外的目录或文件进行读、写、执行等操作。
+            你可以使用 `server_filesystem_` 开头的工具对Agent服务器上的文件系统进行操作。
+            """.trim();
+
 }

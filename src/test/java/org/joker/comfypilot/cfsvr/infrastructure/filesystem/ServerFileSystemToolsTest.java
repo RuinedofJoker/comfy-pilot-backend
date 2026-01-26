@@ -1,21 +1,19 @@
 package org.joker.comfypilot.cfsvr.infrastructure.filesystem;
 
 import org.joker.comfypilot.BaseTest;
-import org.joker.comfypilot.common.tool.filesystem.FileInfo;
-import org.joker.comfypilot.common.tool.filesystem.LocalFileSystemTools;
+import org.joker.comfypilot.common.tool.filesystem.ServerFileSystemTools;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.List;
 
 /**
  * 本地文件系统服务测试类
  * 测试本地文件系统的基本操作功能
  */
-public class LocalFileSystemToolsTest extends BaseTest {
+public class ServerFileSystemToolsTest extends BaseTest {
 
-    private final LocalFileSystemTools fileSystemService = new LocalFileSystemTools();
+    private final ServerFileSystemTools fileSystemService = new ServerFileSystemTools();
 
     /**
      * 测试文件读写操作
@@ -86,23 +84,21 @@ public class LocalFileSystemToolsTest extends BaseTest {
         System.out.println("\n=== 测试目录操作 ===");
 
         // 1. 创建临时目录路径
-        String tempDir = System.getProperty("java.io.tmpdir");
-        String testDirPath = Paths.get(tempDir, "comfy-pilot-test-dir").toString();
-        System.out.println("临时目录路径: " + testDirPath);
+        String tempDir = null;
 
         try {
             // 2. 创建目录
-            fileSystemService.createDirectory(testDirPath);
+            tempDir = fileSystemService.createTempDirectory();
             System.out.println("\n✅ 目录创建成功");
 
             // 3. 在目录中创建几个测试文件
-            fileSystemService.writeFile(Paths.get(testDirPath, "file1.txt").toString(), "Content 1");
-            fileSystemService.writeFile(Paths.get(testDirPath, "file2.txt").toString(), "Content 2");
-            fileSystemService.createDirectory(Paths.get(testDirPath, "subdir").toString());
+            fileSystemService.writeFile(Paths.get(tempDir, "file1.txt").toString(), "Content 1");
+            fileSystemService.writeFile(Paths.get(tempDir, "file2.txt").toString(), "Content 2");
+            fileSystemService.createTempDirectory();
             System.out.println("✅ 测试文件创建成功");
 
             // 4. 列出目录内容
-            String files = fileSystemService.listDirectory(testDirPath);
+            String files = fileSystemService.listDirectory(tempDir);
 //            System.out.println("\n>>> 目录内容 (" + files.size() + " 项):");
             /*for (FileInfo file : files) {
                 String type = file.isDirectory() ? "[目录]" : "[文件]";
@@ -111,8 +107,8 @@ public class LocalFileSystemToolsTest extends BaseTest {
 
         } finally {
             // 5. 清理测试目录
-            if (fileSystemService.exists(testDirPath)) {
-                fileSystemService.delete(testDirPath);
+            if (tempDir != null && fileSystemService.exists(tempDir)) {
+                fileSystemService.delete(tempDir);
                 System.out.println("\n临时目录已清理");
             }
         }
