@@ -230,7 +230,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                         .content(userMessage)
                         .chatContent(PersistableChatMessage.toJsonString(chatMessage))
                         .build();
-                chatMessageRepository.save(userChatMessage);
+                userChatMessage = chatMessageRepository.save(userChatMessage);
                 messageIds.add(userChatMessage.getId() + "");
             }, null);
 
@@ -355,7 +355,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                                     .content("")
                                     .chatContent(PersistableChatMessage.toJsonString(langchainChatMessage))
                                     .build();
-                    chatMessageRepository.save(dbMessage);
+                    dbMessage = chatMessageRepository.save(dbMessage);
                     log.debug("消息已保存到数据库: sessionCode={}, messageType={}, iteration={}",
                             event.getContext().getSessionCode(), event.getMessageType(), event.getIteration());
                     if (messageRole.equals(MessageRole.ASSISTANT)) {

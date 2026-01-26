@@ -96,6 +96,7 @@ public class AgentExecutorImpl implements AgentExecutor {
 
         // 保存执行日志
         executionLog = executionLogRepository.save(executionLog);
+        executionContext.setExecutionLog(executionLog);
 
         long startTime = System.currentTimeMillis();
 
