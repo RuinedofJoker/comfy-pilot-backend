@@ -1,16 +1,24 @@
 package org.joker.comfypilot.agent.infrastructure.tool;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.langchain4j.agent.tool.Tool;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
+import org.joker.comfypilot.agent.domain.context.AgentExecutionContextHolder;
 import org.joker.comfypilot.common.annotation.ToolSet;
+import org.joker.comfypilot.common.exception.BusinessException;
+import org.joker.comfypilot.common.util.RedisUtil;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 状态更新工具
@@ -19,35 +27,35 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Component
 @ToolSet
+@RequiredArgsConstructor
 public class StatusUpdateTool {
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
+    private static final String REDIS_KEY_PREFIX = "agent:tool:serverTool:status:";
+    private static final long REDIS_EXPIRE_HOURS = 24; // 24小时过期
 
-    // 使用 sessionId 作为 key 存储不同会话的状态更新历史
-    private final Map<String, List<StatusUpdate>> sessionStatusHistory = new ConcurrentHashMap<>();
+    private final RedisUtil redisUtil;
 
     /**
      * 状态更新数据结构
      */
+    @Getter
+    @Setter
     public static class StatusUpdate {
         private String message;          // 状态更新消息（1-3句话）
         private String phase;            // 当前阶段（如: 发现、计划、执行、总结）
         private LocalDateTime timestamp; // 时间戳
 
-        public StatusUpdate(String message, String phase) {
-            this.message = message;
-            this.phase = phase;
+        public StatusUpdate() {
             this.timestamp = LocalDateTime.now();
         }
 
-        public String getMessage() { return message; }
-        public void setMessage(String message) { this.message = message; }
-
-        public String getPhase() { return phase; }
-        public void setPhase(String phase) { this.phase = phase; }
-
-        public LocalDateTime getTimestamp() { return timestamp; }
-        public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+        public StatusUpdate(String message, String phase) {
+            this();
+            this.message = message;
+            this.phase = phase;
+        }
 
         @Override
         public String toString() {
@@ -61,7 +69,6 @@ public class StatusUpdateTool {
     /**
      * 记录状态更新
      *
-     * @param sessionId 会话ID
      * @param message 状态更新消息（1-3句话，包括刚刚发生的事情、即将要做的事情、障碍/风险）
      * @param phase 当前执行阶段（discovery/planning/execution/summary）
      * @return 确认信息
@@ -70,8 +77,13 @@ public class StatusUpdateTool {
           "message 应包含: 刚刚发生的事情、即将要做的事情、相关的障碍或风险（1-3句话，对话式风格）。" +
           "phase 表示当前阶段: discovery(发现)、planning(计划)、execution(执行)、summary(总结)。" +
           "应在以下时机调用: 启动时、每个工具批次前后、待办事项更新后、编辑/构建/测试前、完成后、提交前。")
-    public String statusUpdate(String sessionId, String message, String phase) {
-        log.info("调用工具: statusUpdate, sessionId: {}, phase: {}", sessionId, phase);
+    public String statusUpdate(String message, String phase) {
+        AgentExecutionContext executionContext = AgentExecutionContextHolder.get();
+        if (executionContext == null) {
+            throw new BusinessException("找不到当前工具执行上下文");
+        }
+        String sessionCode = executionContext.getSessionCode();
+        log.info("调用工具: statusUpdate, sessionCode: {}, phase: {}", sessionCode, phase);
 
         try {
             if (message == null || message.trim().isEmpty()) {
@@ -83,12 +95,8 @@ public class StatusUpdateTool {
 
             StatusUpdate update = new StatusUpdate(message.trim(), normalizedPhase);
 
-            // 获取或创建会话的状态历史
-            List<StatusUpdate> history = sessionStatusHistory.computeIfAbsent(
-                    sessionId,
-                    k -> new ArrayList<>()
-            );
-
+            // 获取现有历史并添加新记录
+            List<StatusUpdate> history = getStatusHistoryFromRedis(sessionCode);
             history.add(update);
 
             // 限制历史记录数量（保留最近100条）
@@ -96,12 +104,15 @@ public class StatusUpdateTool {
                 history.removeFirst();
             }
 
+            // 保存到 Redis
+            saveStatusHistoryToRedis(sessionCode, history);
+
             return String.format("✓ 状态已更新 [%s]: %s",
                     normalizedPhase,
                     truncateMessage(message, 50));
 
         } catch (Exception e) {
-            log.error("记录状态更新失败, sessionId: {}", sessionId, e);
+            log.error("记录状态更新失败, sessionCode: {}", sessionCode, e);
             return "错误: " + e.getMessage();
         }
     }
@@ -109,17 +120,21 @@ public class StatusUpdateTool {
     /**
      * 获取状态更新历史
      *
-     * @param sessionId 会话ID
      * @param limit 返回最近的 N 条记录（默认10条）
      * @return 格式化的状态历史
      */
     @Tool("获取当前会话的状态更新历史记录")
-    public String getStatusHistory(String sessionId, int limit) {
-        log.info("调用工具: getStatusHistory, sessionId: {}, limit: {}", sessionId, limit);
+    public String getStatusHistory(int limit) {
+        AgentExecutionContext executionContext = AgentExecutionContextHolder.get();
+        if (executionContext == null) {
+            throw new BusinessException("找不到当前工具执行上下文");
+        }
+        String sessionCode = executionContext.getSessionCode();
+        log.info("调用工具: getStatusHistory, sessionCode: {}, limit: {}", sessionCode, limit);
 
-        List<StatusUpdate> history = sessionStatusHistory.get(sessionId);
+        List<StatusUpdate> history = getStatusHistoryFromRedis(sessionCode);
 
-        if (history == null || history.isEmpty()) {
+        if (history.isEmpty()) {
             return "当前会话没有状态更新历史";
         }
 
@@ -139,13 +154,18 @@ public class StatusUpdateTool {
     /**
      * 清空状态历史
      *
-     * @param sessionId 会话ID
      * @return 操作结果
      */
     @Tool("清空当前会话的所有状态更新历史")
-    public String clearStatusHistory(String sessionId) {
-        log.info("调用工具: clearStatusHistory, sessionId: {}", sessionId);
-        sessionStatusHistory.remove(sessionId);
+    public String clearStatusHistory() {
+        AgentExecutionContext executionContext = AgentExecutionContextHolder.get();
+        if (executionContext == null) {
+            throw new BusinessException("找不到当前工具执行上下文");
+        }
+        String sessionCode = executionContext.getSessionCode();
+        log.info("调用工具: clearStatusHistory, sessionCode: {}", sessionCode);
+        String redisKey = buildRedisKey(sessionCode);
+        redisUtil.del(redisKey);
         return "状态更新历史已清空";
     }
 
@@ -179,7 +199,50 @@ public class StatusUpdateTool {
     /**
      * 获取原始状态历史（供内部使用）
      */
-    public List<StatusUpdate> getRawStatusHistory(String sessionId) {
-        return sessionStatusHistory.getOrDefault(sessionId, new ArrayList<>());
+    public List<StatusUpdate> getRawStatusHistory(String sessionCode) {
+        return getStatusHistoryFromRedis(sessionCode);
+    }
+
+    /**
+     * 构建 Redis Key
+     */
+    private String buildRedisKey(String sessionCode) {
+        return REDIS_KEY_PREFIX + sessionCode;
+    }
+
+    /**
+     * 从 Redis 获取状态历史列表
+     */
+    private List<StatusUpdate> getStatusHistoryFromRedis(String sessionCode) {
+        try {
+            String redisKey = buildRedisKey(sessionCode);
+            Object value = redisUtil.get(redisKey);
+
+            if (value == null) {
+                return new ArrayList<>();
+            }
+
+            String json = (String) value;
+            return OBJECT_MAPPER.readValue(json, new TypeReference<>() {
+            });
+        } catch (Exception e) {
+            log.error("从 Redis 获取状态历史失败, sessionCode: {}", sessionCode, e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * 保存状态历史列表到 Redis
+     */
+    private void saveStatusHistoryToRedis(String sessionCode, List<StatusUpdate> history) {
+        try {
+            String redisKey = buildRedisKey(sessionCode);
+            String json = OBJECT_MAPPER.writeValueAsString(history);
+            redisUtil.set(redisKey, json, REDIS_EXPIRE_HOURS, TimeUnit.HOURS);
+            log.debug("状态历史已保存到 Redis, sessionCode: {}, count: {}", sessionCode, history.size());
+        } catch (Exception e) {
+            log.error("保存状态历史到 Redis 失败, sessionCode: {}", sessionCode, e);
+            throw new RuntimeException("保存状态历史失败", e);
+        }
     }
 }

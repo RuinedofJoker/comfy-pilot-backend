@@ -1,5 +1,6 @@
 package org.joker.comfypilot.session.infrastructure.websocket;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -276,12 +277,11 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             }
 
             // 直接类型转换，无需使用ObjectMapper
-            if (!(dataObj instanceof AgentToolCallResponseData)) {
+            if (!(dataObj instanceof AgentToolCallResponseData responseData)) {
                 sendErrorMessage(session, "工具调用响应数据类型错误", wsMessage.getSessionCode(), wsMessage.getRequestId());
                 return;
             }
 
-            AgentToolCallResponseData responseData = (AgentToolCallResponseData) dataObj;
             if (Boolean.FALSE.equals(responseData.getIsMcpTool()) && Boolean.FALSE.equals(responseData.getIsClientTool())) {
                 Tool serverTool = SpringContextUtil.getBean(ToolRegistry.class).getToolByName(responseData.getToolName());
                 if (serverTool != null) {
@@ -293,6 +293,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                     } catch (Exception e) {
                         log.error("服务端工具执行失败", e);
                         responseData.setSuccess(false);
+                        responseData.setResult(ExceptionUtil.stacktraceToString(e));
                         responseData.setError(e.getMessage());
                     } finally {
                         AgentExecutionContextHolder.clear();

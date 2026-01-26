@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 public class TodoWriteTool {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static final String REDIS_KEY_PREFIX = "agent:todo:";
+    private static final String REDIS_KEY_PREFIX = "agent:tool:serverTool:todo:";
     private static final long REDIS_EXPIRE_HOURS = 24; // 24小时过期
 
     private final RedisUtil redisUtil;

@@ -67,8 +67,10 @@ public class WorkflowAgentPrompts {
             
             1. 当你想要看到用户实时的工作流内容时，调用 `get_workflow` 工具。
             2. 当你想要用户能够看到你当前更改的工具流内容，调用 `set_workflow` 工具 或 `load_workflow` 工具。
-            3. 当你想要直接操作客户端工作流时直接调用工具。
-            4. 除非用户明确要求，否则不要输出工作流的json内容，而是应该通过 `set_workflow` 工具 或 `load_workflow` 工具在页面上调整工作流内容
+            3. 除非用户明确要求，否则不要输出工作流的json内容，而是应该通过 `set_workflow` 工具 或 `load_workflow` 工具在页面上调整工作流内容
+            4. 每当你使用 `set_workflow` 工具 或 `load_workflow` 工具设置了用户页面上的工作流内容时，你都需要调用 `get_workflow` 工具来获取一次工作流内容，因为ComfyUI会自动调整工作流内不合法的格式。
+            4. 你可以通过以`comfyui_server_`开头的工具集来从服务端获取用户所在ComfyUI服务上的基本信息，如可用的模型文件夹列表、文件夹中的模型列表等。
+            5. 当你想要直接操作客户端工作流时调用 `execute_workflow` 工具，调用工具前必须确认工作流上使用的模型是该ComfyUI服务中有的且是你想要调用的模型。
             
             ### 工具调用
             

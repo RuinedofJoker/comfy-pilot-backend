@@ -24,6 +24,7 @@ import org.joker.comfypilot.agent.infrastructure.tool.TodoWriteTool;
 import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerAdvancedFeaturesDTO;
 import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerDTO;
 import org.joker.comfypilot.cfsvr.application.service.ComfyuiServerService;
+import org.joker.comfypilot.cfsvr.application.tool.ComfyUIServerTool;
 import org.joker.comfypilot.common.domain.content.*;
 import org.joker.comfypilot.common.domain.message.PersistableChatMessage;
 import org.joker.comfypilot.common.enums.MessageRole;
@@ -162,6 +163,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             // 从 ToolRegistry 获取工具列表
             List<Tool> todoTools = toolRegistry.getToolsByClass(TodoWriteTool.class);
             List<Tool> statusTools = toolRegistry.getToolsByClass(StatusUpdateTool.class);
+            List<Tool> comfyuiServerTools = toolRegistry.getToolsByClass(ComfyUIServerTool.class);
 
             // 准备工具规范
             List<ToolSpecification> toolSpecs = new ArrayList<>();
@@ -177,13 +179,19 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                     throw new BusinessException("客户端工具" + serverTool.toolName() + "与服务内部工具重名");
                 }
             }
+            toolSpecs.addAll(todoTools.stream().map(Tool::toolSpecification).toList());
             for (Tool serverTool : statusTools) {
                 if (executionContext.getClientToolNames().contains(serverTool.toolName())) {
                     throw new BusinessException("客户端工具" + serverTool.toolName() + "与服务内部工具重名");
                 }
             }
-            toolSpecs.addAll(todoTools.stream().map(Tool::toolSpecification).toList());
             toolSpecs.addAll(statusTools.stream().map(Tool::toolSpecification).toList());
+            for (Tool comfyuiServerTool : comfyuiServerTools) {
+                if (executionContext.getClientToolNames().contains(comfyuiServerTool.toolName())) {
+                    throw new BusinessException("客户端工具" + comfyuiServerTool.toolName() + "与服务内部工具重名");
+                }
+            }
+            toolSpecs.addAll(comfyuiServerTools.stream().map(Tool::toolSpecification).toList());
 
             // Agent构建ComfyUI服务高级功能提示词和补充工具
             ChatSessionDTO chatSessionDTO = chatSessionService.getSessionByCode(executionContext.getSessionCode());
