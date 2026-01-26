@@ -81,6 +81,15 @@ public class AgentExecutionLog extends BaseEntity<Long> {
     }
 
     /**
+     * 领域行为：标记执行中断
+     */
+    public void markInterrupted(Long executionTimeMs) {
+        this.status = ExecutionStatus.INTERRUPTED;
+        this.executionTimeMs = executionTimeMs;
+        this.updateTime = LocalDateTime.now();
+    }
+
+    /**
      * 领域行为：标记执行失败
      */
     public void markFailed(String errorMessage, Long executionTimeMs) {

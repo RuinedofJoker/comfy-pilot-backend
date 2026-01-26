@@ -248,7 +248,7 @@ public class ChatSessionServiceImpl implements ChatSessionService {
             // 获取Agent执行上下文（直接使用传入的agentCode）
             AgentExecutionContext executionContext = agentExecutor.getExecutionContext(chatSession.getAgentCode(), agentRequest);
             executionContext.setSessionCode(sessionCode);
-            executionContext.setWsSessionId(wsContext.getWebSocketSession().getId());
+            executionContext.setConnectSessionId(wsContext.getWebSocketSession().getId());
             executionContext.setWebSocketSessionContext(wsContext);
 
             // 替换上下文

@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * WebSocket流式输出回调实现
+ * WebSocket输出回调实现
  */
 @Slf4j
 public class WebSocketAgentCallback implements AgentCallback {
@@ -132,7 +132,7 @@ public class WebSocketAgentCallback implements AgentCallback {
 
     @Override
     public void addMemoryMessage(ChatMessage message, Consumer<ChatMessage> successCallback, Consumer<ChatMessage> failCallback) {
-        if (chatMemoryChatMemoryStore.addMessage(agentExecutionContext.getWsSessionId(), message)) {
+        if (chatMemoryChatMemoryStore.addMessage(agentExecutionContext.getConnectSessionId(), message)) {
             if (successCallback != null) {
                 successCallback.accept(message);
             }
@@ -146,7 +146,7 @@ public class WebSocketAgentCallback implements AgentCallback {
 
     @Override
     public List<ChatMessage> getMemoryMessages() {
-        List<ChatMessage> messages = chatMemoryChatMemoryStore.getMessages(agentExecutionContext.getWsSessionId());
+        List<ChatMessage> messages = chatMemoryChatMemoryStore.getMessages(agentExecutionContext.getConnectSessionId());
         if (messages == null) {
             throw new BusinessException("当前会话已关闭");
         }

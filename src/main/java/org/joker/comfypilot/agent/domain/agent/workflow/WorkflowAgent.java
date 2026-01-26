@@ -295,7 +295,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             eventPublisher.addEventListener(AgentEventType.TOOL_CALL_NOTIFY, (ToolCallNotifyEvent event) -> {
                 agentCallback.onToolCall(executionContext.getClientToolNames().contains(event.getToolName()), false, event.getToolCallId(), event.getToolName(), event.getToolArgs());
                 // 连接断开时直接取消回调
-                sessionManager.addRemovedCallback(executionContext.getWsSessionId(), () -> {
+                sessionManager.addRemovedCallback(executionContext.getConnectSessionId(), () -> {
                     toolCallWaitManager.cancelWait(event.getToolCallId(), event.getToolName());
                 });
             });

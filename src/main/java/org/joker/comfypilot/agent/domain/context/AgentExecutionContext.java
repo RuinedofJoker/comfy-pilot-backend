@@ -8,12 +8,12 @@ import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionResponse;
 import org.joker.comfypilot.agent.domain.callback.AgentCallback;
 import org.joker.comfypilot.agent.domain.entity.AgentExecutionLog;
+import org.joker.comfypilot.agent.domain.enums.ExecutionContextConnectType;
 import org.joker.comfypilot.agent.domain.event.AgentEventPublisher;
 import org.joker.comfypilot.agent.domain.service.Agent;
 import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
 import org.joker.comfypilot.tool.domain.service.Tool;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,36 +27,99 @@ import java.util.Set;
 @AllArgsConstructor
 public class AgentExecutionContext {
 
+    /**
+     * 执行Agent
+     */
     private Agent agent;
 
+    /**
+     * Agent编码
+     */
     private String agentCode;
 
-    private String wsSessionId;
+    /**
+     * 执行上下文连接类型
+     */
+    private ExecutionContextConnectType executionContextConnectType;
 
+    /**
+     * 执行上下文连接ID
+     */
+    private String connectSessionId;
+
+    /**
+     * 连接使用的WebSocket上下文
+     * executionContextConnectType = WEBSOCKET时使用
+     */
     private WebSocketSessionContext webSocketSessionContext;
 
+    /**
+     * 用户会话ID
+     */
     private Long sessionId;
 
+    /**
+     * 用户会话编码
+     */
     private String sessionCode;
 
+    /**
+     * 当前执行请求ID(一般是请求时的时间戳)
+     */
     private String requestId;
 
+    /**
+     * 所属用户ID
+     */
     private Long userId;
+
+    /**
+     * 开始时间
+     */
+    private Long startTime;
 
     private AgentExecutionRequest request;
 
     private AgentExecutionResponse response;
 
+    /**
+     * Agent执行日志
+     */
     private AgentExecutionLog executionLog;
 
+    /**
+     * 运行时Agent配置
+     */
     private Map<String, Object> agentConfig;
 
+    /**
+     * 运行时AgentScope
+     */
     private Map<String, Object> agentScope;
 
+    /**
+     * 客户端工具
+     */
     private List<? extends Tool> clientTools;
 
+    /**
+     * 客户端工具名称
+     */
     private Set<String> clientToolNames;
 
+    /**
+     * MCP工具
+     */
+    private List<? extends Tool> mcpTools;
+
+    /**
+     * MCP工具名称
+     */
+    private Set<String> mcpToolNames;
+
+    /**
+     * 输出回调
+     */
     private AgentCallback agentCallback;
 
     /**
@@ -69,15 +132,6 @@ public class AgentExecutionContext {
      */
     public boolean isInterrupted() {
         return agentCallback != null && agentCallback.isInterrupted();
-    }
-
-    /**
-     * 获取当前需要加载的所有工具 TODO
-     * @param serverToolSets 服务端工具集
-     * @return 整合服务端和客户端的所有工具
-     */
-    public Map<String, ? extends Tool> allTools(List<Class<?>> serverToolSets) {
-        return new HashMap<>();
     }
 
 }

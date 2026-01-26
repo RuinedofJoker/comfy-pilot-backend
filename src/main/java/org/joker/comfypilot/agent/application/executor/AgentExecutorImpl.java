@@ -100,6 +100,8 @@ public class AgentExecutorImpl implements AgentExecutor {
         long startTime = System.currentTimeMillis();
 
         try {
+            executionContext.setStartTime(startTime);
+
             // 3. 执行Agent
             log.info("开始执行Agent: code={}, sessionId={}, version={}",
                     agentCode, request.getSessionId(), agent.getVersion());
@@ -108,7 +110,7 @@ public class AgentExecutorImpl implements AgentExecutor {
             if (executionContext.isInterrupted()) {
                 log.warn("Agent执行被中断: code={}, sessionId={}", agentCode, request.getSessionId());
                 long executionTime = System.currentTimeMillis() - startTime;
-                executionLog.markFailed("执行被用户中断", executionTime);
+                executionLog.markInterrupted(executionTime);
                 executionLogRepository.update(executionLog);
 
                 return AgentExecutionResponse.builder()
@@ -136,6 +138,12 @@ public class AgentExecutorImpl implements AgentExecutor {
                 long executionTime = System.currentTimeMillis() - startTime;
                 executionLog.markFailed(TraceIdUtil.getTraceId() + " " + response.getErrorMessage(), executionTime);
                 log.info("Agent执行失败: code={}, executionTime={}ms, error={}", agentCode, executionTime, response.getErrorMessage());
+                response.setExecutionTimeMs(executionTime);
+                executionLogRepository.update(executionLog);
+            } else if (ExecutionStatus.INTERRUPTED.name().equals(response.getStatus())) {
+                // 6. 记录中断
+                long executionTime = System.currentTimeMillis() - startTime;
+                executionLog.markInterrupted(executionTime);
                 response.setExecutionTimeMs(executionTime);
                 executionLogRepository.update(executionLog);
             }

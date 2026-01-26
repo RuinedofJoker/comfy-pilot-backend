@@ -18,7 +18,14 @@ public enum ExecutionStatus {
     /**
      * 执行中
      */
-    RUNNING("执行中");
+    RUNNING("执行中"),
+
+    /**
+     * 执行中
+     */
+    INTERRUPTED("执行中断"),
+
+    ;
 
     private final String description;
 
