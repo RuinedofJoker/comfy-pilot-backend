@@ -12,7 +12,7 @@ public class AgentExecutionContextHolder {
      *
      * @param executionContext 当前工具执行上下文
      */
-    public static void setAgentExecutionContext(AgentExecutionContext executionContext) {
+    public static void set(AgentExecutionContext executionContext) {
         CONTEXT.set(executionContext);
     }
 
@@ -21,7 +21,7 @@ public class AgentExecutionContextHolder {
      *
      * @return 用户会话
      */
-    public static AgentExecutionContext getAgentExecutionContext() {
+    public static AgentExecutionContext get() {
         return CONTEXT.get();
     }
 
