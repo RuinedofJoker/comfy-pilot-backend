@@ -55,9 +55,9 @@ public enum AgentPromptType {
     COMPLETE("执行完成", "执行完成"),
 
     /**
-     *
+     * Agent计划
      */
-    TODO_WRITE("", ""),
+    TODO_WRITE("Agent计划", "Agent计划"),
     ;
 
     /**

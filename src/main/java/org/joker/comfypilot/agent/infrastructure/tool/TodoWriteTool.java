@@ -2,19 +2,22 @@ package org.joker.comfypilot.agent.infrastructure.tool;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.eventbus.EventBus;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContextHolder;
 import org.joker.comfypilot.common.annotation.ToolSet;
 import org.joker.comfypilot.common.config.JacksonConfig;
+import org.joker.comfypilot.common.event.WorkflowAgentOnPromptEvent;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.util.RedisUtil;
 import org.joker.comfypilot.session.domain.enums.AgentPromptType;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -29,13 +32,17 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Component
 @ToolSet
-@RequiredArgsConstructor
 public class TodoWriteTool {
 
     private static final String REDIS_KEY_PREFIX = "agent:tool:serverTool:todo:";
     private static final long REDIS_EXPIRE_HOURS = 24; // 24小时过期
 
-    private final RedisUtil redisUtil;
+    @Autowired
+    private RedisUtil redisUtil;
+
+    @Autowired
+    @Qualifier("workflowAgentOnPromptEventBus")
+    private EventBus workflowAgentOnPromptEventBus;
 
     /**
      * 待办事项数据结构
@@ -133,7 +140,7 @@ public class TodoWriteTool {
 
             String formatTodoList = formatTodoList(sessionCode);
 
-            executionContext.getAgentCallback().onPrompt(AgentPromptType.TODO_WRITE, formatTodoList);
+            workflowAgentOnPromptEventBus.post(new WorkflowAgentOnPromptEvent(executionContext, AgentPromptType.TODO_WRITE, formatTodoList));
 
             return formatTodoList;
 
