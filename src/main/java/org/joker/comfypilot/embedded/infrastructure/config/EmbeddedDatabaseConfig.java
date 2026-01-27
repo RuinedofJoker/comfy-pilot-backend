@@ -585,7 +585,7 @@ public class EmbeddedDatabaseConfig {
                         title VARCHAR(200),
                         rules CLOB,
                         status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
-                        is_deleted INTEGER NOT NULL DEFAULT 0,
+                        is_deleted BIGINT NOT NULL DEFAULT 0,
                         create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                         update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                         create_by BIGINT,
