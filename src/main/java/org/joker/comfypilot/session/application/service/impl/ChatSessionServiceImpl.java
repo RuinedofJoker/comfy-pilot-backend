@@ -181,17 +181,39 @@ public class ChatSessionServiceImpl implements ChatSessionService {
 
     @Override
     @Transactional
-    public void archiveSession(String sessionCode) {
+    public void archiveSession(String sessionCode, Long userId) {
         log.info("归档会话: sessionCode={}", sessionCode);
 
         ChatSession chatSession = chatSessionRepository.findBySessionCode(sessionCode)
                 .orElseThrow(() -> new BusinessException("会话不存在: " + sessionCode));
+
+        if (!chatSession.getUserId().equals(userId)) {
+            throw new BusinessException("只允许归档用户自己的会话");
+        }
 
         // 调用领域行为归档会话
         chatSession.archive();
         chatSessionRepository.updateById(chatSession);
 
         log.info("会话已归档: sessionCode={}", sessionCode);
+    }
+
+    @Override
+    @Transactional
+    public void deleteSession(String sessionCode, Long userId) {
+        log.info("删除会话: sessionCode={}", sessionCode);
+
+        ChatSession chatSession = chatSessionRepository.findBySessionCode(sessionCode)
+                .orElseThrow(() -> new BusinessException("会话不存在: " + sessionCode));
+
+        if (!chatSession.getUserId().equals(userId)) {
+            throw new BusinessException("只允许删除用户自己的会话");
+        }
+
+        chatMessageRepository.deleteBySessionId(chatSession.getId());
+        chatSessionRepository.deleteById(chatSession.getId());
+
+        log.info("会话已删除: sessionCode={}", sessionCode);
     }
 
     @Override

@@ -66,4 +66,11 @@ public interface ChatMessageRepository {
      * @param id 消息ID
      */
     void deleteById(Long id);
+
+    /**
+     * 根据sessionId删除消息（逻辑删除）
+     *
+     * @param sessionId 会话ID
+     */
+    void deleteBySessionId(Long sessionId);
 }

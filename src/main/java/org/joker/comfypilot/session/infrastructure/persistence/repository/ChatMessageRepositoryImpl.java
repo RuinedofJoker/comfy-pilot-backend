@@ -99,4 +99,11 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
             chatMessageMapper.updateById(po);
         }
     }
+
+    @Override
+    public void deleteBySessionId(Long sessionId) {
+        LambdaQueryWrapper<ChatMessagePO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ChatMessagePO::getSessionId, sessionId);
+        chatMessageMapper.delete(wrapper);
+    }
 }

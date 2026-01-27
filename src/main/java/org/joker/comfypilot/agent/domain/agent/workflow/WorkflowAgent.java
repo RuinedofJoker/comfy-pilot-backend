@@ -332,6 +332,10 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                 agentScope.put("UserPdfFileContents", pdfFileContentMap);
             }
 
+            if (agentScope.get("UserRules") != null) {
+                userMessageBuilder.append("\n").append(WorkflowAgentPrompts.USER_RULES_PROMPT.formatted(agentScope.get("UserRules")));
+            }
+
             // 添加系统提示词
             agentCallback.addMemoryMessage(SystemMessage.from(agentScope.get("SystemPrompt").toString()), null, null);
 

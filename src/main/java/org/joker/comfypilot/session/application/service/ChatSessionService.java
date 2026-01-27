@@ -94,6 +94,14 @@ public interface ChatSessionService {
      * 归档会话
      *
      * @param sessionCode 会话编码
+     * @param userId      用户ID
      */
-    void archiveSession(String sessionCode);
+    void archiveSession(String sessionCode, Long userId);
+
+    /**
+     * 删除会话
+     *
+     * @param sessionCode 会话编码
+     */
+    void deleteSession(String sessionCode, Long userId);
 }

@@ -158,6 +158,15 @@ public class WorkflowAgentPrompts {
             ---
             """.trim();
 
+    public static final String USER_RULES_PROMPT = """
+            ---
+            
+            用户添加了一些自定义的规则，规则如下：
+            %s
+            
+            ---
+            """.trim();
+
     public static final String SERVER_FILE_TOOL_PROMPT = """
             ## Agent服务器文件系统操作规范
             

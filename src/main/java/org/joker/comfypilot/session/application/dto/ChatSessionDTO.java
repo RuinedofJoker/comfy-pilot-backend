@@ -30,14 +30,11 @@ public class ChatSessionDTO extends BaseDTO {
     @Schema(description = "ComfyUI服务ID")
     private Long comfyuiServerId;
 
-    @Schema(description = "会话使用的agent的agentCode")
-    private String agentCode;
-
-    @Schema(description = "会话使用的agent的运行时配置（json格式）")
-    private String agentConfig;
-
     @Schema(description = "会话标题")
     private String title;
+
+    @Schema(description = "Agent Rules")
+    private String rules;
 
     @Schema(description = "会话状态（ACTIVE, ARCHIVED）")
     private String status;

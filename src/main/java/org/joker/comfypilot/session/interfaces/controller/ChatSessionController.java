@@ -81,12 +81,14 @@ public class ChatSessionController {
         return Result.success(messages);
     }
 
-    @Operation(summary = "归档会话", description = "归档指定的会话")
-    @PostMapping("/{sessionCode}/archive")
-    public Result<Void> archiveSession(
+    @Operation(summary = "删除会话", description = "删除会话")
+    @DeleteMapping("/{sessionCode}")
+    public Result<Void> deleteSession(
             @Parameter(description = "会话编码", required = true)
             @PathVariable String sessionCode) {
-        chatSessionService.archiveSession(sessionCode);
+        Long userId = UserContextHolder.getCurrentUserId();
+        chatSessionService.deleteSession(sessionCode, userId);
         return Result.success(null);
     }
+
 }

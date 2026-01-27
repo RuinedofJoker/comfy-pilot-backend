@@ -57,7 +57,7 @@ public class ChatSessionRepositoryImpl implements ChatSessionRepository {
     public List<ChatSession> findByUserId(Long userId) {
         LambdaQueryWrapper<ChatSessionPO> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ChatSessionPO::getUserId, userId)
-                .orderByDesc(ChatSessionPO::getUpdateTime);
+                .orderByDesc(ChatSessionPO::getCreateTime);
         return chatSessionMapper.selectList(wrapper).stream()
                 .map(chatSessionConverter::toDomain)
                 .collect(Collectors.toList());
@@ -70,7 +70,7 @@ public class ChatSessionRepositoryImpl implements ChatSessionRepository {
                 .eq(ChatSessionPO::getUserId, userId)
                 .eq(comfyuiServerId != null, ChatSessionPO::getComfyuiServerId, comfyuiServerId)
                 .eq(ChatSessionPO::getStatus, "ACTIVE")
-                .orderByDesc(ChatSessionPO::getUpdateTime);
+                .orderByDesc(ChatSessionPO::getCreateTime);
         return chatSessionMapper.selectList(wrapper).stream()
                 .map(chatSessionConverter::toDomain)
                 .collect(Collectors.toList());
@@ -85,10 +85,6 @@ public class ChatSessionRepositoryImpl implements ChatSessionRepository {
 
     @Override
     public void deleteById(Long id) {
-        ChatSessionPO po = chatSessionMapper.selectById(id);
-        if (po != null) {
-            po.setIsDeleted(System.currentTimeMillis());
-            chatSessionMapper.updateById(po);
-        }
+        chatSessionMapper.deleteById(id);
     }
 }
