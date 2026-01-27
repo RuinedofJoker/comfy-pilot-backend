@@ -23,7 +23,7 @@ import java.util.List;
  */
 @Slf4j
 @Component
-@ToolSet("")
+@ToolSet
 public class ComfyUIServerTool {
 
     @Autowired
@@ -37,7 +37,7 @@ public class ComfyUIServerTool {
      *
      * @return 系统状态信息的 JSON 字符串
      */
-    @Tool("获取当前用户连接的 ComfyUI 服务器的系统状态，包括版本信息、系统资源使用情况等")
+    @Tool(name = "getSystemStats", value = "获取当前用户连接的 ComfyUI 服务器的系统状态，包括版本信息、系统资源使用情况等")
     public String getSystemStats() {
         AgentExecutionContext executionContext = AgentExecutionContextHolder.get();
         if (executionContext == null) {
@@ -55,7 +55,7 @@ public class ComfyUIServerTool {
      *
      * @return 队列状态信息的 JSON 字符串
      */
-    @Tool("获取当前用户连接的 ComfyUI 服务器的任务队列状态，包括正在运行的任务和等待中的任务")
+    @Tool(name = "getQueueStatus", value = "获取当前用户连接的 ComfyUI 服务器的任务队列状态，包括正在运行的任务和等待中的任务")
     public String getQueueStatus() {
         AgentExecutionContext executionContext = AgentExecutionContextHolder.get();
         if (executionContext == null) {
@@ -73,7 +73,7 @@ public class ComfyUIServerTool {
      *
      * @return 模型文件夹列表的 JSON 字符串
      */
-    @Tool("获取当前用户连接的 ComfyUI 服务器上可用的模型文件夹列表")
+    @Tool(name = "getModelFolders", value = "获取当前用户连接的 ComfyUI 服务器上可用的模型文件夹列表")
     public String getModelFolders() {
         AgentExecutionContext executionContext = AgentExecutionContextHolder.get();
         if (executionContext == null) {
@@ -92,7 +92,7 @@ public class ComfyUIServerTool {
      * @param folder 文件夹名称
      * @return 模型列表的 JSON 字符串
      */
-    @Tool("获取当前用户连接的 ComfyUI 服务器指定文件夹中的模型列表")
+    @Tool(name = "getModels", value = "获取当前用户连接的 ComfyUI 服务器指定文件夹中的模型列表")
     public String getModels(String folder) {
         AgentExecutionContext executionContext = AgentExecutionContextHolder.get();
         if (executionContext == null) {
