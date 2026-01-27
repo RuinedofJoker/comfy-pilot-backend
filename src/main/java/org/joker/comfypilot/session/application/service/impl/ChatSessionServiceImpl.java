@@ -286,13 +286,13 @@ public class ChatSessionServiceImpl implements ChatSessionService {
             executionContext.setSessionCode(sessionCode);
             executionContext.setConnectSessionId(wsContext.getWebSocketSession().getId());
             executionContext.setWebSocketSessionContext(wsContext);
-            executionContext.getAgentScope().put("UserMessage", content);
-            executionContext.getAgentScope().put("UserRules", chatSession.getRules());
 
             // 标记开始执行
             if (!wsContext.startExecution(requestId)) {
                 throw new BusinessException("会话未结束，请稍后再试");
             }
+            executionContext.getAgentScope().put("UserMessage", content);
+            executionContext.getAgentScope().put("UserRules", chatSession.getRules() != null ? chatSession.getRules() : "");
 
             // 替换上下文
             wsContext.getAgentExecutionContext().set(executionContext);

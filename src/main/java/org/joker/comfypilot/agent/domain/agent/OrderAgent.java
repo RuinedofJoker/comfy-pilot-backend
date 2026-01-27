@@ -74,7 +74,7 @@ public class OrderAgent {
                     chatSessionService.saveMessage(helpMessage);
                 }
                 case "/clear" -> {
-                    chatSessionService.deleteSession(executionContext.getSessionCode(), executionContext.getUserId());
+                    chatSessionService.clearSession(executionContext.getSessionCode(), executionContext.getUserId());
                     chatMemoryChatMemoryStore.updateMessages(executionContext.getConnectSessionId(), new ArrayList<>());
                     agentCallback.onPrompt(AgentPromptType.CLEAR, null);
                 }
@@ -85,8 +85,8 @@ public class OrderAgent {
         } catch (Exception e) {
             log.error("OrderAgent执行出错", e);
             agentCallback.onPrompt(AgentPromptType.ERROR, e.getMessage());
-            agentCallback.onPrompt(AgentPromptType.COMPLETE, null);
         }
+        agentCallback.onPrompt(AgentPromptType.COMPLETE, null);
     }
 
     public void summery(AgentExecutionContext executionContext) {
