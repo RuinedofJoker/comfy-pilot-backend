@@ -305,7 +305,6 @@ public class AiModelServiceImpl implements AiModelService {
         }
         try {
             ObjectMapper objectMapper = JacksonConfig.getObjectMapper();
-            objectMapper.findAndRegisterModules();
             return objectMapper.readValue(json, new TypeReference<>() {
             });
         } catch (JsonProcessingException e) {

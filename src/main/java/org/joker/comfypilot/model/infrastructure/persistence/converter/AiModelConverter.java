@@ -90,7 +90,6 @@ public interface AiModelConverter {
         }
         try {
             ObjectMapper objectMapper = JacksonConfig.getObjectMapper();
-            objectMapper.findAndRegisterModules();
             return objectMapper.readValue(json, new TypeReference<>() {
             });
         } catch (JsonProcessingException e) {
@@ -108,7 +107,6 @@ public interface AiModelConverter {
         }
         try {
             ObjectMapper objectMapper = JacksonConfig.getObjectMapper();
-            objectMapper.findAndRegisterModules();
             return objectMapper.writeValueAsString(map);
         } catch (JsonProcessingException e) {
             throw new BusinessException("Failed to deserialize advancedFeatures", e);

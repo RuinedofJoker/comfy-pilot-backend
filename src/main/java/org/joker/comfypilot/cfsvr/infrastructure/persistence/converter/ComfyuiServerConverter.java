@@ -62,7 +62,6 @@ public interface ComfyuiServerConverter {
         }
         try {
             ObjectMapper objectMapper = JacksonConfig.getObjectMapper();
-            objectMapper.findAndRegisterModules();
             return objectMapper.readValue(json, ComfyuiServerAdvancedFeatures.class);
         } catch (JsonProcessingException e) {
             throw new BusinessException("Failed to deserialize advancedFeatures", e);
@@ -76,7 +75,6 @@ public interface ComfyuiServerConverter {
         }
         try {
             ObjectMapper objectMapper = JacksonConfig.getObjectMapper();
-            objectMapper.findAndRegisterModules();
             return objectMapper.writeValueAsString(features);
         } catch (JsonProcessingException e) {
             throw new BusinessException("Failed to serialize advancedFeatures", e);

@@ -53,6 +53,8 @@ public class JacksonConfig {
     public ObjectMapper objectMapper(Jackson2ObjectMapperBuilder builder) {
         ObjectMapper objectMapper = builder.createXmlMapper(false).build();
 
+        objectMapper.findAndRegisterModules();
+
         // 配置 Long 类型序列化为 String
         SimpleModule simpleModule = new SimpleModule();
 
