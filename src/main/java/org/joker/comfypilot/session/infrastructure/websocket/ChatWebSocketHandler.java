@@ -8,6 +8,7 @@ import dev.langchain4j.data.message.*;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.joker.comfypilot.agent.domain.agent.OrderAgent;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContextHolder;
 import org.joker.comfypilot.agent.infrastructure.memory.ChatMemoryChatMemoryStore;
@@ -39,7 +40,6 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -245,9 +245,8 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
      * 处理用户命令
      */
     private void handleUserOrder(WebSocketSession session, WebSocketSessionContext context, WebSocketMessage<?> wsMessage) {
-        Set<String> allowOrders = Set.of("/help", "/clear", "/compact");
         String content = wsMessage.getContent();
-        if (!allowOrders.contains(content)) {
+        if (!OrderAgent.ALLOWED_PROMPTS.contains(content)) {
             sendErrorMessage(session, "命令格式不合法", wsMessage.getSessionCode(), wsMessage.getRequestId());
             return;
         }

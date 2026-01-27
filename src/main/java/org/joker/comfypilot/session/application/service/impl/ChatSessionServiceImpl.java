@@ -3,6 +3,7 @@ package org.joker.comfypilot.session.application.service.impl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
 import org.joker.comfypilot.agent.application.dto.UserAgentConfigDTO;
@@ -18,6 +19,7 @@ import org.joker.comfypilot.session.application.service.ChatSessionService;
 import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
 import org.joker.comfypilot.session.domain.entity.ChatMessage;
 import org.joker.comfypilot.session.domain.entity.ChatSession;
+import org.joker.comfypilot.session.domain.enums.MessageStatus;
 import org.joker.comfypilot.session.domain.enums.SessionStatus;
 import org.joker.comfypilot.session.domain.repository.ChatMessageRepository;
 import org.joker.comfypilot.session.domain.repository.ChatSessionRepository;
@@ -181,7 +183,7 @@ public class ChatSessionServiceImpl implements ChatSessionService {
 
     @Override
     @Transactional
-    public void archiveSession(String sessionCode, Long userId) {
+    public void archiveSession(String sessionCode, Long userId, List<ChatMessageDTO> summeryMessages) {
         log.info("归档会话: sessionCode={}", sessionCode);
 
         ChatSession chatSession = chatSessionRepository.findBySessionCode(sessionCode)
@@ -191,9 +193,10 @@ public class ChatSessionServiceImpl implements ChatSessionService {
             throw new BusinessException("只允许归档用户自己的会话");
         }
 
-        // 调用领域行为归档会话
-        chatSession.archive();
-        chatSessionRepository.updateById(chatSession);
+        chatMessageRepository.archiveBySessionId(chatSession.getId());
+        if (CollectionUtils.isNotEmpty(summeryMessages)) {
+            chatMessageRepository.saveAll(summeryMessages.stream().map(dtoConverter::toMessageEntity).peek(entity -> entity.setStatus(MessageStatus.ACTIVE)).toList());
+        }
 
         log.info("会话已归档: sessionCode={}", sessionCode);
     }
@@ -214,6 +217,30 @@ public class ChatSessionServiceImpl implements ChatSessionService {
         chatSessionRepository.deleteById(chatSession.getId());
 
         log.info("会话已删除: sessionCode={}", sessionCode);
+    }
+
+    @Override
+    public void clearSession(String sessionCode, Long userId) {
+        log.info("清空会话: sessionCode={}", sessionCode);
+
+        ChatSession chatSession = chatSessionRepository.findBySessionCode(sessionCode)
+                .orElseThrow(() -> new BusinessException("会话不存在: " + sessionCode));
+
+        if (!chatSession.getUserId().equals(userId)) {
+            throw new BusinessException("只允许删除用户自己的会话");
+        }
+
+        chatMessageRepository.deleteBySessionId(chatSession.getId());
+
+        log.info("会话已清空: sessionCode={}", sessionCode);
+    }
+
+    @Override
+    public ChatMessageDTO saveMessage(ChatMessageDTO messageDTO) {
+        ChatMessage message = dtoConverter.toMessageEntity(messageDTO);
+        message.setStatus(MessageStatus.ACTIVE);
+        message = chatMessageRepository.save(message);
+        return dtoConverter.toMessageDTO(message);
     }
 
     @Override
@@ -259,6 +286,7 @@ public class ChatSessionServiceImpl implements ChatSessionService {
             executionContext.setSessionCode(sessionCode);
             executionContext.setConnectSessionId(wsContext.getWebSocketSession().getId());
             executionContext.setWebSocketSessionContext(wsContext);
+            executionContext.getAgentScope().put("UserMessage", content);
             executionContext.getAgentScope().put("UserRules", chatSession.getRules());
 
             // 标记开始执行

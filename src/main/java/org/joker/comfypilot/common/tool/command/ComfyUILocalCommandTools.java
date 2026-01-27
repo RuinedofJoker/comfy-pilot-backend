@@ -55,11 +55,11 @@ public class ComfyUILocalCommandTools {
             throw new BusinessException("找不到当前工具执行上下文");
         }
         Map<String, Object> agentScope = executionContext.getAgentScope();
-        if (!Boolean.TRUE.equals(agentScope.get("advancedFeaturesEnabled"))) {
+        if (!Boolean.TRUE.equals(agentScope.get("AdvancedFeaturesEnabled"))) {
             throw new BusinessException("当前未开启ComfyUI高级功能");
         }
 
-        if (agentScope.get("advancedFeatures") == null || !(agentScope.get("advancedFeatures") instanceof ComfyuiServerAdvancedFeaturesDTO advancedFeatures)) {
+        if (agentScope.get("AdvancedFeatures") == null || !(agentScope.get("AdvancedFeatures") instanceof ComfyuiServerAdvancedFeaturesDTO advancedFeatures)) {
             throw new BusinessException("Agent上下文中找不到ComfyUI高级功能对象");
         }
 

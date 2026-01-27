@@ -1,0 +1,149 @@
+package org.joker.comfypilot.agent.domain.agent;
+
+import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.request.ChatRequest;
+import dev.langchain4j.model.chat.request.ToolChoice;
+import dev.langchain4j.model.chat.response.ChatResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.joker.comfypilot.agent.domain.callback.AgentCallback;
+import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
+import org.joker.comfypilot.agent.infrastructure.memory.ChatMemoryChatMemoryStore;
+import org.joker.comfypilot.common.domain.message.PersistableChatMessage;
+import org.joker.comfypilot.common.enums.MessageRole;
+import org.joker.comfypilot.model.domain.service.ChatModelFactory;
+import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
+import org.joker.comfypilot.session.application.service.ChatSessionService;
+import org.joker.comfypilot.session.domain.enums.AgentPromptType;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import java.util.*;
+
+@Component
+@Slf4j
+public class OrderAgent {
+
+    @Autowired
+    private ChatModelFactory chatModelFactory;
+    @Autowired
+    private ChatSessionService chatSessionService;
+    @Autowired
+    private ChatMemoryChatMemoryStore chatMemoryChatMemoryStore;
+
+    public static final Set<String> ALLOWED_PROMPTS = Set.of("/help", "/clear", "/compact");
+
+    private static final String HELP = """
+            这是一个help
+            """.trim();
+
+    /**
+     * 目前命令都是同步执行
+     */
+    public void execute(AgentExecutionContext executionContext) {
+        Map<String, Object> agentScope = executionContext.getAgentScope();
+        String userMessage = agentScope.get("UserMessage").toString();
+
+        AgentCallback agentCallback = executionContext.getAgentCallback();
+        agentCallback.onPrompt(AgentPromptType.STARTED, null);
+
+        try {
+            ChatMessageDTO orderMessage = ChatMessageDTO.builder()
+                    .sessionId(executionContext.getSessionId())
+                    .sessionCode(executionContext.getSessionCode())
+                    .requestId(executionContext.getRequestId())
+                    .role(MessageRole.USER_ORDER.name())
+                    .content(userMessage)
+                    .metadata(new HashMap<>())
+                    .build();
+            chatSessionService.saveMessage(orderMessage);
+
+            switch (userMessage) {
+                case "/help" -> {
+                    agentCallback.onPrompt(AgentPromptType.AGENT_MESSAGE_BLOCK, HELP);
+                    ChatMessageDTO helpMessage = ChatMessageDTO.builder()
+                            .sessionId(executionContext.getSessionId())
+                            .sessionCode(executionContext.getSessionCode())
+                            .requestId(executionContext.getRequestId())
+                            .role(MessageRole.AGENT_MESSAGE.name())
+                            .content(userMessage)
+                            .metadata(new HashMap<>())
+                            .build();
+                    chatSessionService.saveMessage(helpMessage);
+                }
+                case "/clear" -> {
+                    chatSessionService.deleteSession(executionContext.getSessionCode(), executionContext.getUserId());
+                    chatMemoryChatMemoryStore.updateMessages(executionContext.getConnectSessionId(), new ArrayList<>());
+                    agentCallback.onPrompt(AgentPromptType.CLEAR, null);
+                }
+                case "/compact" -> {
+                    summery(executionContext);
+                }
+            }
+        } catch (Exception e) {
+            log.error("OrderAgent执行出错", e);
+            agentCallback.onPrompt(AgentPromptType.ERROR, e.getMessage());
+            agentCallback.onPrompt(AgentPromptType.COMPLETE, null);
+        }
+    }
+
+    public void summery(AgentExecutionContext executionContext) {
+        Map<String, Object> agentScope = executionContext.getAgentScope();
+        AgentCallback agentCallback = executionContext.getAgentCallback();
+        Map<String, Object> agentConfig = (Map<String, Object>) agentScope.get("AgentConfig");
+        agentCallback.onPrompt(AgentPromptType.SUMMARY, null);
+        ChatModel chatModel = chatModelFactory.createChatModel(
+                agentConfig.get("llmModelIdentifier").toString(),
+                agentConfig
+        );
+
+        SystemMessage summerySystemMessage = SystemMessage.from(AgentPrompts.SUMMARY_SYSTEM_PROMPT);
+        agentCallback.addMemoryMessage(summerySystemMessage, null, null);
+        UserMessage summeryUserMessage = UserMessage.from(AgentPrompts.SUMMARY_USER_PROMPT);
+        agentCallback.addMemoryMessage(summeryUserMessage, null, null);
+
+        ChatRequest chatRequest = ChatRequest.builder()
+                .messages(agentCallback.getMemoryMessages())
+                .toolChoice(ToolChoice.NONE)
+                .build();
+
+        ChatResponse chatResponse = chatModel.chat(chatRequest);
+        AiMessage summeryMessage = chatResponse.aiMessage();
+        String summery = summeryMessage.text();
+        agentCallback.onPrompt(AgentPromptType.AGENT_MESSAGE_BLOCK, summery);
+
+        List<ChatMessageDTO> summeryMessageDTOList = List.of(
+                ChatMessageDTO.builder()
+                        .sessionId(executionContext.getSessionId())
+                        .sessionCode(executionContext.getSessionCode())
+                        .requestId(executionContext.getRequestId())
+                        .role(MessageRole.AGENT_PROMPT.name())
+                        .content("")
+                        .chatContent(PersistableChatMessage.toJsonString(summeryUserMessage))
+                        .metadata(new HashMap<>())
+                        .build(),
+                ChatMessageDTO.builder()
+                        .sessionId(executionContext.getSessionId())
+                        .sessionCode(executionContext.getSessionCode())
+                        .requestId(executionContext.getRequestId())
+                        .role(MessageRole.AGENT_MESSAGE.name())
+                        .content(summery)
+                        .metadata(new HashMap<>())
+                        .build(),
+                ChatMessageDTO.builder()
+                        .sessionId(executionContext.getSessionId())
+                        .sessionCode(executionContext.getSessionCode())
+                        .requestId(executionContext.getRequestId())
+                        .role(MessageRole.ASSISTANT_PROMPT.name())
+                        .content("")
+                        .chatContent(PersistableChatMessage.toJsonString(summeryMessage))
+                        .metadata(new HashMap<>())
+                        .build()
+        );
+
+        chatSessionService.archiveSession(executionContext.getSessionCode(), executionContext.getUserId(), summeryMessageDTOList);
+    }
+
+}

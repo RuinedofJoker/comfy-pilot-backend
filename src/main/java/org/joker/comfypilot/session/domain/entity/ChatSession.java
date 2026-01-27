@@ -66,14 +66,6 @@ public class ChatSession extends BaseEntity<Long> {
     private LocalDateTime updateTime;
 
     /**
-     * 领域行为：归档会话
-     */
-    public void archive() {
-        this.status = SessionStatus.ARCHIVED;
-        this.updateTime = LocalDateTime.now();
-    }
-
-    /**
      * 领域行为：更新标题
      */
     public void updateTitle(String newTitle) {

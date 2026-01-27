@@ -29,14 +29,19 @@ public enum MessageRole {
     ASSISTANT("助手"),
 
     /**
+     * AI助手提示词消息，构建消息历史时与ASSISTANT消息一致，页面上不回显
+     */
+    ASSISTANT_PROMPT("助手提示词"),
+
+    /**
      * 工具执行结果消息，在带工具执行的AI助手消息时出现
      */
     TOOL_EXECUTION_RESULT("工具执行结果消息"),
 
     /**
-     * 摘要，不计入模型记忆，只用作页面回显
+     * Agent消息，不计入模型记忆，只用作页面回显
      */
-    SUMMARY("摘要"),
+    AGENT_MESSAGE("Agent消息"),
 
     /**
      * 用户命令，不计入模型记忆，只用作页面回显

@@ -30,9 +30,9 @@ public enum AgentPromptType {
     SUMMARY("生成摘要中", "Agent正在生成摘要..."),
 
     /**
-     * 摘要生成完成
+     * Agent消息块
      */
-    SUMMARY_COMPLETE("摘要完成", "摘要已生成完成"),
+    AGENT_MESSAGE_BLOCK("Agent消息块", "Agent消息块"),
 
     /**
      * 执行开始
@@ -58,6 +58,11 @@ public enum AgentPromptType {
      * Agent计划
      */
     TODO_WRITE("Agent计划", "Agent计划"),
+
+    /**
+     * 清空会话
+     */
+    CLEAR("清空会话", "清空会话"),
     ;
 
     /**

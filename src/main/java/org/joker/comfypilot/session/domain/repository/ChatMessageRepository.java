@@ -19,6 +19,11 @@ public interface ChatMessageRepository {
     ChatMessage save(ChatMessage chatMessage);
 
     /**
+     * 批量保存消息
+     */
+    void saveAll(List<ChatMessage> chatMessages);
+
+    /**
      * 根据ID查询消息
      *
      * @param id 消息ID
@@ -73,4 +78,11 @@ public interface ChatMessageRepository {
      * @param sessionId 会话ID
      */
     void deleteBySessionId(Long sessionId);
+
+    /**
+     * 根据sessionId归档消息
+     *
+     * @param sessionId 会话ID
+     */
+    void archiveBySessionId(Long sessionId);
 }

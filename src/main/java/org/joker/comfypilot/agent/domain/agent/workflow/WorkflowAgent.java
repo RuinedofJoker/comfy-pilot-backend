@@ -14,6 +14,8 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
+import org.joker.comfypilot.agent.domain.agent.AgentPrompts;
+import org.joker.comfypilot.agent.domain.agent.OrderAgent;
 import org.joker.comfypilot.agent.domain.callback.AgentCallback;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.joker.comfypilot.agent.domain.entity.AgentExecutionLog;
@@ -47,12 +49,12 @@ import org.joker.comfypilot.model.domain.enums.ModelCallingType;
 import org.joker.comfypilot.model.domain.service.StreamingChatModelFactory;
 import org.joker.comfypilot.script.context.ScriptRuntimeContext;
 import org.joker.comfypilot.script.tool.PythonScriptTools;
+import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
 import org.joker.comfypilot.session.application.dto.ChatSessionDTO;
 import org.joker.comfypilot.session.application.dto.client2server.UserMessageRequestData;
 import org.joker.comfypilot.session.application.service.ChatSessionService;
 import org.joker.comfypilot.session.domain.enums.AgentPromptType;
 import org.joker.comfypilot.session.domain.enums.MessageStatus;
-import org.joker.comfypilot.session.domain.repository.ChatMessageRepository;
 import org.joker.comfypilot.session.infrastructure.websocket.WebSocketSessionManager;
 import org.joker.comfypilot.tool.domain.service.Tool;
 import org.joker.comfypilot.tool.domain.service.ToolRegistry;
@@ -80,8 +82,6 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
     @Autowired
     private StreamingChatModelFactory streamingChatModelFactory;
     @Autowired
-    private ChatMessageRepository chatMessageRepository;
-    @Autowired
     private AiModelService aiModelService;
     @Autowired
     private ChatSessionService chatSessionService;
@@ -98,6 +98,8 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
     @Autowired
     @Qualifier("workflowAgentOnPromptEventBus")
     private EventBus workflowAgentOnPromptEventBus;
+    @Autowired
+    private OrderAgent orderAgent;
 
     @Override
     public String getAgentCode() {
@@ -158,19 +160,29 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             throw new BusinessException("Agent执行上下文为空");
         }
         if (AgentPromptType.TODO_WRITE.equals(event.getPromptType())) {
-            // 保存用户消息
-            org.joker.comfypilot.session.domain.entity.ChatMessage agentPlanChatMessage = org.joker.comfypilot.session.domain.entity.ChatMessage.builder()
+            ChatMessageDTO agentPlanChatMessage = ChatMessageDTO.builder()
                     .sessionId(executionContext.getSessionId())
                     .sessionCode(executionContext.getSessionCode())
                     .requestId(executionContext.getRequestId())
-                    .role(MessageRole.AGENT_PLAN)
-                    .status(MessageStatus.ACTIVE)
+                    .role(MessageRole.AGENT_PLAN.name())
                     .metadata(new HashMap<>())
                     .content(event.getMessage())
                     .chatContent(null)
                     .build();
-            chatMessageRepository.save(agentPlanChatMessage);
+            chatSessionService.saveMessage(agentPlanChatMessage);
             executionContext.getAgentCallback().onPrompt(AgentPromptType.TODO_WRITE, event.getMessage());
+        } else if (AgentPromptType.AGENT_MESSAGE_BLOCK.equals(event.getPromptType())) {
+            ChatMessageDTO agentMessageChatMessage = ChatMessageDTO.builder()
+                    .sessionId(executionContext.getSessionId())
+                    .sessionCode(executionContext.getSessionCode())
+                    .requestId(executionContext.getRequestId())
+                    .role(MessageRole.AGENT_MESSAGE.name())
+                    .metadata(new HashMap<>())
+                    .content(event.getMessage())
+                    .chatContent(null)
+                    .build();
+            chatSessionService.saveMessage(agentMessageChatMessage);
+            executionContext.getAgentCallback().onPrompt(AgentPromptType.AGENT_MESSAGE_BLOCK, event.getMessage());
         } else {
             throw new BusinessException("不能识别的消息类型");
         }
@@ -180,44 +192,48 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
         AgentCallback agentCallback = executionContext.getAgentCallback();
 
         AgentExecutionRequest request = executionContext.getRequest();
-        String userMessage = request.getUserMessage();
         UserMessageRequestData userMessageData = request.getUserMessageData();
         Map<String, Object> agentConfig = getRuntimeAgentConfig(executionContext);
         Map<String, Object> agentScope = executionContext.getAgentScope();
 
-        AiModelDTO llmModel = aiModelService.getByModelIdentifier((String) agentConfig.get("llmModelIdentifier"));
+        AiModelDTO llmModel = aiModelService.getByModelIdentifier(agentConfig.get("llmModelIdentifier").toString());
         ObjectMapper objectMapper = JacksonConfig.getObjectMapper();
         Map<String, Object> modelConfig = objectMapper.readValue(llmModel.getModelConfig(), new TypeReference<>() {
         });
 
-        agentScope.put("connectSessionId", executionContext.getConnectSessionId());
-        agentScope.put("userId", executionContext.getUserId());
-        agentScope.put("sessionCode", executionContext.getSessionCode());
-        agentScope.put("llmModelConfig", modelConfig);
+        agentScope.put("AgentConfig", agentConfig);
+
+        agentScope.put("ConnectSessionId", executionContext.getConnectSessionId());
+        agentScope.put("UserId", executionContext.getUserId());
+        agentScope.put("SessionCode", executionContext.getSessionCode());
+        agentScope.put("LLMModelConfig", modelConfig);
 
         Integer maxTokens = modelConfig.get("maxTokens") != null ? Integer.parseInt(modelConfig.get("maxTokens").toString()) : 200_000;
         Integer maxMessages = modelConfig.get("maxMessages") != null ? Integer.parseInt(modelConfig.get("maxMessages").toString()) : 500;
 
-        agentScope.put("maxTokens", maxTokens);
-        agentScope.put("maxMessages", maxMessages);
+        agentScope.put("MaxTokens", maxTokens);
+        agentScope.put("MaxMessages", maxMessages);
 
-        // 创建流式聊天模型（工具规范将在调用时通过 ChatRequest 传递）
-        StreamingChatModel streamingModel = streamingChatModelFactory.createStreamingChatModel(
-                (String) agentConfig.get("llmModelIdentifier"),
-                agentConfig
-        );
+        String userMessage = agentScope.get("UserMessage").toString();
 
         if (userMessage.startsWith("/")) {
-            // TODO 命令执行
+            // 命令执行
+
+            orderAgent.execute(executionContext);
         } else {
             // Agent执行
+
+            // 创建流式聊天模型（工具规范将在调用时通过 ChatRequest 传递）
+            StreamingChatModel streamingModel = streamingChatModelFactory.createStreamingChatModel(
+                    agentConfig.get("llmModelIdentifier").toString(),
+                    agentConfig
+            );
 
             ConcurrentLinkedQueue<String> messageIds = new ConcurrentLinkedQueue<>();
 
             // 构建用户消息+Agent提示词
             StringBuilder userMessageBuilder = new StringBuilder();
-            agentScope.put("UserMessage", userMessage);
-            userMessageBuilder.append(WorkflowAgentPrompts.USER_QUERY_START_TOKEN).append(userMessage).append(WorkflowAgentPrompts.USER_QUERY_END_TOKEN);
+            userMessageBuilder.append(AgentPrompts.USER_QUERY_START_TOKEN).append(userMessage).append(AgentPrompts.USER_QUERY_END_TOKEN);
             List<ChatContent> multimodalContents = userMessageData.getMultimodalContents();
 
             // 从 ToolRegistry 获取工具列表
@@ -285,8 +301,8 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             if (Boolean.TRUE.equals(comfyuiServerDTO.getAdvancedFeaturesEnabled()) && comfyuiServerDTO.getAdvancedFeatures() != null) {
                 ComfyuiServerAdvancedFeaturesDTO advancedFeatures = comfyuiServerDTO.getAdvancedFeatures();
 
-                agentScope.put("advancedFeaturesEnabled", true);
-                agentScope.put("advancedFeatures", advancedFeatures);
+                agentScope.put("AdvancedFeaturesEnabled", true);
+                agentScope.put("AdvancedFeatures", advancedFeatures);
                 ComfyuiDirectoryConfigDTO directoryConfig = advancedFeatures.getDirectoryConfig();
 
                 // 添加高级功能的系统提示词
@@ -320,8 +336,6 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             List<Content> userMultimodalContents = new ArrayList<>(CollectionUtils.isNotEmpty(multimodalContents) ? multimodalContents.size() : 0);
 
             if (CollectionUtils.isNotEmpty(multimodalContents)) {
-
-
                 int imageIndex = 0;
                 int videoIndex = 0;
                 int audioIndex = 0;
@@ -386,17 +400,16 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                     userMessageContent
             ), (chatMessage) -> {
                 // 保存用户消息
-                org.joker.comfypilot.session.domain.entity.ChatMessage userChatMessage = org.joker.comfypilot.session.domain.entity.ChatMessage.builder()
+                ChatMessageDTO userChatMessage = ChatMessageDTO.builder()
                         .sessionId(executionContext.getSessionId())
                         .sessionCode(executionContext.getSessionCode())
                         .requestId(executionContext.getRequestId())
-                        .role(userMessage.startsWith("/") ? MessageRole.USER_ORDER : MessageRole.USER)
-                        .status(MessageStatus.ACTIVE)
+                        .role(userMessage.startsWith("/") ? MessageRole.USER_ORDER.name() : MessageRole.USER.name())
                         .metadata(new HashMap<>())
                         .content(userMessage)
                         .chatContent(PersistableChatMessage.toJsonString(chatMessage))
                         .build();
-                userChatMessage = chatMessageRepository.save(userChatMessage);
+                userChatMessage = chatSessionService.saveMessage(userChatMessage);
                 messageIds.add(userChatMessage.getId() + "");
             }, null);
 
@@ -459,18 +472,17 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                     if (streamOutputBuilder.compareAndSet(streamOutput, null)) {
                         // 保存输出到一半的消息
                         if (streamOutput != null && !streamOutput.isEmpty()) {
-                            org.joker.comfypilot.session.domain.entity.ChatMessage dbMessage =
-                                    org.joker.comfypilot.session.domain.entity.ChatMessage.builder()
+                            ChatMessageDTO dbMessage =
+                                    ChatMessageDTO.builder()
                                             .sessionId(event.getContext().getSessionId())
                                             .sessionCode(event.getContext().getSessionCode())
                                             .requestId(event.getContext().getRequestId())
-                                            .role(MessageRole.ASSISTANT)
-                                            .status(MessageStatus.ACTIVE)
+                                            .role(MessageRole.ASSISTANT.name())
                                             .metadata(new HashMap<>())
                                             .content("")
                                             .chatContent(PersistableChatMessage.toJsonString(AiMessage.aiMessage(streamOutput.toString())))
                                             .build();
-                            chatMessageRepository.save(dbMessage);
+                            chatSessionService.saveMessage(dbMessage);
                         }
                     }
                     agentCallback.onInterrupted();
@@ -524,18 +536,17 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                         case ToolExecutionResultMessage toolExecutionResultMessage -> MessageRole.TOOL_EXECUTION_RESULT;
                         default -> throw new BusinessException("未知的消息类型：" + langchainChatMessage.getClass());
                     };
-                    org.joker.comfypilot.session.domain.entity.ChatMessage dbMessage =
-                            org.joker.comfypilot.session.domain.entity.ChatMessage.builder()
+                    ChatMessageDTO dbMessage =
+                            ChatMessageDTO.builder()
                                     .sessionId(event.getContext().getSessionId())
                                     .sessionCode(event.getContext().getSessionCode())
                                     .requestId(event.getContext().getRequestId())
-                                    .role(messageRole)
-                                    .status(MessageStatus.ACTIVE)
+                                    .role(messageRole.name())
                                     .metadata(new HashMap<>())
                                     .content("")
                                     .chatContent(PersistableChatMessage.toJsonString(langchainChatMessage))
                                     .build();
-                    dbMessage = chatMessageRepository.save(dbMessage);
+                    dbMessage = chatSessionService.saveMessage(dbMessage);
                     log.debug("消息已保存到数据库: sessionCode={}, messageType={}, iteration={}",
                             event.getContext().getSessionCode(), event.getMessageType(), event.getIteration());
                     if (messageRole.equals(MessageRole.ASSISTANT)) {

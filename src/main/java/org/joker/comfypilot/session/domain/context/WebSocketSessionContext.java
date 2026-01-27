@@ -5,7 +5,6 @@ import lombok.Data;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**

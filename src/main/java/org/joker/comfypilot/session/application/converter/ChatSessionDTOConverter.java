@@ -3,6 +3,7 @@ package org.joker.comfypilot.session.application.converter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.joker.comfypilot.common.config.JacksonConfig;
+import org.joker.comfypilot.common.enums.MessageRole;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
 import org.joker.comfypilot.session.application.dto.ChatSessionDTO;
@@ -33,6 +34,12 @@ public interface ChatSessionDTOConverter {
     ChatMessageDTO toMessageDTO(ChatMessage entity);
 
     /**
+     * 消息DTO转Entity
+     */
+    @Mapping(target = "role", source = "role", qualifiedByName = "roleStringToEnum")
+    ChatMessage toMessageEntity(ChatMessageDTO dto);
+
+    /**
      * 枚举转字符串
      */
     @Named("enumToString")
@@ -46,6 +53,14 @@ public interface ChatSessionDTOConverter {
     @Named("roleEnumToString")
     default String roleEnumToString(Enum<?> role) {
         return role != null ? role.name() : null;
+    }
+
+    /**
+     * 角色字符串转枚举
+     */
+    @Named("roleStringToEnum")
+    default MessageRole roleStringToEnum(String role) {
+        return MessageRole.valueOf(role);
     }
 
     @Named("mapToString")

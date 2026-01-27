@@ -1,11 +1,8 @@
 package org.joker.comfypilot.agent.domain.agent.workflow;
 
-public class WorkflowAgentPrompts {
+public interface WorkflowAgentPrompts {
 
-    public static final String USER_QUERY_START_TOKEN = "<cp_agent_user_query>";
-    public static final String USER_QUERY_END_TOKEN = "</cp_agent_user_query>";
-
-    public static final String SYSTEM_PROMPT = """
+    String SYSTEM_PROMPT = """
             始终用中文与用户进行交流。
             你是一个ComfyUI使用帮助助手。
             
@@ -160,7 +157,7 @@ public class WorkflowAgentPrompts {
             ---
             """.trim();
 
-    public static final String USER_RULES_PROMPT = """
+    String USER_RULES_PROMPT = """
             ---
             
             用户添加了一些自定义的规则，规则如下：
@@ -169,7 +166,7 @@ public class WorkflowAgentPrompts {
             ---
             """.trim();
 
-    public static final String SERVER_FILE_TOOL_PROMPT = """
+    String SERVER_FILE_TOOL_PROMPT = """
             ## Agent服务器文件系统操作规范
             
             你当前允许使用Agent服务器创建一些脚本文件执行，但是你对Agent服务器上的所有文件操作都必须通过 `createTempDirectory` 工具获取到一个临时目录后，在此临时目录下执行。使用完该目录后你必须通过 `delete` 工具将该目录删除掉。
@@ -179,7 +176,7 @@ public class WorkflowAgentPrompts {
             ---
             """.trim();
 
-    public static final String SERVER_PYTHON_TOOL_PROMPT = """
+    String SERVER_PYTHON_TOOL_PROMPT = """
             ## Agent服务器Python脚本执行规范
             
             你当前允许使用 `pipShow`, `pipInstall`, `executePythonFile` 这三个工具在Agent服务器上执行Python脚本来协助你处理复杂任务。
@@ -195,7 +192,7 @@ public class WorkflowAgentPrompts {
             ---
             """.trim();
 
-    public static final String COMFY_UI_LOCAL_ADVANCED_PROMPT = """
+    String COMFY_UI_LOCAL_ADVANCED_PROMPT = """
             ## ComfyUI服务器本地命令执行规范
             
             你当前允许使用 `executeComfyUILocalCommand` 工具在用户连接的ComfyUI服务器上执行一些终端命令操作。
@@ -216,7 +213,7 @@ public class WorkflowAgentPrompts {
             ---
             """.trim();
 
-    public static final String USER_MULTIMODAL_CONTENT_PROMPT = """
+    String USER_MULTIMODAL_CONTENT_PROMPT = """
             用户消息里包含了 %s %s %s %s 类型的多模态数据文件，你可以使用多模态模型模型工具处理这些多模态数据文件。
             我们使用 `文件类型_该类型的文件传入下标` 组成该文件的唯一索引，你能够使用这个文件唯一索引来获取到该文件，多模态模型模型工具也是接收该文件唯一索引来获取你指定的文件。
             以下是用户传入的文件唯一索引列表：

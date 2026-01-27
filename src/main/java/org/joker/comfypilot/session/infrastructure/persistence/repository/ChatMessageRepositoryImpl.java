@@ -1,6 +1,7 @@
 package org.joker.comfypilot.session.infrastructure.persistence.repository;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.joker.comfypilot.common.enums.MessageRole;
 import org.joker.comfypilot.session.domain.entity.ChatMessage;
@@ -35,6 +36,12 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
     }
 
     @Override
+    public void saveAll(List<ChatMessage> chatMessages) {
+        List<ChatMessagePO> poList = chatMessages.stream().map(chatMessageConverter::toPO).toList();
+        chatMessageMapper.insert(poList);
+    }
+
+    @Override
     public Optional<ChatMessage> findById(Long id) {
         ChatMessagePO po = chatMessageMapper.selectById(id);
         return Optional.ofNullable(po).map(chatMessageConverter::toDomain);
@@ -47,7 +54,7 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
                 .in(ChatMessagePO::getRole, List.of(
                         MessageRole.USER.name(),
                         MessageRole.ASSISTANT.name(),
-                        MessageRole.SUMMARY.name(),
+                        MessageRole.AGENT_MESSAGE.name(),
                         MessageRole.AGENT_PLAN.name(),
                         MessageRole.USER_ORDER.name()
                 ))
@@ -63,9 +70,10 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
         wrapper.eq(ChatMessagePO::getSessionId, sessionId)
                 .in(ChatMessagePO::getRole, List.of(
                         MessageRole.USER.name(),
-                        MessageRole.AGENT_PROMPT.name(),
                         MessageRole.ASSISTANT.name(),
-                        MessageRole.TOOL_EXECUTION_RESULT.name()
+                        MessageRole.TOOL_EXECUTION_RESULT.name(),
+                        MessageRole.AGENT_PROMPT.name(),
+                        MessageRole.ASSISTANT_PROMPT.name()
                 ))
                 .eq(ChatMessagePO::getStatus, MessageStatus.ACTIVE.name())
                 .orderByAsc(ChatMessagePO::getRequestId, ChatMessagePO::getCreateTime);
@@ -107,5 +115,12 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
         LambdaQueryWrapper<ChatMessagePO> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ChatMessagePO::getSessionId, sessionId);
         chatMessageMapper.delete(wrapper);
+    }
+
+    @Override
+    public void archiveBySessionId(Long sessionId) {
+        LambdaUpdateWrapper<ChatMessagePO> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.eq(ChatMessagePO::getSessionId, sessionId).set(ChatMessagePO::getStatus, MessageStatus.ACTIVE.name());
+        chatMessageMapper.update(wrapper);
     }
 }

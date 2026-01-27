@@ -8,7 +8,6 @@ import org.joker.comfypilot.model.domain.service.AbstractModelTemplate;
 import org.joker.comfypilot.model.domain.service.ChatModelFactory;
 import org.joker.comfypilot.model.domain.service.ModelTemplate;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 

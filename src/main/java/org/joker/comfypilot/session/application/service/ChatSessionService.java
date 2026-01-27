@@ -96,7 +96,7 @@ public interface ChatSessionService {
      * @param sessionCode 会话编码
      * @param userId      用户ID
      */
-    void archiveSession(String sessionCode, Long userId);
+    void archiveSession(String sessionCode, Long userId, List<ChatMessageDTO> summeryMessages);
 
     /**
      * 删除会话
@@ -104,4 +104,14 @@ public interface ChatSessionService {
      * @param sessionCode 会话编码
      */
     void deleteSession(String sessionCode, Long userId);
+
+    /**
+     * 清空会话
+     */
+    void clearSession(String sessionCode, Long userId);
+
+    /**
+     * 保存消息
+     */
+    ChatMessageDTO saveMessage(ChatMessageDTO messageDTO);
 }
