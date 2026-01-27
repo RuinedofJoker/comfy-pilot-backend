@@ -78,6 +78,7 @@ public class CommandUtil {
             throws IOException, InterruptedException {
         CommandConfig config = CommandConfig.builder()
                 .command(command)
+                .charset(StandardCharsets.UTF_8)
                 .workingDir(workingDir)
                 .build();
         return execute(config);
@@ -92,11 +93,31 @@ public class CommandUtil {
      * @throws IOException          IO 异常
      * @throws InterruptedException 中断异常
      */
-    public static CommandResult executeWithRealTimeOutput(String command,
-                                                          java.util.function.Consumer<String> outputCallback)
-            throws IOException, InterruptedException {
+    public static CommandResult executeWithRealTimeOutput(
+            String command,
+            Consumer<String> outputCallback
+    ) throws IOException, InterruptedException {
+        return executeWithRealTimeOutput(command, null, outputCallback);
+    }
+
+    /**
+     * 执行命令并实时输出（使用默认配置）
+     *
+     * @param command        命令字符串
+     * @param outputCallback 实时输出回调（每行输出都会调用）
+     * @return 命令执行结果
+     * @throws IOException          IO 异常
+     * @throws InterruptedException 中断异常
+     */
+    public static CommandResult executeWithRealTimeOutput(
+            String command,
+            String workingDir,
+            Consumer<String> outputCallback
+    ) throws IOException, InterruptedException {
         CommandConfig config = CommandConfig.builder()
                 .command(command)
+                .charset(StandardCharsets.UTF_8)
+                .workingDir(workingDir)
                 .outputCallback(outputCallback)
                 .build();
         return execute(config);
@@ -114,7 +135,7 @@ public class CommandUtil {
         log.info("执行命令: {}", config.command);
 
         // 1. 构建命令数组
-        List<String> commandList = buildCommandList(config.command, config.shellType);
+        List<String> commandList = buildCommandList(config.command, config.shellType, config.charset);
 
         // 2. 创建 ProcessBuilder
         ProcessBuilder processBuilder = new ProcessBuilder(commandList);
@@ -200,7 +221,7 @@ public class CommandUtil {
      * @return 命令列表
      */
     private static List<String> buildCommandList(String command) {
-        return buildCommandList(command, ShellType.AUTO);
+        return buildCommandList(command, ShellType.AUTO, null);
     }
 
     /**
@@ -210,7 +231,7 @@ public class CommandUtil {
      * @param shellType 终端类型
      * @return 命令列表
      */
-    private static List<String> buildCommandList(String command, ShellType shellType) {
+    private static List<String> buildCommandList(String command, ShellType shellType, Charset charset) {
         List<String> commandList = new ArrayList<>();
 
         // 如果是自动选择，根据操作系统决定
@@ -233,25 +254,49 @@ public class CommandUtil {
             case POWERSHELL:
                 commandList.add("powershell");
                 commandList.add("-Command");
-                commandList.add(command);
+                // 如果指定了字符编码，在 PowerShell 命令前设置输出编码
+                if (charset != null) {
+                    String encodingPrefix = getPowerShellEncodingPrefix(charset);
+                    commandList.add(encodingPrefix + command);
+                } else {
+                    commandList.add(command);
+                }
                 break;
 
             case CMD:
                 commandList.add("cmd");
                 commandList.add("/c");
-                commandList.add(command);
+                // 如果指定了字符编码，在 CMD 命令前设置代码页
+                if (charset != null) {
+                    String chcpPrefix = getCmdCodePagePrefix(charset);
+                    commandList.add(chcpPrefix + command);
+                } else {
+                    commandList.add(command);
+                }
                 break;
 
             case BASH:
                 commandList.add("bash");
                 commandList.add("-c");
-                commandList.add(command);
+                // 如果指定了字符编码，在 Bash 命令前设置 LANG 环境变量
+                if (charset != null) {
+                    String langPrefix = getBashLangPrefix(charset);
+                    commandList.add(langPrefix + command);
+                } else {
+                    commandList.add(command);
+                }
                 break;
 
             case SH:
                 commandList.add("sh");
                 commandList.add("-c");
-                commandList.add(command);
+                // 如果指定了字符编码，在 Sh 命令前设置 LANG 环境变量
+                if (charset != null) {
+                    String langPrefix = getBashLangPrefix(charset);
+                    commandList.add(langPrefix + command);
+                } else {
+                    commandList.add(command);
+                }
                 break;
 
             default:
@@ -259,6 +304,106 @@ public class CommandUtil {
         }
 
         return commandList;
+    }
+
+    /**
+     * 获取 PowerShell 编码设置前缀
+     * 根据指定的字符编码生成 PowerShell 编码设置命令
+     *
+     * @param charset 字符编码
+     * @return PowerShell 编码设置命令前缀
+     */
+    private static String getPowerShellEncodingPrefix(Charset charset) {
+        String encodingName;
+
+        if (charset.equals(StandardCharsets.UTF_8)) {
+            encodingName = "UTF8";
+        } else if (charset.equals(StandardCharsets.UTF_16)) {
+            encodingName = "Unicode";
+        } else if (charset.equals(StandardCharsets.UTF_16BE)) {
+            encodingName = "BigEndianUnicode";
+        } else if (charset.equals(StandardCharsets.UTF_16LE)) {
+            encodingName = "Unicode";
+        } else if (charset.equals(StandardCharsets.US_ASCII)) {
+            encodingName = "ASCII";
+        } else if (charset.equals(StandardCharsets.ISO_8859_1)) {
+            encodingName = "Latin1";
+        } else if (charset.name().equalsIgnoreCase("GBK")) {
+            encodingName = "Default";  // GBK 使用系统默认编码
+        } else {
+            // 其他编码尝试使用编码名称
+            encodingName = charset.name();
+        }
+
+        return "[Console]::OutputEncoding = [System.Text.Encoding]::" + encodingName + "; ";
+    }
+
+    /**
+     * 获取 CMD 代码页设置前缀
+     * 根据指定的字符编码生成 CMD chcp 命令
+     *
+     * @param charset 字符编码
+     * @return CMD 代码页设置命令前缀
+     */
+    private static String getCmdCodePagePrefix(Charset charset) {
+        int codePage;
+
+        if (charset.equals(StandardCharsets.UTF_8)) {
+            codePage = 65001;  // UTF-8
+        } else if (charset.equals(StandardCharsets.US_ASCII)) {
+            codePage = 20127;  // US-ASCII
+        } else if (charset.equals(StandardCharsets.ISO_8859_1)) {
+            codePage = 28591;  // ISO-8859-1
+        } else if (charset.name().equalsIgnoreCase("GBK")) {
+            codePage = 936;    // GBK/GB2312
+        } else if (charset.name().equalsIgnoreCase("GB2312")) {
+            codePage = 936;    // GB2312
+        } else if (charset.name().equalsIgnoreCase("Big5")) {
+            codePage = 950;    // Big5
+        } else if (charset.name().equalsIgnoreCase("Shift_JIS")) {
+            codePage = 932;    // Shift_JIS
+        } else if (charset.name().equalsIgnoreCase("EUC-KR")) {
+            codePage = 949;    // EUC-KR
+        } else {
+            // 默认使用 UTF-8
+            codePage = 65001;
+        }
+
+        return "chcp " + codePage + " >nul && ";
+    }
+
+    /**
+     * 获取 Bash/Sh LANG 环境变量设置前缀
+     * 根据指定的字符编码生成 LANG 环境变量设置命令
+     *
+     * @param charset 字符编码
+     * @return Bash LANG 环境变量设置命令前缀
+     */
+    private static String getBashLangPrefix(Charset charset) {
+        String langValue;
+
+        if (charset.equals(StandardCharsets.UTF_8)) {
+            langValue = "en_US.UTF-8";
+        } else if (charset.equals(StandardCharsets.US_ASCII)) {
+            langValue = "C";
+        } else if (charset.equals(StandardCharsets.ISO_8859_1)) {
+            langValue = "en_US.ISO-8859-1";
+        } else if (charset.name().equalsIgnoreCase("GBK")) {
+            langValue = "zh_CN.GBK";
+        } else if (charset.name().equalsIgnoreCase("GB2312")) {
+            langValue = "zh_CN.GB2312";
+        } else if (charset.name().equalsIgnoreCase("Big5")) {
+            langValue = "zh_TW.Big5";
+        } else if (charset.name().equalsIgnoreCase("Shift_JIS")) {
+            langValue = "ja_JP.SJIS";
+        } else if (charset.name().equalsIgnoreCase("EUC-KR")) {
+            langValue = "ko_KR.EUC-KR";
+        } else {
+            // 默认使用 UTF-8
+            langValue = "en_US.UTF-8";
+        }
+
+        return "export LANG=" + langValue + "; export LC_ALL=" + langValue + "; ";
     }
 
     /**

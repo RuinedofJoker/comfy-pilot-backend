@@ -40,8 +40,13 @@ public class SshConnectionConfig implements Serializable {
     private String authType;
 
     /**
-     * SSH密码（加密存储）
+     * SSH密码
      */
     private String password;
+
+    /**
+     * SSH私钥路径
+     */
+    private String privateKeyPath;
 
 }

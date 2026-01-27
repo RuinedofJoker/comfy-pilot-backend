@@ -22,15 +22,18 @@ import org.joker.comfypilot.agent.domain.service.AgentConfigDefinition;
 import org.joker.comfypilot.agent.domain.toolcall.ToolCallWaitManager;
 import org.joker.comfypilot.agent.infrastructure.tool.StatusUpdateTool;
 import org.joker.comfypilot.agent.infrastructure.tool.TodoWriteTool;
+import org.joker.comfypilot.cfsvr.application.dto.ComfyuiDirectoryConfigDTO;
 import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerAdvancedFeaturesDTO;
 import org.joker.comfypilot.cfsvr.application.dto.ComfyuiServerDTO;
 import org.joker.comfypilot.cfsvr.application.service.ComfyuiServerService;
 import org.joker.comfypilot.cfsvr.application.tool.ComfyUIServerTool;
+import org.joker.comfypilot.cfsvr.domain.enums.ConnectionType;
 import org.joker.comfypilot.common.config.JacksonConfig;
 import org.joker.comfypilot.common.domain.content.*;
 import org.joker.comfypilot.common.domain.message.PersistableChatMessage;
 import org.joker.comfypilot.common.enums.MessageRole;
 import org.joker.comfypilot.common.exception.BusinessException;
+import org.joker.comfypilot.common.tool.command.ComfyUILocalCommandTools;
 import org.joker.comfypilot.common.tool.filesystem.ServerFileSystemTools;
 import org.joker.comfypilot.common.util.TraceIdUtil;
 import org.joker.comfypilot.model.application.dto.AiModelDTO;
@@ -148,6 +151,11 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
         Map<String, Object> modelConfig = objectMapper.readValue(llmModel.getModelConfig(), new TypeReference<>() {
         });
 
+        agentScope.put("connectSessionId", executionContext.getConnectSessionId());
+        agentScope.put("userId", executionContext.getUserId());
+        agentScope.put("sessionCode", executionContext.getSessionCode());
+        agentScope.put("llmModelConfig", modelConfig);
+
         Integer maxTokens = modelConfig.get("maxTokens") != null ? Integer.parseInt(modelConfig.get("maxTokens").toString()) : 200_000;
         Integer maxMessages = modelConfig.get("maxMessages") != null ? Integer.parseInt(modelConfig.get("maxMessages").toString()) : 500;
 
@@ -237,8 +245,34 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             if (Boolean.TRUE.equals(comfyuiServerDTO.getAdvancedFeaturesEnabled()) && comfyuiServerDTO.getAdvancedFeatures() != null) {
                 ComfyuiServerAdvancedFeaturesDTO advancedFeatures = comfyuiServerDTO.getAdvancedFeatures();
 
+                agentScope.put("advancedFeaturesEnabled", true);
+                agentScope.put("advancedFeatures", advancedFeatures);
+                ComfyuiDirectoryConfigDTO directoryConfig = advancedFeatures.getDirectoryConfig();
+
                 // 添加高级功能的系统提示词
                 StringBuilder systemMessageBuilder = new StringBuilder(agentScope.get("SystemPrompt").toString()).append("\n");
+
+                if (ConnectionType.LOCAL.getCode().equals(advancedFeatures.getConnectionType())) {
+                    List<Tool> comfyUILocalCommandTools = toolRegistry.getToolsByClass(ComfyUILocalCommandTools.class);
+                    for (Tool comfyUILocalCommandTool : comfyUILocalCommandTools) {
+                        if (executionContext.getClientToolNames().contains(comfyUILocalCommandTool.toolName())) {
+                            throw new BusinessException("客户端工具" + comfyUILocalCommandTool.toolName() + "与服务内部工具重名");
+                        }
+                    }
+                    toolSpecs.addAll(comfyUILocalCommandTools.stream().map(Tool::toolSpecification).toList());
+
+                    systemMessageBuilder.append(WorkflowAgentPrompts.COMFY_UI_LOCAL_ADVANCED_PROMPT
+                                    .formatted(
+                                            advancedFeatures.getOsType(),
+                                            advancedFeatures.getWorkingDirectory(),
+                                            advancedFeatures.getPythonCommand(),
+                                            directoryConfig != null ? directoryConfig.getComfyuiInstallPath() : null,
+                                            directoryConfig != null ? directoryConfig.getComfyuiStartupPath() : null
+                                    )).append("\n");
+                } else {
+
+                }
+
                 agentScope.put("SystemPrompt", systemMessageBuilder.toString());
             }
 

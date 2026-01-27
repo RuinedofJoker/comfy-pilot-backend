@@ -23,24 +23,7 @@ public class ComfyuiDirectoryConfigDTO implements Serializable {
     @Schema(description = "ComfyUI安装目录路径")
     private String comfyuiInstallPath;
 
-    @Schema(description = "基础目录路径（--base-directory）")
-    private String baseDirectory;
+    @Schema(description = "ComfyUI启动脚本路径")
+    private String comfyuiStartupPath;
 
-    @Schema(description = "输出目录路径（--output-directory）")
-    private String outputDirectory;
-
-    @Schema(description = "临时目录路径（--temp-directory）")
-    private String tempDirectory;
-
-    @Schema(description = "输入目录路径（--input-directory）")
-    private String inputDirectory;
-
-    @Schema(description = "用户目录路径（--user-directory）")
-    private String userDirectory;
-
-    @Schema(description = "前端根目录路径（--front-end-root）")
-    private String frontEndRoot;
-
-    @Schema(description = "额外模型路径配置文件列表（--extra-model-paths-config）")
-    private String extraModelPathsConfig;
 }

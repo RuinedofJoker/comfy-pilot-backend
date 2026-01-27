@@ -167,11 +167,33 @@ public class WorkflowAgentPrompts {
             ## Agent服务器Python脚本执行规范
             
             你当前允许使用 `pipShow`, `pipInstall`, `executePythonFile` 这三个工具在Agent服务器上执行Python脚本来协助你处理复杂任务。
-            如果需要对Agent服务器上的文件系统操作，你必须参考 `Agent服务器文件系统操作规范` 。如果需要创建python脚本文件执行，你必须使用 `createTempDirectory` 工具创建临时目录并将所有的脚本放在临时目录里。当你操作完成后你必须通过`delete` 工具删除临时目录。
+            如果需要对Agent服务器上的文件系统操作，你必须参考 `Agent服务器文件系统操作规范` 。如果需要创建python脚本文件执行，你必须使用 `createTempDirectory` 工具创建临时目录并将所有的脚本放在临时目录里。
             你应该尽量少使用python脚本来解决任务，除非其他方式解决不了或使用python脚本能大幅度增加你解决问题的效率。
             如果你遇到因为没有安装的依赖导致脚本执行报错，你可以使用 `pipShow` 工具确认依赖和查看版本，并使用 `pipInstall` 工具安装依赖。
+            你可以在会话里临时保留该临时目录，直到你认为你短期不需要执行Python脚本了再通过 `delete` 工具删除临时目录。
+            当你遇到Python脚本执行报错或结果不符合你预期时你应该试着去修改脚本内容，但是不要让脚本内容偏离了你最初的目的，当你有新的想法或需要大改脚本内容时你应该创建一个新的脚本文件。
+            不要使用Python脚本执行危险的操作，如批量删除目录和文件，修改或删除你不知道影响范围的目录或文件等。
             
             你可以使用python脚本来实现网站搜索或获取网页内容的功能。
+            """.trim();
+
+    public static final String COMFY_UI_LOCAL_ADVANCED_PROMPT = """
+            ## ComfyUI服务器本地命令执行规范
+            
+            你当前允许使用 `executeComfyUILocalCommand` 工具在用户连接的ComfyUI服务器上执行一些终端命令操作。
+            用户认为该ComfyUI服务器所用操作系统为 `%s`。
+            如果你需要执行终端命令，你应该首先使用 `executeComfyUILocalCommand` 工具执行两条测试命令，来完全确认当前的操作系统类型和终端类型，以及当前连接到终端后的默认目录，后续的命令必须符合你刚刚查询到的操作系统类型和终端类型的格式。
+            命令默认是使用UTF8的编码执行和输出的。
+            用户指定了你接下来工作环境的几个重要路径：
+            1. 当前工作目录路径 `%s`
+            2. 运行ComfyUI使用的 Python 命令路径路径 `%s`
+            3. ComfyUI安装目录路径 `%s`
+            4. ComfyUI启动脚本路径 `%s`
+            
+            上面的当前工作目录路径如果没有指定，则使用连接到终端后的默认目录作为当前工作目录。
+            运行ComfyUI使用的 Python 命令路径路径和ComfyUI安装目录路径等其他路径可能为空/null或路径对应的目录或文件不存在，这种情况下你应该与用户确认他的意图，看看他是想要你帮忙安装Python/ComfyUI还是想干什么。
+            
+            你可以使用 `/user-python-path/python -s /user-comfyui-path/main.py -h` 来查看ComfyUI启动命令和一些启动参数信息，其中就包括了ComfyUI内一些目录位置的配置。
             """.trim();
 
 }

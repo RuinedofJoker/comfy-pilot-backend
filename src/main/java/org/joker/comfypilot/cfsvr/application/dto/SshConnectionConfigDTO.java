@@ -35,4 +35,6 @@ public class SshConnectionConfigDTO implements Serializable {
     @Schema(description = "SSH密码（加密存储）")
     private String password;
 
+    @Schema(description = "SSH私钥路径")
+    private String privateKeyPath;
 }
