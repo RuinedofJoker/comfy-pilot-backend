@@ -39,19 +39,14 @@ public class ChatSessionPO extends BasePO {
     private Long comfyuiServerId;
 
     /**
-     * 会话使用的agent的agentCode
-     */
-    private String agentCode;
-
-    /**
-     * 会话使用的agent的运行时配置（json格式）
-     */
-    private String agentConfig;
-
-    /**
      * 会话标题
      */
     private String title;
+
+    /**
+     * 会话规则
+     */
+    private String rules;
 
     /**
      * 会话状态（ACTIVE, CLOSED）

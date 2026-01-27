@@ -1,7 +1,6 @@
 package org.joker.comfypilot.session.application.converter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.joker.comfypilot.common.config.JacksonConfig;
 import org.joker.comfypilot.common.exception.BusinessException;
@@ -25,7 +24,6 @@ public interface ChatSessionDTOConverter {
      * Entity转DTO
      */
     @Mapping(target = "status", source = "status", qualifiedByName = "enumToString")
-    @Mapping(target = "agentConfig", source = "agentConfig", qualifiedByName = "mapToString")
     ChatSessionDTO toDTO(ChatSession entity);
 
     /**

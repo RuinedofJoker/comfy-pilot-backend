@@ -25,6 +25,12 @@ public class UserMessageRequestData implements ClientToServerMessage {
     private static final long serialVersionUID = 1L;
 
     /**
+     * 用户使用的Agent的AgentCode
+     */
+    @Schema(description = "用户使用的Agent的AgentCode")
+    private String agentCode;
+
+    /**
      * 客户端MCP工具列表
      */
     @Schema(description = "客户端工具schema列表")

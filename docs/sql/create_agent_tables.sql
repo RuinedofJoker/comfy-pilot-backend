@@ -62,3 +62,29 @@ CREATE INDEX idx_agent_execution_log_is_deleted ON agent_execution_log(is_delete
 
 -- 添加注释
 COMMENT ON TABLE agent_execution_log IS 'Agent执行日志表';
+
+-- =====================================================
+-- 3. user_agent_config - 用户Agent配置表
+-- =====================================================
+CREATE TABLE IF NOT EXISTS user_agent_config (
+    id BIGINT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    agent_code VARCHAR(50) NOT NULL,
+    agent_config TEXT,
+    is_deleted BIGINT NOT NULL DEFAULT 0,
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    create_by BIGINT,
+    update_by BIGINT
+);
+
+-- 创建唯一索引
+CREATE UNIQUE INDEX uk_user_agent ON user_agent_config(user_id, agent_code, is_deleted);
+
+-- 创建普通索引
+CREATE INDEX idx_user_agent_config_user_id ON user_agent_config(user_id);
+CREATE INDEX idx_user_agent_config_agent_code ON user_agent_config(agent_code);
+CREATE INDEX idx_user_agent_config_is_deleted ON user_agent_config(is_deleted);
+
+-- 添加注释
+COMMENT ON TABLE user_agent_config IS '用户Agent配置表';

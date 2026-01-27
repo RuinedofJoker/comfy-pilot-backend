@@ -53,6 +53,11 @@ public enum AgentPromptType {
      * 执行完成
      */
     COMPLETE("执行完成", "执行完成"),
+
+    /**
+     *
+     */
+    TODO_WRITE("", ""),
     ;
 
     /**

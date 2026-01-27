@@ -1,10 +1,11 @@
 package org.joker.comfypilot.session.application.service.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.joker.comfypilot.agent.application.dto.AgentConfigDTO;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
+import org.joker.comfypilot.agent.application.dto.UserAgentConfigDTO;
 import org.joker.comfypilot.agent.application.executor.AgentExecutor;
 import org.joker.comfypilot.agent.application.service.AgentConfigService;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
@@ -66,16 +67,13 @@ public class ChatSessionServiceImpl implements ChatSessionService {
         // 生成会话编码
         String sessionCode = "session_" + UUID.randomUUID().toString().replace("-", "");
 
-        AgentConfigDTO agent = agentConfigService.getAgentByCode(request.getAgentCode());
-
         // 创建会话实体
         ChatSession chatSession = ChatSession.builder()
                 .sessionCode(sessionCode)
                 .userId(userId)
                 .comfyuiServerId(request.getComfyuiServerId())
-                .agentCode(request.getAgentCode())
-                .agentConfig(getAgentConfig(agent, request.getAgentConfig()))
                 .title(StringUtils.isNotBlank(request.getTitle()) ? request.getTitle() : "新会话")
+                .rules(request.getRules())
                 .status(SessionStatus.ACTIVE)
                 .build();
 
@@ -97,14 +95,11 @@ public class ChatSessionServiceImpl implements ChatSessionService {
             throw new BusinessException("当前会话不属于该用户，无法编辑");
         }
 
-        AgentConfigDTO agent = agentConfigService.getAgentByCode(request.getAgentCode());
-
         // 创建会话实体
         ChatSession chatSession = ChatSession.builder()
                 .id(chatSessionDTO.getId())
-                .agentCode(request.getAgentCode())
-                .agentConfig(getAgentConfig(agent, request.getAgentConfig()))
                 .title(StringUtils.isNotBlank(request.getTitle()) ? request.getTitle() : chatSessionDTO.getTitle())
+                .rules(request.getRules())
                 .build();
 
         // 保存会话
@@ -221,6 +216,10 @@ public class ChatSessionServiceImpl implements ChatSessionService {
                 throw new BusinessException("会话已关闭,无法发送消息");
             }
 
+            String agentCode = userRequestWsMessageData.getAgentCode();
+            UserAgentConfigDTO userAgentConfig = agentConfigService.getUserAgentConfig(wsContext.getUserId(), agentCode);
+            Map<String, Object> agentConfig = objectMapper.readValue(userAgentConfig.getAgentConfig(), new TypeReference<>() {});
+
             // 构建Agent执行请求
             AgentExecutionRequest agentRequest = AgentExecutionRequest.builder()
                     .sessionId(chatSession.getId())
@@ -229,15 +228,16 @@ public class ChatSessionServiceImpl implements ChatSessionService {
                     .userMessageData(userRequestWsMessageData)
                     .toolSchemas(userRequestWsMessageData.getToolSchemas())
                     .userMessage(content)
-                    .agentConfig(chatSession.getAgentConfig())
+                    .agentConfig(agentConfig)
                     .isStreamable(true)
                     .build();
 
             // 获取Agent执行上下文（直接使用传入的agentCode）
-            AgentExecutionContext executionContext = agentExecutor.getExecutionContext(chatSession.getAgentCode(), agentRequest);
+            AgentExecutionContext executionContext = agentExecutor.getExecutionContext(agentCode, agentRequest);
             executionContext.setSessionCode(sessionCode);
             executionContext.setConnectSessionId(wsContext.getWebSocketSession().getId());
             executionContext.setWebSocketSessionContext(wsContext);
+            executionContext.getAgentScope().put("UserRules", chatSession.getRules());
 
             // 标记开始执行
             if (!wsContext.startExecution(requestId)) {
@@ -266,8 +266,4 @@ public class ChatSessionServiceImpl implements ChatSessionService {
         }
     }
 
-    private Map<String, Object> getAgentConfig(AgentConfigDTO agent, String agentConfigJson) {
-        // 调用 AgentConfigService 的校验+转换方法
-        return agentConfigService.validateAndParseAgentConfig(agent, agentConfigJson);
-    }
 }

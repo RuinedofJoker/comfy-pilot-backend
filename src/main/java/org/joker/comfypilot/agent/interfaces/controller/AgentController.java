@@ -5,7 +5,9 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.joker.comfypilot.agent.application.dto.AgentConfigDTO;
 import org.joker.comfypilot.agent.application.dto.AgentRuntimeConfigDTO;
+import org.joker.comfypilot.agent.application.dto.UserAgentConfigDTO;
 import org.joker.comfypilot.agent.application.service.AgentConfigService;
+import org.joker.comfypilot.auth.infrastructure.context.UserContextHolder;
 import org.joker.comfypilot.common.interfaces.response.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -71,6 +73,22 @@ public class AgentController {
             @PathVariable Long id) {
         agentConfigService.disableAgent(id);
         return Result.success();
+    }
+
+    @Operation(summary = "运行时获取用户所有的Agent配置", description = "运行时获取用户所有的Agent配置")
+    @GetMapping("/runtime/getUserAgentConfigs")
+    public Result<List<UserAgentConfigDTO>> getUserAgentConfigs() {
+        Long userId = UserContextHolder.getCurrentUserId();
+        List<UserAgentConfigDTO> userAgentConfigs = agentConfigService.getUserAgentConfigs(userId);
+        return Result.success(userAgentConfigs);
+    }
+
+    @Operation(summary = "运行时更新用户Agent配置", description = "运行时更新用户Agent配置")
+    @PostMapping("/runtime/updateUserAgentConfig")
+    public Result<UserAgentConfigDTO> updateUserAgentConfig(UserAgentConfigDTO userAgentConfigDTO) {
+        Long userId = UserContextHolder.getCurrentUserId();
+        userAgentConfigDTO = agentConfigService.saveOrUpdateUserAgentConfig(userAgentConfigDTO, userId);
+        return Result.success(userAgentConfigDTO);
     }
 
 }

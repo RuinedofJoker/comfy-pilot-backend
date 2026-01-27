@@ -1,13 +1,12 @@
-package org.joker.comfypilot.session.infrastructure.persistence.converter;
+package org.joker.comfypilot.agent.infrastructure.persistence.converter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.joker.comfypilot.agent.domain.entity.UserAgentConfig;
+import org.joker.comfypilot.agent.infrastructure.persistence.po.UserAgentConfigPO;
 import org.joker.comfypilot.common.config.JacksonConfig;
 import org.joker.comfypilot.common.exception.BusinessException;
-import org.joker.comfypilot.session.domain.entity.ChatSession;
-import org.joker.comfypilot.session.domain.enums.SessionStatus;
-import org.joker.comfypilot.session.infrastructure.persistence.po.ChatSessionPO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -15,38 +14,22 @@ import org.mapstruct.Named;
 import java.util.Map;
 
 /**
- * 会话 PO 转换器
+ * 用户Agent配置转换器（PO ↔ Entity）
  */
 @Mapper(componentModel = "spring")
-public interface ChatSessionConverter {
+public interface UserAgentConfigConverter {
 
     /**
      * PO转领域实体
      */
-    @Mapping(target = "status", source = "status", qualifiedByName = "stringToEnum")
-    ChatSession toDomain(ChatSessionPO po);
+    @Mapping(target = "agentConfig", source = "agentConfig", qualifiedByName = "stringToMap")
+    UserAgentConfig toDomain(UserAgentConfigPO po);
 
     /**
      * 领域实体转PO
      */
-    @Mapping(target = "status", source = "status", qualifiedByName = "enumToString")
-    ChatSessionPO toPO(ChatSession domain);
-
-    /**
-     * 字符串转枚举
-     */
-    @Named("stringToEnum")
-    default SessionStatus stringToEnum(String value) {
-        return value != null ? SessionStatus.valueOf(value) : null;
-    }
-
-    /**
-     * 枚举转字符串
-     */
-    @Named("enumToString")
-    default String enumToString(SessionStatus status) {
-        return status != null ? status.name() : null;
-    }
+    @Mapping(target = "agentConfig", source = "agentConfig", qualifiedByName = "mapToString")
+    UserAgentConfigPO toPO(UserAgentConfig domain);
 
     @Named("stringToMap")
     default Map<String, Object> stringToMap(String json) {

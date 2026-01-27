@@ -23,9 +23,7 @@ public class UpdateSessionRequest implements Serializable {
     @Schema(description = "会话标题")
     private String title;
 
-    @Schema(description = "会话使用的agent的agentCode")
-    private String agentCode;
+    @Schema(description = "会话规则")
+    private String rules;
 
-    @Schema(description = "会话使用的agent的运行时配置（json格式）")
-    private String agentConfig;
 }

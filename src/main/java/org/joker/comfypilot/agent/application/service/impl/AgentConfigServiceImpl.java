@@ -5,12 +5,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.agent.application.converter.AgentConfigDTOConverter;
 import org.joker.comfypilot.agent.application.converter.AgentRuntimeConfigDTOConverter;
+import org.joker.comfypilot.agent.application.converter.UserAgentConfigDTOConverter;
 import org.joker.comfypilot.agent.application.dto.AgentConfigDTO;
 import org.joker.comfypilot.agent.application.dto.AgentRuntimeConfigDTO;
+import org.joker.comfypilot.agent.application.dto.UserAgentConfigDTO;
 import org.joker.comfypilot.agent.application.service.AgentConfigService;
 import org.joker.comfypilot.agent.domain.entity.AgentConfig;
+import org.joker.comfypilot.agent.domain.entity.UserAgentConfig;
 import org.joker.comfypilot.agent.domain.enums.AgentConfigType;
 import org.joker.comfypilot.agent.domain.repository.AgentConfigRepository;
+import org.joker.comfypilot.agent.domain.repository.UserAgentConfigRepository;
 import org.joker.comfypilot.agent.domain.service.Agent;
 import org.joker.comfypilot.agent.domain.service.AgentConfigDefinition;
 import org.joker.comfypilot.agent.domain.service.AgentRegistry;
@@ -37,9 +41,13 @@ public class AgentConfigServiceImpl implements AgentConfigService {
     @Autowired
     private AgentConfigRepository agentConfigRepository;
     @Autowired
+    private UserAgentConfigRepository userAgentConfigRepository;
+    @Autowired
     private AgentConfigDTOConverter dtoConverter;
     @Autowired
     private AgentRuntimeConfigDTOConverter runtimeDTOConverter;
+    @Autowired
+    private UserAgentConfigDTOConverter userAgentConfigDTOConverter;
     @Autowired
     private AgentRegistry agentRegistry;
     @Autowired
@@ -156,6 +164,49 @@ public class AgentConfigServiceImpl implements AgentConfigService {
         }
 
         return configMap;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public UserAgentConfigDTO saveOrUpdateUserAgentConfig(UserAgentConfigDTO userAgentConfigDTO, Long userId) {
+        String agentCode = userAgentConfigDTO.getAgentCode();
+        AgentConfigDTO agent = getAgentByCode(agentCode);
+        Map<String, Object> userAgentConfigMap = validateAndParseAgentConfig(agent, userAgentConfigDTO.getAgentConfig());
+        Long dbId = userAgentConfigRepository.findByUserIdAndAgentCode(userId, agentCode).map(UserAgentConfig::getId).orElse(null);
+        UserAgentConfig userAgentConfig = UserAgentConfig.builder()
+                .id(dbId)
+                .agentCode(agentCode)
+                .userId(userId)
+                .agentConfig(userAgentConfigMap)
+                .build();
+        userAgentConfig = userAgentConfigRepository.saveOrUpdate(userAgentConfig);
+        return userAgentConfigDTOConverter.toDTO(userAgentConfig);
+    }
+
+    @Override
+    public UserAgentConfigDTO getUserAgentConfig(Long userId, String agentCode) {
+        UserAgentConfig userAgentConfig = userAgentConfigRepository.findByUserIdAndAgentCode(userId, agentCode)
+                .orElseThrow(() -> new BusinessException("用户未配置该Agent"));
+        return userAgentConfigDTOConverter.toDTO(userAgentConfig);
+    }
+
+    @Override
+    public List<UserAgentConfigDTO> getUserAgentConfigs(Long userId) {
+        List<AgentRuntimeConfigDTO> enabledRuntimeAgents = getEnabledRuntimeAgents();
+        Map<String, AgentRuntimeConfigDTO> enabledRuntimeAgentMap = enabledRuntimeAgents.stream().collect(Collectors.toMap(AgentRuntimeConfigDTO::getAgentCode, it -> it));
+        List<UserAgentConfig> userAgentConfigs = userAgentConfigRepository.findByUserId(userId);
+        Map<String, UserAgentConfig> userAgentConfigMap = userAgentConfigs.stream().filter(it -> enabledRuntimeAgentMap.containsKey(it.getAgentCode())).collect(Collectors.toMap(UserAgentConfig::getAgentCode, it -> it));
+        for (AgentRuntimeConfigDTO enabledRuntimeAgent : enabledRuntimeAgents) {
+            if (!userAgentConfigMap.containsKey(enabledRuntimeAgent.getAgentCode())) {
+                UserAgentConfig userAgentConfig = UserAgentConfig.builder()
+                        .userId(userId)
+                        .agentCode(enabledRuntimeAgent.getAgentCode())
+                        .agentConfig(new HashMap<>())
+                        .build();
+                userAgentConfigMap.put(enabledRuntimeAgent.getAgentCode(), userAgentConfig);
+            }
+        }
+        return userAgentConfigMap.values().stream().map(userAgentConfigDTOConverter::toDTO).toList();
     }
 
     /**

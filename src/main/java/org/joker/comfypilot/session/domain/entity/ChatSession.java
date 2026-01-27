@@ -8,7 +8,6 @@ import org.joker.comfypilot.common.domain.BaseEntity;
 import org.joker.comfypilot.session.domain.enums.SessionStatus;
 
 import java.time.LocalDateTime;
-import java.util.Map;
 
 /**
  * 会话领域实体
@@ -47,14 +46,9 @@ public class ChatSession extends BaseEntity<Long> {
     private String title;
 
     /**
-     * 会话使用的agent的agentCode
+     * 会话规则
      */
-    private String agentCode;
-
-    /**
-     * 会话使用的agent的运行时配置（json格式）
-     */
-    private Map<String, Object> agentConfig;
+    private String rules;
 
     /**
      * 会话状态

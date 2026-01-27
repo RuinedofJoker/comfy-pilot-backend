@@ -2,6 +2,7 @@ package org.joker.comfypilot.agent.infrastructure.tool;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.joker.comfypilot.common.annotation.ToolSet;
 import org.joker.comfypilot.common.config.JacksonConfig;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.util.RedisUtil;
+import org.joker.comfypilot.session.domain.enums.AgentPromptType;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -89,10 +91,11 @@ public class TodoWriteTool {
      * @param merge     是否合并模式。true: 更新现有列表；false: 替换整个列表
      * @return 操作结果信息
      */
-    @Tool("创建或更新待办事项列表。用于跟踪任务执行进度，支持创建新任务、更新任务状态（pending/in_progress/completed）。" +
+    @Tool("创建或更新待办事项列表，并在用户界面展示该列表。用于跟踪任务执行进度，支持创建新任务、更新任务状态（pending/in_progress/completed）。" +
             "每个待办事项需要包含 content（任务描述，≤14个单词）、activeForm（进行中形式）和 status（状态）。" +
-            "merge=true 时更新现有列表，merge=false 时替换整个列表。")
-    public String todoWrite(String todosJson, boolean merge) {
+            "merge=true 时更新现有列表，merge=false 时替换整个列表。"
+    )
+    public String todoWrite(@P("待办事项列表的 JSON 字符串，格式: [{\"content\":\"任务内容\",\"activeForm\":\"进行中形式\",\"status\":\"pending|in_progress|completed\"}]") String todosJson, @P("是否合并模式。true: 更新现有列表；false: 替换整个列表") boolean merge) {
         AgentExecutionContext executionContext = AgentExecutionContextHolder.get();
         if (executionContext == null) {
             throw new BusinessException("找不到当前工具执行上下文");
@@ -128,7 +131,11 @@ public class TodoWriteTool {
                 saveTodosToRedis(sessionCode, newTodos);
             }
 
-            return formatTodoList(sessionCode);
+            String formatTodoList = formatTodoList(sessionCode);
+
+            executionContext.getAgentCallback().onPrompt(AgentPromptType.TODO_WRITE, formatTodoList);
+
+            return formatTodoList;
 
         } catch (JsonProcessingException e) {
             log.error("解析待办事项 JSON 失败, sessionId: {}", sessionCode, e);
@@ -174,43 +181,20 @@ public class TodoWriteTool {
     }
 
     /**
-     * 格式化待办事项列表为可读字符串
+     * 格式化待办事项列表为json字符串
      */
     private String formatTodoList(String sessionId) {
         List<TodoItem> todos = getTodosFromRedis(sessionId);
 
         if (todos.isEmpty()) {
-            return "当前没有待办事项";
+            return "[]";
         }
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("待办事项列表 (共 ").append(todos.size()).append(" 项):\n\n");
-
-        int pendingCount = 0;
-        int inProgressCount = 0;
-        int completedCount = 0;
-
-        for (int i = 0; i < todos.size(); i++) {
-            TodoItem todo = todos.get(i);
-            String statusIcon = switch (todo.getStatus()) {
-                case "completed" -> "✅";
-                case "in_progress" -> "🔄";
-                default -> "⏳";
-            };
-
-            sb.append(String.format("%d. %s %s\n", i + 1, statusIcon, todo.getContent()));
-
-            switch (todo.getStatus()) {
-                case "completed" -> completedCount++;
-                case "in_progress" -> inProgressCount++;
-                default -> pendingCount++;
-            }
+        try {
+            return JacksonConfig.getObjectMapper().writeValueAsString(todos);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
-
-        sb.append(String.format("\n统计: ⏳待处理 %d | 🔄进行中 %d | ✅已完成 %d",
-                pendingCount, inProgressCount, completedCount));
-
-        return sb.toString();
     }
 
     /**

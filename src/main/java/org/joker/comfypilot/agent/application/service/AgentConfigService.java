@@ -2,6 +2,7 @@ package org.joker.comfypilot.agent.application.service;
 
 import org.joker.comfypilot.agent.application.dto.AgentConfigDTO;
 import org.joker.comfypilot.agent.application.dto.AgentRuntimeConfigDTO;
+import org.joker.comfypilot.agent.application.dto.UserAgentConfigDTO;
 
 import java.util.List;
 import java.util.Map;
@@ -73,4 +74,19 @@ public interface AgentConfigService {
      * @throws org.joker.comfypilot.common.exception.ValidationException 当配置不符合定义时抛出
      */
     Map<String, Object> validateAndParseAgentConfig(AgentConfigDTO agentConfigDTO, String agentConfigJson);
+
+    /**
+     * 创建或保存用户Agent配置
+     */
+    UserAgentConfigDTO saveOrUpdateUserAgentConfig(UserAgentConfigDTO userAgentConfigDTO, Long userId);
+
+    /**
+     * 获取用户的Agent配置
+     */
+    UserAgentConfigDTO getUserAgentConfig(Long userId, String agentCode);
+
+    /**
+     * 获取用户当前所有的Agent配置
+     */
+    List<UserAgentConfigDTO> getUserAgentConfigs(Long userId);
 }

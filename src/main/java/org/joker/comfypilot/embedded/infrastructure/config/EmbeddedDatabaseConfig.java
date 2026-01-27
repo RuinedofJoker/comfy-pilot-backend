@@ -536,6 +536,37 @@ public class EmbeddedDatabaseConfig {
         } else {
             log.info("Agent执行日志表已存在，跳过创建");
         }
+
+        // 3. 创建user_agent_config表
+        if (!tableExists("user_agent_config")) {
+            log.info("开始创建用户Agent配置表...");
+            String sql = """
+                    CREATE TABLE IF NOT EXISTS user_agent_config (
+                        id BIGINT PRIMARY KEY,
+                        user_id BIGINT NOT NULL,
+                        agent_code VARCHAR(50) NOT NULL,
+                        agent_config CLOB,
+                        is_deleted BIGINT NOT NULL DEFAULT 0,
+                        create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        create_by BIGINT,
+                        update_by BIGINT
+                    )
+                    """;
+            jdbcTemplate.execute(sql);
+
+            // 创建唯一索引
+            jdbcTemplate.execute("CREATE UNIQUE INDEX uk_user_agent ON user_agent_config(user_id, agent_code, is_deleted)");
+
+            // 创建普通索引
+            jdbcTemplate.execute("CREATE INDEX idx_user_agent_config_user_id ON user_agent_config(user_id)");
+            jdbcTemplate.execute("CREATE INDEX idx_user_agent_config_agent_code ON user_agent_config(agent_code)");
+            jdbcTemplate.execute("CREATE INDEX idx_user_agent_config_is_deleted ON user_agent_config(is_deleted)");
+
+            log.info("用户Agent配置表创建完成");
+        } else {
+            log.info("用户Agent配置表已存在，跳过创建");
+        }
     }
 
     /**
@@ -551,9 +582,8 @@ public class EmbeddedDatabaseConfig {
                         session_code VARCHAR(50) NOT NULL,
                         user_id BIGINT NOT NULL,
                         comfyui_server_id BIGINT NOT NULL,
-                        agent_code VARCHAR(50) NOT NULL,
-                        agent_config CLOB NOT NULL,
                         title VARCHAR(200),
+                        rules CLOB,
                         status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
                         is_deleted INTEGER NOT NULL DEFAULT 0,
                         create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
