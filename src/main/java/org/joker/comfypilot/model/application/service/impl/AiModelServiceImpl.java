@@ -100,6 +100,7 @@ public class AiModelServiceImpl implements AiModelService {
         // 7. 创建领域实体
         AiModel model = AiModel.builder()
                 .modelName(request.getModelName())
+                .modelDisplayName(request.getModelDisplayName())
                 .modelIdentifier(finalModelIdentifier)
                 .modelCallingType(modelCallingType)
                 .apiBaseUrl(request.getApiBaseUrl())
@@ -176,6 +177,7 @@ public class AiModelServiceImpl implements AiModelService {
 
         // 7. 更新字段
         model.setModelName(request.getModelName());
+        model.setModelDisplayName(request.getModelDisplayName());
         model.setModelCallingType(modelCallingType);
         model.setApiBaseUrl(request.getApiBaseUrl());
         model.setApiKey(request.getApiKey());

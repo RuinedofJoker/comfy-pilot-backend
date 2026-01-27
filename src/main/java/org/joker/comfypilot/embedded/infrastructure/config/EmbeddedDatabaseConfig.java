@@ -430,7 +430,8 @@ public class EmbeddedDatabaseConfig {
                     CREATE TABLE IF NOT EXISTS ai_model (
                         id BIGINT PRIMARY KEY,
                         model_name VARCHAR(100) NOT NULL,
-                        model_identifier VARCHAR(100) NOT NULL UNIQUE,
+                        model_identifier VARCHAR(100) NOT NULL,
+                        model_display_name VARCHAR(100) NOT NULL,
                         access_type VARCHAR(50) NOT NULL,
                         model_type VARCHAR(50) NOT NULL,
                         model_calling_type VARCHAR(50),

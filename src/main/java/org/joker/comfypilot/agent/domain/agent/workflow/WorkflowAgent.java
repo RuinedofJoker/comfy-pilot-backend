@@ -1,5 +1,6 @@
 package org.joker.comfypilot.agent.domain.agent.workflow;
 
+import com.alibaba.fastjson2.JSON;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.langchain4j.data.message.*;
@@ -177,7 +178,8 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
 
             // 构建用户消息+Agent提示词
             StringBuilder userMessageBuilder = new StringBuilder();
-            userMessageBuilder.append(WorkflowAgentPrompts.USER_QUERY_START_TOKEN).append(userMessage).append(WorkflowAgentPrompts.USER_QUERY_END_TOKEN).append("\n");
+            agentScope.put("UserMessage", userMessage);
+            userMessageBuilder.append(WorkflowAgentPrompts.USER_QUERY_START_TOKEN).append(userMessage).append(WorkflowAgentPrompts.USER_QUERY_END_TOKEN);
             List<ChatContent> multimodalContents = userMessageData.getMultimodalContents();
 
             // 从 ToolRegistry 获取工具列表
@@ -276,25 +278,67 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                 agentScope.put("SystemPrompt", systemMessageBuilder.toString());
             }
 
+            List<Content> userMessageContent = new ArrayList<>(1 + (CollectionUtils.isNotEmpty(multimodalContents) ? multimodalContents.size() : 0));
+            List<Content> userMultimodalContents = new ArrayList<>(CollectionUtils.isNotEmpty(multimodalContents) ? multimodalContents.size() : 0);
+
+            if (CollectionUtils.isNotEmpty(multimodalContents)) {
+
+
+                int imageIndex = 0;
+                int videoIndex = 0;
+                int audioIndex = 0;
+                int pdfFileIndex = 0;
+                Map<String, ImageChatContent> imageContentMap = new LinkedHashMap<>();
+                Map<String, VideoChatContent> videoContentMap = new HashMap<>();
+                Map<String, AudioChatContent> audioContentMap = new HashMap<>();
+                Map<String, PdfChatContent> pdfFileContentMap = new HashMap<>();
+                for (ChatContent multimodalContent : multimodalContents) {
+                    if (multimodalContent instanceof ImageChatContent imageChatContent) {
+                        imageContentMap.put("image_" + imageIndex++, imageChatContent);
+                        if (Boolean.TRUE.equals(modelConfig.get("supportImageMultimodal"))) {
+                            userMultimodalContents.add(multimodalContent.toContent());
+                        }
+                    } else if (multimodalContent instanceof VideoChatContent videoChatContent) {
+                        videoContentMap.put("video_" + videoIndex++, videoChatContent);
+                        if (Boolean.TRUE.equals(modelConfig.get("supportVideoMultimodal"))) {
+                            userMultimodalContents.add(multimodalContent.toContent());
+                        }
+                    } else if (multimodalContent instanceof AudioChatContent audioChatContent) {
+                        audioContentMap.put("audio_" + audioIndex++, audioChatContent);
+                        if (Boolean.TRUE.equals(modelConfig.get("supportAudioMultimodal"))) {
+                            userMultimodalContents.add(multimodalContent.toContent());
+                        }
+                    } else if (multimodalContent instanceof PdfChatContent pdfFileChatContent) {
+                        pdfFileContentMap.put("pdfFile_" + pdfFileIndex++, pdfFileChatContent);
+                        if (Boolean.TRUE.equals(modelConfig.get("supportPdfFileMultimodal"))) {
+                            userMultimodalContents.add(multimodalContent.toContent());
+                        }
+                    }
+                }
+
+                userMessageBuilder.append("\n").append(WorkflowAgentPrompts.USER_MULTIMODAL_CONTENT_PROMPT.formatted(
+                        !imageContentMap.isEmpty() ? "`image`" : "",
+                        !videoContentMap.isEmpty() ? "`video`" : "",
+                        !audioContentMap.isEmpty() ? "`audio`" : "",
+                        !pdfFileContentMap.isEmpty() ? "`pdfFile`" : "",
+                        !imageContentMap.isEmpty() ? "image: " + JSON.toJSONString(imageContentMap.keySet()) : "",
+                        !videoContentMap.isEmpty() ? "video: " + JSON.toJSONString(videoContentMap.keySet()) : "",
+                        !audioContentMap.isEmpty() ? "audio: " + JSON.toJSONString(audioContentMap.keySet()) : "",
+                        !pdfFileContentMap.isEmpty() ? "pdfFile: " + JSON.toJSONString(pdfFileContentMap.keySet()) : ""
+                ));
+                agentScope.put("UserImageContents", imageContentMap);
+                agentScope.put("UserVideoContents", videoContentMap);
+                agentScope.put("UserAudioContents", audioContentMap);
+                agentScope.put("UserPdfFileContents", pdfFileContentMap);
+            }
+
             // 添加系统提示词
             agentCallback.addMemoryMessage(SystemMessage.from(agentScope.get("SystemPrompt").toString()), null, null);
 
             // 添加用户提示词
-            List<Content> userMessageContent = new ArrayList<>(1 + (CollectionUtils.isNotEmpty(multimodalContents) ? multimodalContents.size() : 0));
             userMessageContent.add(TextContent.from(userMessageBuilder.toString()));
-            if (CollectionUtils.isNotEmpty(multimodalContents)) {
-                for (ChatContent multimodalContent : multimodalContents) {
-                    if ((multimodalContent instanceof ImageChatContent) && !Boolean.TRUE.equals(modelConfig.get("supportImageMultimodal"))) {
-                        throw new BusinessException("模型不支持图片多模态文件");
-                    } else if ((multimodalContent instanceof VideoChatContent) && !Boolean.TRUE.equals(modelConfig.get("supportVideoMultimodal"))) {
-                        throw new BusinessException("模型不支持图片多模态文件");
-                    } else if ((multimodalContent instanceof AudioChatContent) && !Boolean.TRUE.equals(modelConfig.get("supportAudioMultimodal"))) {
-                        throw new BusinessException("模型不支持图片多模态文件");
-                    } else if ((multimodalContent instanceof PdfChatContent) && !Boolean.TRUE.equals(modelConfig.get("supportPdfFileMultimodal"))) {
-                        throw new BusinessException("模型不支持图片多模态文件");
-                    }
-                    userMessageContent.add(multimodalContent.toContent());
-                }
+            if (CollectionUtils.isNotEmpty(userMultimodalContents)) {
+                userMessageContent.addAll(userMultimodalContents);
             }
             agentCallback.addMemoryMessage(UserMessage.from(
                     userMessageContent

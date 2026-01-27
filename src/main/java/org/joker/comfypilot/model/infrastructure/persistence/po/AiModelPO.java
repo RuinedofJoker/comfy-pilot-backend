@@ -34,6 +34,11 @@ public class AiModelPO extends BasePO {
     private String modelIdentifier;
 
     /**
+     * 模型显示名
+     */
+    private String modelDisplayName;
+
+    /**
      * 接入方式（远程API/本地）
      */
     private String accessType;

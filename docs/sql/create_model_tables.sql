@@ -51,7 +51,8 @@ COMMENT ON COLUMN model_provider.is_deleted IS '逻辑删除标记（0-未删除
 CREATE TABLE IF NOT EXISTS ai_model (
     id BIGINT PRIMARY KEY,
     model_name VARCHAR(100) NOT NULL,
-    model_identifier VARCHAR(100) NOT NULL UNIQUE,
+    model_identifier VARCHAR(100) NOT NULL,
+    model_display_name VARCHAR(100) NOT NULL,
     access_type VARCHAR(50) NOT NULL,
     model_type VARCHAR(50) NOT NULL,
     model_calling_type VARCHAR(50),
@@ -85,6 +86,7 @@ COMMENT ON TABLE ai_model IS 'AI模型表';
 COMMENT ON COLUMN ai_model.id IS '主键ID';
 COMMENT ON COLUMN ai_model.model_name IS '模型名称';
 COMMENT ON COLUMN ai_model.model_identifier IS '模型标识符(唯一)';
+COMMENT ON COLUMN ai_model.model_display_name IS '模型显示名';
 COMMENT ON COLUMN ai_model.access_type IS '接入方式(remote_api/local)';
 COMMENT ON COLUMN ai_model.model_type IS '模型类型(llm/embedding/sentiment_classification等)';
 COMMENT ON COLUMN ai_model.model_calling_type IS '模型调用方式，决定了模型调用使用的Model实现类';

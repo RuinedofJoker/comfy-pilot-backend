@@ -58,6 +58,7 @@ public class ModelInitializer implements CommandLineRunner {
         return AiModel.builder()
                 .modelIdentifier(modelName)
                 .modelName(modelName)
+                .modelDisplayName(modelName)
                 .accessType(ModelAccessType.REMOTE_API)
                 .modelType(ModelType.LLM)
                 .modelCallingType(ModelCallingType.API_LLM)

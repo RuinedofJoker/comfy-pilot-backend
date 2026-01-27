@@ -26,6 +26,11 @@ public class CreateModelRequest implements Serializable {
     @Size(max = 100, message = "模型名称长度不能超过100")
     private String modelName;
 
+    @Schema(description = "模型显示名称", required = true)
+    @NotBlank(message = "模型显示名称不能为空")
+    @Size(max = 100, message = "模型显示名称长度不能超过100")
+    private String modelDisplayName;
+
     @Schema(description = "模型标识符（可选，不填则自动生成）")
     @Size(max = 100, message = "模型标识符长度不能超过100")
     private String modelIdentifier;

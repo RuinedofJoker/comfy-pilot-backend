@@ -27,6 +27,9 @@ public class AiModelDTO extends BaseDTO {
     @Schema(description = "模型标识符")
     private String modelIdentifier;
 
+    @Schema(description = "模型显示名称")
+    private String modelDisplayName;
+
     @Schema(description = "接入方式（remote_api/local）")
     private String accessType;
 

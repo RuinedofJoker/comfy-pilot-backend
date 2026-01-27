@@ -41,6 +41,11 @@ public class AiModel extends BaseEntity<Long> {
     private String modelIdentifier;
 
     /**
+     * 模型显示名
+     */
+    private String modelDisplayName;
+
+    /**
      * 接入方式（远程API/本地用命令调用）
      */
     private ModelAccessType accessType;

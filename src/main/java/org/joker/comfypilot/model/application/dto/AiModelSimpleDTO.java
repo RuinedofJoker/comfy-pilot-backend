@@ -26,6 +26,9 @@ public class AiModelSimpleDTO implements Serializable {
     @Schema(description = "模型名称")
     private String modelName;
 
+    @Schema(description = "模型显示名称")
+    private String modelDisplayName;
+
     @Schema(description = "模型标识符")
     private String modelIdentifier;
 

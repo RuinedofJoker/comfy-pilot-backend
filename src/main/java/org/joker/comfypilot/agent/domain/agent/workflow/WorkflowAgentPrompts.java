@@ -117,6 +117,8 @@ public class WorkflowAgentPrompts {
             如果你不确定如何回答用户的请求或如何满足他们的请求，则应收集更多信息。这可以通过额外的工具调用、提出澄清问题等方式来实现。
             例如，如果你已执行语义搜索，但结果可能无法完全回答用户的请求，或者需要收集更多信息，请随时调用更多工具。
             
+            ---
+            
             ### Markdown 规范
             
             - 用户喜欢你使用“###”和“##”标题组织消息。切勿使用“#”标题，因为用户会觉得它们难以理解。
@@ -153,6 +155,7 @@ public class WorkflowAgentPrompts {
             
             - 不应包含具体类型、变量名、事件名等详细信息，也不应列出所有需要更新的项目或元素，除非用户的目标是进行仅涉及这些更改的大型重构。
             
+            ---
             """.trim();
 
     public static final String SERVER_FILE_TOOL_PROMPT = """
@@ -161,6 +164,8 @@ public class WorkflowAgentPrompts {
             你当前允许使用Agent服务器创建一些脚本文件执行，但是你对Agent服务器上的所有文件操作都必须通过 `createTempDirectory` 工具获取到一个临时目录后，在此临时目录下执行。使用完该目录后你必须通过 `delete` 工具将该目录删除掉。
             严禁对你获得的临时目录外的目录或文件进行读、写、执行等操作，你要执行的所有脚本文件以及脚本文件内的对Agent服务器文件系统的操作必须在该临时目录内进行。
             你可以使用Agent服务器文件操作相关工具对Agent服务器上的文件系统进行操作。
+            
+            ---
             """.trim();
 
     public static final String SERVER_PYTHON_TOOL_PROMPT = """
@@ -175,6 +180,8 @@ public class WorkflowAgentPrompts {
             不要使用Python脚本执行危险的操作，如批量删除目录和文件，修改或删除你不知道影响范围的目录或文件等。
             
             你可以使用python脚本来实现网站搜索或获取网页内容的功能。
+            
+            ---
             """.trim();
 
     public static final String COMFY_UI_LOCAL_ADVANCED_PROMPT = """
@@ -194,6 +201,19 @@ public class WorkflowAgentPrompts {
             运行ComfyUI使用的 Python 命令路径路径和ComfyUI安装目录路径等其他路径可能为空/null或路径对应的目录或文件不存在，这种情况下你应该与用户确认他的意图，看看他是想要你帮忙安装Python/ComfyUI还是想干什么。
             
             你可以使用 `/user-python-path/python -s /user-comfyui-path/main.py -h` 来查看ComfyUI启动命令和一些启动参数信息，其中就包括了ComfyUI内一些目录位置的配置。
+            
+            ---
             """.trim();
 
+    public static final String USER_MULTIMODAL_CONTENT_PROMPT = """
+            用户消息里包含了 %s %s %s %s 类型的多模态数据文件，你可以使用多模态模型模型工具处理这些多模态数据文件。
+            我们使用 `文件类型_该类型的文件传入下标` 组成该文件的唯一索引，你能够使用这个文件唯一索引来获取到该文件，多模态模型模型工具也是接收该文件唯一索引来获取你指定的文件。
+            以下是用户传入的文件唯一索引列表：
+            %s
+            %s
+            %s
+            %s
+            
+             ---
+            """.trim();
 }
