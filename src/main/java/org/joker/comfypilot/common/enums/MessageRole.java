@@ -29,14 +29,14 @@ public enum MessageRole {
     ASSISTANT("助手"),
 
     /**
-     * 摘要，构建消息历史时与AI助手消息一致
-     */
-    SUMMARY("摘要"),
-
-    /**
      * 工具执行结果消息，在带工具执行的AI助手消息时出现
      */
     TOOL_EXECUTION_RESULT("工具执行结果消息"),
+
+    /**
+     * 摘要，不计入模型记忆，只用作页面回显
+     */
+    SUMMARY("摘要"),
 
     /**
      * 用户命令，不计入模型记忆，只用作页面回显
@@ -44,7 +44,7 @@ public enum MessageRole {
     USER_ORDER("用户命令"),
 
     /**
-     * Agent计划，构建消息历史时与AI助手消息一致，页面上不回显
+     * Agent计划，不计入模型记忆，只用作页面回显
      */
     AGENT_PLAN("Agent计划"),
 

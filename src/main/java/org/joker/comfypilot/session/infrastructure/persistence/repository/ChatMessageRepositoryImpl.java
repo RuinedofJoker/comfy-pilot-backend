@@ -45,7 +45,11 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
         LambdaQueryWrapper<ChatMessagePO> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ChatMessagePO::getSessionId, sessionId)
                 .in(ChatMessagePO::getRole, List.of(
-                        MessageRole.USER.name(), MessageRole.ASSISTANT.name()
+                        MessageRole.USER.name(),
+                        MessageRole.ASSISTANT.name(),
+                        MessageRole.SUMMARY.name(),
+                        MessageRole.AGENT_PLAN.name(),
+                        MessageRole.USER_ORDER.name()
                 ))
                 .orderByAsc(ChatMessagePO::getRequestId, ChatMessagePO::getCreateTime);
         return chatMessageMapper.selectList(wrapper).stream()
@@ -61,9 +65,7 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
                         MessageRole.USER.name(),
                         MessageRole.AGENT_PROMPT.name(),
                         MessageRole.ASSISTANT.name(),
-                        MessageRole.SUMMARY.name(),
-                        MessageRole.TOOL_EXECUTION_RESULT.name(),
-                        MessageRole.AGENT_PLAN.name()
+                        MessageRole.TOOL_EXECUTION_RESULT.name()
                 ))
                 .eq(ChatMessagePO::getStatus, MessageStatus.ACTIVE.name())
                 .orderByAsc(ChatMessagePO::getRequestId, ChatMessagePO::getCreateTime);
