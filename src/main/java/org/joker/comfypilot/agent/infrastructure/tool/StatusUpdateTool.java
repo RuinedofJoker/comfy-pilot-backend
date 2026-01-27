@@ -73,7 +73,7 @@ public class StatusUpdateTool {
      * @param phase 当前执行阶段（discovery/planning/execution/summary）
      * @return 确认信息
      */
-    @Tool("记录 Agent 执行过程中的状态更新。" +
+    @Tool(name = "statusUpdate",value = "记录 Agent 执行过程中的状态更新。" +
           "message 应包含: 刚刚发生的事情、即将要做的事情、相关的障碍或风险（1-3句话，对话式风格）。" +
           "phase 表示当前阶段: discovery(发现)、planning(计划)、execution(执行)、summary(总结)。" +
           "应在以下时机调用: 启动时、每个工具批次前后、待办事项更新后、编辑/构建/测试前、完成后、提交前。")
@@ -123,7 +123,7 @@ public class StatusUpdateTool {
      * @param limit 返回最近的 N 条记录（默认10条）
      * @return 格式化的状态历史
      */
-    @Tool("获取当前会话的状态更新历史记录")
+    @Tool(name = "getStatusHistory",value = "获取当前会话的状态更新历史记录")
     public String getStatusHistory(int limit) {
         AgentExecutionContext executionContext = AgentExecutionContextHolder.get();
         if (executionContext == null) {
@@ -156,7 +156,7 @@ public class StatusUpdateTool {
      *
      * @return 操作结果
      */
-    @Tool("清空当前会话的所有状态更新历史")
+    @Tool(name = "clearStatusHistory",value = "清空当前会话的所有状态更新历史")
     public String clearStatusHistory() {
         AgentExecutionContext executionContext = AgentExecutionContextHolder.get();
         if (executionContext == null) {
