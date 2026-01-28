@@ -58,6 +58,11 @@ public enum MessageRole {
      */
     AGENT_PLAN("Agent计划"),
 
+    /**
+     * 终端输出，不计入模型记忆，只用作页面回显
+     */
+    AGENT_TERMINAL("终端输出"),
+
     ;
 
     private final String description;

@@ -63,6 +63,16 @@ public enum AgentPromptType {
      * 清空会话
      */
     CLEAR("清空会话", "清空会话"),
+
+    /**
+     * 终端输出开始
+     */
+    TERMINAL_OUTPUT_START("终端输出开始", "终端输出开始"),
+
+    /**
+     * 终端输出结束
+     */
+    TERMINAL_OUTPUT_END("终端输出结束", "终端输出结束"),
     ;
 
     /**

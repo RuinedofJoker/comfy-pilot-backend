@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -95,7 +96,7 @@ public class CommandUtil {
      */
     public static CommandResult executeWithRealTimeOutput(
             String command,
-            Consumer<String> outputCallback
+            BiConsumer<String, Boolean> outputCallback
     ) throws IOException, InterruptedException {
         return executeWithRealTimeOutput(command, null, outputCallback);
     }
@@ -112,7 +113,7 @@ public class CommandUtil {
     public static CommandResult executeWithRealTimeOutput(
             String command,
             String workingDir,
-            Consumer<String> outputCallback
+            BiConsumer<String, Boolean> outputCallback
     ) throws IOException, InterruptedException {
         CommandConfig config = CommandConfig.builder()
                 .command(command)
@@ -171,7 +172,7 @@ public class CommandUtil {
                     output.append(line).append(System.lineSeparator());
                     // 实时输出回调
                     if (config.outputCallback != null) {
-                        config.outputCallback.accept(line + System.lineSeparator());
+                        config.outputCallback.accept(line + System.lineSeparator(), false);
                     }
                 }
             } catch (IOException e) {
@@ -186,7 +187,7 @@ public class CommandUtil {
                 while ((line = reader.readLine()) != null) {
                     error.append(line).append(System.lineSeparator());
                     if (config.outputCallback != null) {
-                        config.outputCallback.accept(line + System.lineSeparator());
+                        config.outputCallback.accept(line + System.lineSeparator(), true);
                     }
                 }
             } catch (IOException e) {
@@ -480,7 +481,7 @@ public class CommandUtil {
         /**
          * 实时输出回调（每行输出都会调用）
          */
-        private final Consumer<String> outputCallback;
+        private final BiConsumer<String, Boolean> outputCallback;
 
         /**
          * 终端类型（默认自动选择）
@@ -512,7 +513,7 @@ public class CommandUtil {
             private Charset charset = DEFAULT_CHARSET;
             private Map<String, String> environment;
             private boolean redirectErrorStream = false;
-            private java.util.function.Consumer<String> outputCallback;
+            private BiConsumer<String, Boolean> outputCallback;
             private ShellType shellType = ShellType.AUTO;
 
             public Builder command(String command) {
@@ -553,7 +554,7 @@ public class CommandUtil {
                 return this;
             }
 
-            public Builder outputCallback(java.util.function.Consumer<String> outputCallback) {
+            public Builder outputCallback(BiConsumer<String, Boolean> outputCallback) {
                 this.outputCallback = outputCallback;
                 return this;
             }

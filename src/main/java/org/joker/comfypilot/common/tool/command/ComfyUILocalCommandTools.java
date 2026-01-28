@@ -10,7 +10,7 @@ import org.joker.comfypilot.common.annotation.ToolSet;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.util.CommandResult;
 import org.joker.comfypilot.common.util.CommandUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.joker.comfypilot.session.domain.enums.AgentPromptType;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
@@ -68,30 +68,21 @@ public class ComfyUILocalCommandTools {
         String environmentInitScript = advancedFeatures.getEnvironmentInitScript();
 
         try {
+            executionContext.getAgentCallback().onPrompt(AgentPromptType.TERMINAL_OUTPUT_START, null, false);
+
             // 构建最终执行的命令
             String finalCommand = buildFinalCommand(command, environmentInitScript);
             log.debug("最终执行命令: {}", finalCommand);
 
-            PipedReader reader = new PipedReader();
-            PipedWriter writer = new PipedWriter(reader);
-
             // 使用 CommandUtil 执行命令
             CommandResult result;
             if (workingDir != null && !workingDir.trim().isEmpty()) {
-                result = CommandUtil.executeWithRealTimeOutput(finalCommand, workingDir.trim(), (chunk) -> {
-                    try {
-                        writer.write(chunk);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+                result = CommandUtil.executeWithRealTimeOutput(finalCommand, workingDir.trim(), (chunk, isError) -> {
+                    executionContext.getAgentCallback().onStream(chunk);
                 });
             } else {
-                result = CommandUtil.executeWithRealTimeOutput(finalCommand, (chunk) -> {
-                    try {
-                        writer.write(chunk);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+                result = CommandUtil.executeWithRealTimeOutput(finalCommand, (chunk, isError) -> {
+                    executionContext.getAgentCallback().onStream((isError ? "1 " : "0 ") + chunk);
                 });
             }
 
@@ -129,6 +120,8 @@ public class ComfyUILocalCommandTools {
             String errorMsg = "命令执行失败: " + command + ", 错误: " + e.getMessage();
             log.error(errorMsg, e);
             throw new IOException(errorMsg, e);
+        } finally {
+            executionContext.getAgentCallback().onPrompt(AgentPromptType.TERMINAL_OUTPUT_END, null, false);
         }
     }
 
