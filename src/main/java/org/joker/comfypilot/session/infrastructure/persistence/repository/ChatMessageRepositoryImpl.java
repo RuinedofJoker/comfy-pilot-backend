@@ -56,7 +56,8 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
                         MessageRole.ASSISTANT.name(),
                         MessageRole.AGENT_MESSAGE.name(),
                         MessageRole.AGENT_PLAN.name(),
-                        MessageRole.USER_ORDER.name()
+                        MessageRole.USER_ORDER.name(),
+                        MessageRole.AGENT_ERROR.name()
                 ))
                 .orderByAsc(ChatMessagePO::getRequestId, ChatMessagePO::getCreateTime);
         return chatMessageMapper.selectList(wrapper).stream()

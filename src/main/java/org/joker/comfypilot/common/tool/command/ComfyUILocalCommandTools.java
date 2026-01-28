@@ -10,9 +10,10 @@ import org.joker.comfypilot.common.annotation.ToolSet;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.util.CommandResult;
 import org.joker.comfypilot.common.util.CommandUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.Map;
 
 /**
@@ -71,12 +72,27 @@ public class ComfyUILocalCommandTools {
             String finalCommand = buildFinalCommand(command, environmentInitScript);
             log.debug("最终执行命令: {}", finalCommand);
 
+            PipedReader reader = new PipedReader();
+            PipedWriter writer = new PipedWriter(reader);
+
             // 使用 CommandUtil 执行命令
             CommandResult result;
             if (workingDir != null && !workingDir.trim().isEmpty()) {
-                result = CommandUtil.execute(finalCommand, workingDir.trim());
+                result = CommandUtil.executeWithRealTimeOutput(finalCommand, workingDir.trim(), (chunk) -> {
+                    try {
+                        writer.write(chunk);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
             } else {
-                result = CommandUtil.execute(finalCommand);
+                result = CommandUtil.executeWithRealTimeOutput(finalCommand, (chunk) -> {
+                    try {
+                        writer.write(chunk);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
             }
 
             // 构建返回结果

@@ -36,7 +36,7 @@ public class CommandUtil {
     /**
      * 默认超时时间（秒）
      */
-    private static final long DEFAULT_TIMEOUT = 60;
+    private static final long DEFAULT_TIMEOUT = 60 * 60;
 
     /**
      * 默认字符编码
@@ -171,7 +171,7 @@ public class CommandUtil {
                     output.append(line).append(System.lineSeparator());
                     // 实时输出回调
                     if (config.outputCallback != null) {
-                        config.outputCallback.accept(line);
+                        config.outputCallback.accept(line + System.lineSeparator());
                     }
                 }
             } catch (IOException e) {
@@ -185,6 +185,9 @@ public class CommandUtil {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     error.append(line).append(System.lineSeparator());
+                    if (config.outputCallback != null) {
+                        config.outputCallback.accept(line + System.lineSeparator());
+                    }
                 }
             } catch (IOException e) {
                 log.error("读取错误输出失败", e);

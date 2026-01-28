@@ -74,28 +74,41 @@ public class WebSocketAgentCallback implements AgentCallback {
 
         sendWebSocketMessage(wsMessage);
 
-        if (AgentPromptType.TODO_WRITE.equals(promptType)) {
-            ChatMessageDTO agentPlanChatMessage = ChatMessageDTO.builder()
-                    .sessionId(agentExecutionContext.getSessionId())
-                    .sessionCode(sessionCode)
-                    .requestId(agentExecutionContext.getRequestId())
-                    .role(MessageRole.AGENT_PLAN.name())
-                    .metadata(new HashMap<>())
-                    .content(message)
-                    .chatContent(null)
-                    .build();
-            chatSessionService.saveMessage(agentPlanChatMessage);
-        } else if (AgentPromptType.AGENT_MESSAGE_BLOCK.equals(promptType)) {
-            ChatMessageDTO agentMessageChatMessage = ChatMessageDTO.builder()
-                    .sessionId(agentExecutionContext.getSessionId())
-                    .sessionCode(sessionCode)
-                    .requestId(agentExecutionContext.getRequestId())
-                    .role(MessageRole.AGENT_MESSAGE.name())
-                    .metadata(new HashMap<>())
-                    .content(message)
-                    .chatContent(null)
-                    .build();
-            chatSessionService.saveMessage(agentMessageChatMessage);
+        if (needSave) {
+            if (AgentPromptType.TODO_WRITE.equals(promptType)) {
+                ChatMessageDTO agentPlanChatMessage = ChatMessageDTO.builder()
+                        .sessionId(agentExecutionContext.getSessionId())
+                        .sessionCode(sessionCode)
+                        .requestId(agentExecutionContext.getRequestId())
+                        .role(MessageRole.AGENT_PLAN.name())
+                        .metadata(new HashMap<>())
+                        .content(message)
+                        .chatContent(null)
+                        .build();
+                chatSessionService.saveMessage(agentPlanChatMessage);
+            } else if (AgentPromptType.AGENT_MESSAGE_BLOCK.equals(promptType)) {
+                ChatMessageDTO agentMessageChatMessage = ChatMessageDTO.builder()
+                        .sessionId(agentExecutionContext.getSessionId())
+                        .sessionCode(sessionCode)
+                        .requestId(agentExecutionContext.getRequestId())
+                        .role(MessageRole.AGENT_MESSAGE.name())
+                        .metadata(new HashMap<>())
+                        .content(message)
+                        .chatContent(null)
+                        .build();
+                chatSessionService.saveMessage(agentMessageChatMessage);
+            } else if (AgentPromptType.ERROR.equals(promptType)) {
+                ChatMessageDTO agentMessageChatMessage = ChatMessageDTO.builder()
+                        .sessionId(agentExecutionContext.getSessionId())
+                        .sessionCode(sessionCode)
+                        .requestId(agentExecutionContext.getRequestId())
+                        .role(MessageRole.AGENT_ERROR.name())
+                        .metadata(new HashMap<>())
+                        .content(message)
+                        .chatContent(null)
+                        .build();
+                chatSessionService.saveMessage(agentMessageChatMessage);
+            }
         }
     }
 
