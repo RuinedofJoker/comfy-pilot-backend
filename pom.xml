@@ -250,6 +250,7 @@
     </dependencyManagement>
 
     <build>
+        <finalName>comfy-pilot-app</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
