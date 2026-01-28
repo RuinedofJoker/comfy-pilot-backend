@@ -44,6 +44,11 @@ public enum MessageRole {
     AGENT_MESSAGE("Agent消息"),
 
     /**
+     * Agent报错，不计入模型记忆，只用作页面回显
+     */
+    AGENT_ERROR("Agent报错"),
+
+    /**
      * 用户命令，不计入模型记忆，只用作页面回显
      */
     USER_ORDER("用户命令"),

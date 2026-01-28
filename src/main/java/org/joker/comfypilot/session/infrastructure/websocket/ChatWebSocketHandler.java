@@ -106,7 +106,8 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
             // 直接反序列化为 WebSocketMessage，Jackson会根据type字段自动选择正确的data类型
             WebSocketMessage<? extends WebSocketMessageData> wsMessage =
-                objectMapper.readValue(payload, new TypeReference<WebSocketMessage<WebSocketMessageData>>() {});
+                    objectMapper.readValue(payload, new TypeReference<WebSocketMessage<WebSocketMessageData>>() {
+                    });
 
             // 验证消息类型
             if (wsMessage.getType() == null) {
@@ -274,7 +275,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             }
 
             AgentExecutionContext executionContext = context.getAgentExecutionContext().get();
-            if (executionContext == null || !StringUtils.equals(executionContext.getRequestId(),  wsMessage.getRequestId())) {
+            if (executionContext == null || !StringUtils.equals(executionContext.getRequestId(), wsMessage.getRequestId())) {
                 throw new BusinessException("当前Agent执行上下文不正确");
             }
 

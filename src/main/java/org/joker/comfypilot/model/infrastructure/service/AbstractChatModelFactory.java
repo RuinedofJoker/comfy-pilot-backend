@@ -59,7 +59,7 @@ public abstract class AbstractChatModelFactory {
                 apiKey = provider.getApiKey();
             }
 
-            return new ModelConfig(apiKey, temperature, maxTokens, topP, timeoutSeconds, apiBaseUrl);
+            return new ModelConfig(apiKey, temperature, maxTokens, topP, timeoutSeconds != null ? timeoutSeconds : 60 * 60, apiBaseUrl);
 
         } catch (Exception e) {
             log.error("解析模型配置失败: modelConfig={}, agentConfig={}", modelConfig, agentConfig, e);

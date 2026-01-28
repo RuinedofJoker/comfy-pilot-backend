@@ -6,18 +6,22 @@ import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.agent.domain.callback.AgentCallback;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.joker.comfypilot.agent.infrastructure.memory.ChatMemoryChatMemoryStore;
+import org.joker.comfypilot.common.enums.MessageRole;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.util.SpringContextUtil;
+import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
 import org.joker.comfypilot.session.application.dto.WebSocketMessage;
 import org.joker.comfypilot.session.application.dto.server2client.AgentCompleteResponseData;
 import org.joker.comfypilot.session.application.dto.server2client.AgentPromptData;
 import org.joker.comfypilot.session.application.dto.server2client.AgentToolCallRequestData;
+import org.joker.comfypilot.session.application.service.ChatSessionService;
 import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
 import org.joker.comfypilot.session.domain.enums.AgentPromptType;
 import org.joker.comfypilot.session.domain.enums.WebSocketMessageType;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -36,6 +40,7 @@ public class WebSocketAgentCallback implements AgentCallback {
     private final ObjectMapper objectMapper;
 
     private final ChatMemoryChatMemoryStore chatMemoryChatMemoryStore;
+    private final ChatSessionService chatSessionService;
 
     public WebSocketAgentCallback(WebSocketSession webSocketSession, WebSocketSessionContext sessionContext, AgentExecutionContext agentExecutionContext, String sessionCode, String requestId, ObjectMapper objectMapper) {
         this.webSocketSession = webSocketSession;
@@ -46,10 +51,11 @@ public class WebSocketAgentCallback implements AgentCallback {
         this.objectMapper = objectMapper;
 
         this.chatMemoryChatMemoryStore = SpringContextUtil.getBean(ChatMemoryChatMemoryStore.class);
+        this.chatSessionService = SpringContextUtil.getBean(ChatSessionService.class);
     }
 
     @Override
-    public void onPrompt(AgentPromptType promptType, String message) {
+    public void onPrompt(AgentPromptType promptType, String message, boolean needSave) {
         log.debug("Agent提示: sessionCode={}, promptType={}, message={}", sessionCode, promptType, message);
 
         // 构建提示数据
@@ -67,6 +73,30 @@ public class WebSocketAgentCallback implements AgentCallback {
                 .build();
 
         sendWebSocketMessage(wsMessage);
+
+        if (AgentPromptType.TODO_WRITE.equals(promptType)) {
+            ChatMessageDTO agentPlanChatMessage = ChatMessageDTO.builder()
+                    .sessionId(agentExecutionContext.getSessionId())
+                    .sessionCode(sessionCode)
+                    .requestId(agentExecutionContext.getRequestId())
+                    .role(MessageRole.AGENT_PLAN.name())
+                    .metadata(new HashMap<>())
+                    .content(message)
+                    .chatContent(null)
+                    .build();
+            chatSessionService.saveMessage(agentPlanChatMessage);
+        } else if (AgentPromptType.AGENT_MESSAGE_BLOCK.equals(promptType)) {
+            ChatMessageDTO agentMessageChatMessage = ChatMessageDTO.builder()
+                    .sessionId(agentExecutionContext.getSessionId())
+                    .sessionCode(sessionCode)
+                    .requestId(agentExecutionContext.getRequestId())
+                    .role(MessageRole.AGENT_MESSAGE.name())
+                    .metadata(new HashMap<>())
+                    .content(message)
+                    .chatContent(null)
+                    .build();
+            chatSessionService.saveMessage(agentMessageChatMessage);
+        }
     }
 
     @Override
@@ -134,7 +164,7 @@ public class WebSocketAgentCallback implements AgentCallback {
     @Override
     public void onInterrupted() {
         if (sessionContext.completeExecution(requestId)) {
-            onPrompt(AgentPromptType.INTERRUPTED, null);
+            onPrompt(AgentPromptType.INTERRUPTED, "用户中断", false);
         }
     }
 

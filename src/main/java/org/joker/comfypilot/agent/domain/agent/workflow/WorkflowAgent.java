@@ -54,7 +54,6 @@ import org.joker.comfypilot.session.application.dto.ChatSessionDTO;
 import org.joker.comfypilot.session.application.dto.client2server.UserMessageRequestData;
 import org.joker.comfypilot.session.application.service.ChatSessionService;
 import org.joker.comfypilot.session.domain.enums.AgentPromptType;
-import org.joker.comfypilot.session.domain.enums.MessageStatus;
 import org.joker.comfypilot.session.infrastructure.websocket.WebSocketSessionManager;
 import org.joker.comfypilot.tool.domain.service.Tool;
 import org.joker.comfypilot.tool.domain.service.ToolRegistry;
@@ -95,9 +94,6 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
     private ToolCallWaitManager toolCallWaitManager;
     @Autowired
     private AgentExecutionLogRepository executionLogRepository;
-    @Autowired
-    @Qualifier("workflowAgentOnPromptEventBus")
-    private EventBus workflowAgentOnPromptEventBus;
     @Autowired
     private OrderAgent orderAgent;
 
@@ -144,47 +140,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
         try {
             executeWithAgentStreaming(executionContext);
         } catch (Exception e) {
-            executionContext.getAgentCallback().onPrompt(AgentPromptType.ERROR, "执行过程中发生错误，" + e.getMessage());
-        }
-    }
-
-    @PostConstruct
-    public void init() {
-        workflowAgentOnPromptEventBus.register(this);
-    }
-
-    @Subscribe
-    private void onPrompt(WorkflowAgentOnPromptEvent event) {
-        AgentExecutionContext executionContext = event.getExecutionContext();
-        if (executionContext == null) {
-            throw new BusinessException("Agent执行上下文为空");
-        }
-        if (AgentPromptType.TODO_WRITE.equals(event.getPromptType())) {
-            ChatMessageDTO agentPlanChatMessage = ChatMessageDTO.builder()
-                    .sessionId(executionContext.getSessionId())
-                    .sessionCode(executionContext.getSessionCode())
-                    .requestId(executionContext.getRequestId())
-                    .role(MessageRole.AGENT_PLAN.name())
-                    .metadata(new HashMap<>())
-                    .content(event.getMessage())
-                    .chatContent(null)
-                    .build();
-            chatSessionService.saveMessage(agentPlanChatMessage);
-            executionContext.getAgentCallback().onPrompt(AgentPromptType.TODO_WRITE, event.getMessage());
-        } else if (AgentPromptType.AGENT_MESSAGE_BLOCK.equals(event.getPromptType())) {
-            ChatMessageDTO agentMessageChatMessage = ChatMessageDTO.builder()
-                    .sessionId(executionContext.getSessionId())
-                    .sessionCode(executionContext.getSessionCode())
-                    .requestId(executionContext.getRequestId())
-                    .role(MessageRole.AGENT_MESSAGE.name())
-                    .metadata(new HashMap<>())
-                    .content(event.getMessage())
-                    .chatContent(null)
-                    .build();
-            chatSessionService.saveMessage(agentMessageChatMessage);
-            executionContext.getAgentCallback().onPrompt(AgentPromptType.AGENT_MESSAGE_BLOCK, event.getMessage());
-        } else {
-            throw new BusinessException("不能识别的消息类型");
+            executionContext.getAgentCallback().onPrompt(AgentPromptType.ERROR, e.getMessage(), true);
         }
     }
 
@@ -430,15 +386,15 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             // LLM调用前事件
             eventPublisher.addEventListener(AgentEventType.BEFORE_LLM_CALL, (BeforeLlmCallEvent event) -> {
                 streamOutputBuilder.compareAndSet(null, new StringBuilder());
-                agentCallback.onPrompt(AgentPromptType.THINKING, null);
+                agentCallback.onPrompt(AgentPromptType.THINKING, null, false);
             });
 
             eventPublisher.addEventListener(AgentEventType.BEFORE_TOOL_CALL, (BeforeToolCallEvent event) -> {
-                agentCallback.onPrompt(AgentPromptType.TOOL_CALLING, null);
+                agentCallback.onPrompt(AgentPromptType.TOOL_CALLING, null, false);
             });
 
             eventPublisher.addEventListener(AgentEventType.AFTER_TOOL_CALL, (AfterToolCallEvent event) -> {
-                agentCallback.onPrompt(AgentPromptType.TOOL_COMPLETE, null);
+                agentCallback.onPrompt(AgentPromptType.TOOL_COMPLETE, null, false);
             });
 
             // 流式输出事件 -> AgentCallback.onStream()
@@ -460,34 +416,38 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             // 迭代开始事件
             eventPublisher.addEventListener(AgentEventType.ITERATION_START, (IterationStartEvent event) -> {
                 if (isStarted.compareAndSet(false, true)) {
-                    agentCallback.onPrompt(AgentPromptType.STARTED, null);
+                    agentCallback.onPrompt(AgentPromptType.STARTED, null, false);
                 }
             });
 
             // 迭代结束事件
             eventPublisher.addEventListener(AgentEventType.ITERATION_END, (IterationEndEvent event) -> {
                 // 发生中断
-                if (!event.isSuccess() && !event.isWillContinue() && event.getContext().isInterrupted() && streamOutputBuilder.get() != null) {
-                    StringBuilder streamOutput = streamOutputBuilder.get();
-                    if (streamOutputBuilder.compareAndSet(streamOutput, null)) {
-                        // 保存输出到一半的消息
-                        if (streamOutput != null && !streamOutput.isEmpty()) {
-                            ChatMessageDTO dbMessage =
-                                    ChatMessageDTO.builder()
-                                            .sessionId(event.getContext().getSessionId())
-                                            .sessionCode(event.getContext().getSessionCode())
-                                            .requestId(event.getContext().getRequestId())
-                                            .role(MessageRole.ASSISTANT.name())
-                                            .metadata(new HashMap<>())
-                                            .content("")
-                                            .chatContent(PersistableChatMessage.toJsonString(AiMessage.aiMessage(streamOutput.toString())))
-                                            .build();
-                            chatSessionService.saveMessage(dbMessage);
+                if (!event.isSuccess() && !event.isWillContinue()) {
+                    if (event.getContext().isInterrupted()) {
+                        if (streamOutputBuilder.get() != null) {
+                            StringBuilder streamOutput = streamOutputBuilder.get();
+                            if (streamOutputBuilder.compareAndSet(streamOutput, null)) {
+                                // 保存输出到一半的消息
+                                if (streamOutput != null && !streamOutput.isEmpty()) {
+                                    ChatMessageDTO dbMessage =
+                                            ChatMessageDTO.builder()
+                                                    .sessionId(event.getContext().getSessionId())
+                                                    .sessionCode(event.getContext().getSessionCode())
+                                                    .requestId(event.getContext().getRequestId())
+                                                    .role(MessageRole.ASSISTANT.name())
+                                                    .metadata(new HashMap<>())
+                                                    .content("")
+                                                    .chatContent(PersistableChatMessage.toJsonString(AiMessage.aiMessage(streamOutput.toString())))
+                                                    .build();
+                                    chatSessionService.saveMessage(dbMessage);
+                                }
+                            }
                         }
+                        agentCallback.onInterrupted();
+                    } else {
+                        agentCallback.onPrompt(AgentPromptType.ERROR, event.getException() != null ? event.getException().getMessage() : "未知错误", true);
                     }
-                    agentCallback.onInterrupted();
-                } else if (!event.isSuccess() && !event.isWillContinue()) {
-                    agentCallback.onPrompt(AgentPromptType.ERROR, event.getException() != null ? event.getException().getMessage() : "未知错误");
                 }
 
                 if (!event.isWillContinue() && executionContext.getExecutionLog() != null) {
@@ -505,7 +465,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
 
                 if (!event.isWillContinue()) {
                     if (executionContext.getWebSocketSessionContext().completeExecution(executionContext.getRequestId())) {
-                        agentCallback.onPrompt(AgentPromptType.COMPLETE, null);
+                        agentCallback.onPrompt(AgentPromptType.COMPLETE, null, false);
                         executionContext.executeCompleteCallbacks(event.isSuccess(), event.getException());
                     }
                 }

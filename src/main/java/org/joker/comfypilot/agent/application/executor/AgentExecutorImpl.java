@@ -166,19 +166,7 @@ public class AgentExecutorImpl implements AgentExecutor {
             executionLog.markFailed(e.getMessage(), executionTime);
             executionLogRepository.update(executionLog);
 
-            log.error("Agent执行失败: code={}, error={}", agentCode, e.getMessage(), e);
-
-            // 如果有流式回调，通知错误
-            if (executionContext.getAgentCallback() != null) {
-                executionContext.getAgentCallback().onPrompt(AgentPromptType.ERROR, e.getMessage());
-            }
-
-            return AgentExecutionResponse.builder()
-                    .logId(executionLog.getId())
-                    .status(ExecutionStatus.FAILED.name())
-                    .errorMessage(TraceIdUtil.getTraceId() + " " + e.getMessage())
-                    .executionTimeMs(executionTime)
-                    .build();
+            throw e;
         }
     }
 }

@@ -227,7 +227,6 @@ public class ReactExecutor {
                     }
                 })
                 .exceptionally(ex -> {
-                    log.error("LLM 调用失败", ex);
                     // 发布迭代结束事件
                     if (context.getEventPublisher() != null) {
                         IterationEndEvent iterationEndEvent = new IterationEndEvent(context, iteration.get(), false, false, false, false, ex);
@@ -247,6 +246,9 @@ public class ReactExecutor {
             int iteration
     ) {
         CompletableFuture<ChatResponse> future = new CompletableFuture<>();
+        if (!context.getLastLLMFuture().compareAndSet(null, future)) {
+            throw new BusinessException("Agent LLM并发执行");
+        }
 
         streamingModel.chat(chatRequest, new StreamingChatResponseHandler() {
             @Override
@@ -264,10 +266,13 @@ public class ReactExecutor {
                 }
             }
 
-
             @Override
             public void onCompleteResponse(ChatResponse completeResponse) {
-                log.debug("LLM 流式调用完成");
+                // 检查是否被中断
+                if (context.isInterrupted()) {
+                    log.info("流式输出被中断");
+                    throw new BusinessException(new InterruptedException("迭代被手动中断"));
+                }
                 // 发布流式输出完成事件
                 if (context.getEventPublisher() != null) {
                     StreamCompleteEvent completeEvent = new StreamCompleteEvent(context, completeResponse);
@@ -283,8 +288,6 @@ public class ReactExecutor {
                 future.completeExceptionally(error);
             }
         });
-
-        context.getLastLLMFuture().compareAndSet(null, future);
 
         return future;
     }

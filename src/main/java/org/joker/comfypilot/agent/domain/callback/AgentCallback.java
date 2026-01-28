@@ -19,7 +19,7 @@ public interface AgentCallback {
      * @param promptType 提示类型
      * @param message    提示内容（可选，如果为null则使用默认提示）
      */
-    void onPrompt(AgentPromptType promptType, String message);
+    void onPrompt(AgentPromptType promptType, String message, boolean needSave);
 
     /**
      * 当Agent输出部分内容时调用（流式输出）

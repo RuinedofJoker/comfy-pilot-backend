@@ -12,6 +12,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.Security;
 import java.util.EnumSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -140,12 +141,16 @@ public class SshBasicTest extends BaseTest {
             System.out.println("✅ SSH 连接成功！");
             System.out.println();
 
+            System.out.println(session.isOpen());
+
             // 执行 Shell 通道测试
             executeShellCommands(session);
 
             // 关闭会话
             session.close();
             System.out.println("✅ SSH 会话已关闭");
+
+            System.out.println(session.isOpen());
 
         } catch (Exception e) {
             System.err.println("❌ SSH 连接失败: " + e.getMessage());
@@ -221,7 +226,7 @@ public class SshBasicTest extends BaseTest {
                 "cd /tmp",                      // 切换目录
                 "pwd",                          // 再次打印目录（验证目录切换生效）
                 "ls -la | head -5",             // 列出文件
-                "exit"                          // 退出 Shell
+//                "exit"                          // 退出 Shell
         };
 
         // 将所有命令拼接成一个字符串（每条命令后加换行符）
@@ -252,9 +257,21 @@ public class SshBasicTest extends BaseTest {
             System.out.println("✅ Shell 通道已打开");
             System.out.println();
 
-            // 等待 Shell 通道关闭（命令执行完成）
+            // 等待命令执行完成（不等待通道关闭）
             System.out.println("等待命令执行完成...");
-            channel.waitFor(EnumSet.of(ClientChannelEvent.CLOSED), TimeUnit.SECONDS.toMillis(30));
+
+            // 方案1：等待输入流被完全读取（EOF事件）
+            Set<ClientChannelEvent> events = channel.waitFor(
+                    EnumSet.of(ClientChannelEvent.EOF),
+                    TimeUnit.SECONDS.toMillis(5)
+            );
+
+            if (events.contains(ClientChannelEvent.EOF)) {
+                System.out.println("✅ 输入流已读取完毕");
+            }
+
+            // 方案2：额外等待一段时间，确保命令执行完成并输出结果
+            Thread.sleep(2000);  // 等待2秒让命令执行完成
 
             // 获取所有输出
             String output = outputStream.toString(StandardCharsets.UTF_8);
@@ -271,10 +288,14 @@ public class SshBasicTest extends BaseTest {
                 System.err.println(error);
             }
 
-            // 获取退出状态
+            // 获取退出状态（Shell 通道未关闭时可能为 null）
             Integer exitStatus = channel.getExitStatus();
             System.out.println("=== 退出状态: " + exitStatus + " ===");
             System.out.println();
+
+            // 手动关闭通道
+            System.out.println("手动关闭 Shell 通道...");
+            channel.close();
 
         } catch (Exception e) {
             System.err.println("❌ Shell 通道执行失败: " + e.getMessage());

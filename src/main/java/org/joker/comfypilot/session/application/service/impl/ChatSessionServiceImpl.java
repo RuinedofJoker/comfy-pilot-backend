@@ -310,9 +310,9 @@ public class ChatSessionServiceImpl implements ChatSessionService {
 
             log.info("消息发送成功: sessionCode={}, requestId={}", sessionCode, requestId);
         } catch (Exception e) {
-            log.error("消息发送失败: sessionCode={}, requestId={}, error={}", sessionCode, requestId, e.getMessage(), e);
+            log.error("消息发送失败: sessionCode={}, requestId={}", sessionCode, requestId, e);
             wsContext.completeExecution(requestId);
-            throw new BusinessException("消息发送失败: " + e.getMessage(), e);
+            throw new BusinessException(e.getMessage(), e);
         }
     }
 

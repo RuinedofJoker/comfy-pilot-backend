@@ -2,7 +2,6 @@ package org.joker.comfypilot.agent.infrastructure.tool;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.common.eventbus.EventBus;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import lombok.Getter;
@@ -12,12 +11,10 @@ import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContextHolder;
 import org.joker.comfypilot.common.annotation.ToolSet;
 import org.joker.comfypilot.common.config.JacksonConfig;
-import org.joker.comfypilot.common.event.WorkflowAgentOnPromptEvent;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.util.RedisUtil;
 import org.joker.comfypilot.session.domain.enums.AgentPromptType;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -39,10 +36,6 @@ public class TodoWriteTool {
 
     @Autowired
     private RedisUtil redisUtil;
-
-    @Autowired
-    @Qualifier("workflowAgentOnPromptEventBus")
-    private EventBus workflowAgentOnPromptEventBus;
 
     /**
      * 待办事项数据结构
@@ -140,7 +133,7 @@ public class TodoWriteTool {
 
             String formatTodoList = formatTodoList(sessionCode);
 
-            workflowAgentOnPromptEventBus.post(new WorkflowAgentOnPromptEvent(executionContext, AgentPromptType.TODO_WRITE, formatTodoList));
+            executionContext.getAgentCallback().onPrompt(AgentPromptType.TODO_WRITE, formatTodoList, true);
 
             return formatTodoList;
 
