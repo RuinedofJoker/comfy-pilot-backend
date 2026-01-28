@@ -23,8 +23,8 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
-    @Operation(summary = "用户注册", description = "新用户注册账户")
-    @PostMapping("/register")
+//    @Operation(summary = "用户注册", description = "新用户注册账户")
+//    @PostMapping("/register")
     public Result<RegisterResponse> register(@Validated @RequestBody RegisterRequest request) {
         RegisterResponse response = authService.register(request);
         return Result.success("注册成功", response);
