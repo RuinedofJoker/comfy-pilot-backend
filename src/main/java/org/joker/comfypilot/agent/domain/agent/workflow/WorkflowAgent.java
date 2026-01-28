@@ -506,6 +506,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                 if (!event.isWillContinue()) {
                     if (executionContext.getWebSocketSessionContext().completeExecution(executionContext.getRequestId())) {
                         agentCallback.onPrompt(AgentPromptType.COMPLETE, null);
+                        executionContext.executeCompleteCallbacks(event.isSuccess(), event.getException());
                     }
                 }
             });

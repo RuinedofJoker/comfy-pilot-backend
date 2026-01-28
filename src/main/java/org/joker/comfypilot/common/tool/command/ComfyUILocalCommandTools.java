@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * 本地命令执行工具集
  * <p>
- * 提供在 Agent 服务器上执行本地命令的功能
+ * 提供在 ComfyUI服务器上执行本地命令的功能
  * <p>
  * 安全限制：
  * - 命令执行有超时限制（默认 60 秒）
@@ -37,7 +37,7 @@ import java.util.Map;
 public class ComfyUILocalCommandTools {
 
     /**
-     * 在 Agent 服务器上执行本地命令
+     * 在 ComfyUI服务器上执行本地命令
      *
      * @param command    要执行的命令字符串（必填）
      * @return 命令执行结果，包含退出码、标准输出和错误输出

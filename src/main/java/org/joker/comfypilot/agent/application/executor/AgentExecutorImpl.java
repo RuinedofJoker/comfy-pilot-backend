@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -88,6 +89,9 @@ public class AgentExecutorImpl implements AgentExecutor {
                 .executionLog(executionLog)
                 .interrupted(new AtomicBoolean(false))
                 .lastLLMFuture(new AtomicReference<>())
+                .agentCompleteCallbacks(new ConcurrentLinkedQueue<>())
+                .isSuccess(new AtomicReference<>(null))
+                .exception(new AtomicReference<>(null))
                 .build();
     }
 

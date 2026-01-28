@@ -67,7 +67,11 @@ public class WebSocketSessionManager {
         if (removedCallbacks != null) {
             Runnable polled = removedCallbacks.poll();
             while (polled != null) {
-                polled.run();
+                try {
+                    polled.run();
+                } catch (Exception e) {
+                    log.error("执行WebSocket会话移除回调出错", e);
+                }
                 polled = removedCallbacks.poll();
             }
         }
@@ -93,7 +97,11 @@ public class WebSocketSessionManager {
         if (!sessions.containsKey(sessionId)) {
             callback = removedCallbacks.poll();
             while (callback != null) {
-                callback.run();
+                try {
+                    callback.run();
+                } catch (Exception e) {
+                    log.error("执行WebSocket会话移除回调出错", e);
+                }
                 callback = removedCallbacks.poll();
             }
         }

@@ -49,6 +49,9 @@ public class OrderAgent {
         AgentCallback agentCallback = executionContext.getAgentCallback();
         agentCallback.onPrompt(AgentPromptType.STARTED, null);
 
+        boolean executeSuccess = false;
+        Throwable exception = null;
+
         try {
             ChatMessageDTO orderMessage = ChatMessageDTO.builder()
                     .sessionId(executionContext.getSessionId())
@@ -82,11 +85,14 @@ public class OrderAgent {
                     summery(executionContext);
                 }
             }
+            executeSuccess = true;
         } catch (Exception e) {
             log.error("OrderAgent执行出错", e);
+            exception = e;
             agentCallback.onPrompt(AgentPromptType.ERROR, e.getMessage());
         }
         agentCallback.onPrompt(AgentPromptType.COMPLETE, null);
+        executionContext.executeCompleteCallbacks(executeSuccess, exception);
     }
 
     public void summery(AgentExecutionContext executionContext) {

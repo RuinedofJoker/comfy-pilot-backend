@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionResponse;
 import org.joker.comfypilot.agent.domain.callback.AgentCallback;
@@ -19,8 +20,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 
 /**
  * Agent执行上下文
@@ -29,6 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Slf4j
 public class AgentExecutionContext {
 
     /**
@@ -142,10 +146,54 @@ public class AgentExecutionContext {
     private AtomicReference<CompletableFuture<ChatResponse>> lastLLMFuture;
 
     /**
+     * Agent执行完成回调
+     */
+    private ConcurrentLinkedQueue<BiConsumer<Boolean, Throwable>> agentCompleteCallbacks;
+
+    /**
+     * 执行是否成功
+     */
+    private AtomicReference<Boolean> isSuccess;
+
+    /**
+     * 执行错误
+     */
+    private AtomicReference<Throwable> exception;
+
+    /**
      * 检查是否被中断
      */
     public boolean isInterrupted() {
         return interrupted.get();
+    }
+
+    public void addCompleteCallback(BiConsumer<Boolean, Throwable> callback) {
+        agentCompleteCallbacks.offer(callback);
+        if (isSuccess.get() != null) {
+            callback = agentCompleteCallbacks.poll();
+            while (callback != null) {
+                try {
+                    callback.accept(isSuccess.get(), exception.get());
+                } catch (Exception e) {
+                    log.error("执行Agent完成回调出错", e);
+                }
+                callback = agentCompleteCallbacks.poll();
+            }
+        }
+    }
+
+    public void executeCompleteCallbacks(boolean isSuccess, Throwable exception) {
+        this.isSuccess.set(isSuccess);
+        this.exception.set(exception);
+        BiConsumer<Boolean, Throwable> callback = agentCompleteCallbacks.poll();
+        while (callback != null) {
+            try {
+                callback.accept(this.isSuccess.get(), this.exception.get());
+            } catch (Exception e) {
+                log.error("执行Agent完成回调出错", e);
+            }
+            callback = agentCompleteCallbacks.poll();
+        }
     }
 
 }
