@@ -86,6 +86,17 @@ public class WebSocketAgentCallback implements AgentCallback {
                         .chatContent(null)
                         .build();
                 chatSessionService.saveMessage(agentPlanChatMessage);
+            } else if (AgentPromptType.STATUS_UPDATE.equals(promptType)) {
+                ChatMessageDTO agentPlanChatMessage = ChatMessageDTO.builder()
+                        .sessionId(agentExecutionContext.getSessionId())
+                        .sessionCode(sessionCode)
+                        .requestId(agentExecutionContext.getRequestId())
+                        .role(MessageRole.AGENT_STATUS.name())
+                        .metadata(new HashMap<>())
+                        .content(message)
+                        .chatContent(null)
+                        .build();
+                chatSessionService.saveMessage(agentPlanChatMessage);
             } else if (AgentPromptType.AGENT_MESSAGE_BLOCK.equals(promptType)) {
                 ChatMessageDTO agentMessageChatMessage = ChatMessageDTO.builder()
                         .sessionId(agentExecutionContext.getSessionId())

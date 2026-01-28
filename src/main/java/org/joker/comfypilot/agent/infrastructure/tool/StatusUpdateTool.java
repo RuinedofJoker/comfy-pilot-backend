@@ -1,7 +1,10 @@
 package org.joker.comfypilot.agent.infrastructure.tool;
 
+import com.alibaba.fastjson2.JSON;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +16,7 @@ import org.joker.comfypilot.common.annotation.ToolSet;
 import org.joker.comfypilot.common.config.JacksonConfig;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.util.RedisUtil;
+import org.joker.comfypilot.session.domain.enums.AgentPromptType;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -45,16 +49,18 @@ public class StatusUpdateTool {
     public static class StatusUpdate {
         private String message;          // 状态更新消息（1-3句话）
         private String phase;            // 当前阶段（如: 发现、计划、执行、总结）
+        private String title;            // 当前阶段标题
         private LocalDateTime timestamp; // 时间戳
 
         public StatusUpdate() {
             this.timestamp = LocalDateTime.now();
         }
 
-        public StatusUpdate(String message, String phase) {
+        public StatusUpdate(String message, String phase, String title) {
             this();
             this.message = message;
             this.phase = phase;
+            this.title = title;
         }
 
         @Override
@@ -74,10 +80,12 @@ public class StatusUpdateTool {
      * @return 确认信息
      */
     @Tool(name = "statusUpdate",value = "记录 Agent 执行过程中的状态更新。" +
-          "message 应包含: 刚刚发生的事情、即将要做的事情、相关的障碍或风险（1-3句话，对话式风格）。" +
-          "phase 表示当前阶段: discovery(发现)、planning(计划)、execution(执行)、summary(总结)。" +
           "应在以下时机调用: 启动时、每个工具批次前后、待办事项更新后、编辑/构建/测试前、完成后、提交前。")
-    public String statusUpdate(String message, String phase) {
+    public String statusUpdate(
+            @P("包含: 刚刚发生的事情、即将要做的事情、相关的障碍或风险（1-3句话，对话式风格，用markdown的格式）。") String message,
+            @P("表示当前阶段: discovery(发现)、planning(计划)、execution(执行)、summary(总结)") String phase,
+            @P("当前阶段的标题") String title
+    ) {
         AgentExecutionContext executionContext = AgentExecutionContextHolder.get();
         if (executionContext == null) {
             throw new BusinessException("找不到当前工具执行上下文");
@@ -93,7 +101,7 @@ public class StatusUpdateTool {
             // 验证 phase 参数
             String normalizedPhase = normalizePhase(phase);
 
-            StatusUpdate update = new StatusUpdate(message.trim(), normalizedPhase);
+            StatusUpdate update = new StatusUpdate(message.trim(), normalizedPhase, title);
 
             // 获取现有历史并添加新记录
             List<StatusUpdate> history = getStatusHistoryFromRedis(sessionCode);
@@ -107,10 +115,17 @@ public class StatusUpdateTool {
             // 保存到 Redis
             saveStatusHistoryToRedis(sessionCode, history);
 
-            return String.format("✓ 状态已更新 [%s]: %s",
-                    normalizedPhase,
-                    truncateMessage(message, 50));
+            update.setMessage(message);
 
+            String statusUpdate = JacksonConfig.getObjectMapper().writeValueAsString(update);
+
+            executionContext.getAgentCallback().onPrompt(AgentPromptType.STATUS_UPDATE, statusUpdate, true);
+
+            return statusUpdate;
+
+        } catch (JsonProcessingException e) {
+            log.error("解析待办事项 JSON 失败, sessionId: {}", sessionCode, e);
+            return "错误: JSON 格式不正确 - " + e.getMessage();
         } catch (Exception e) {
             log.error("记录状态更新失败, sessionCode: {}", sessionCode, e);
             return "错误: " + e.getMessage();
@@ -145,7 +160,12 @@ public class StatusUpdateTool {
         sb.append(String.format("最近 %d 条状态更新:\n\n", actualLimit));
 
         for (int i = startIndex; i < history.size(); i++) {
-            sb.append(history.get(i).toString()).append("\n");
+            try {
+                sb.append(JacksonConfig.getObjectMapper().writeValueAsString(history.get(i))).append("\n");
+            } catch (JsonProcessingException e) {
+                log.error("解析待办事项 JSON 失败, sessionId: {}", sessionCode, e);
+                return "错误: JSON 格式不正确 - " + e.getMessage();
+            }
         }
 
         return sb.toString();
@@ -174,33 +194,16 @@ public class StatusUpdateTool {
      */
     private String normalizePhase(String phase) {
         if (phase == null || phase.trim().isEmpty()) {
-            return "执行中";
+            return "execution";
         }
 
         return switch (phase.toLowerCase()) {
-            case "discovery", "发现" -> "发现";
-            case "planning", "计划" -> "计划";
-            case "execution", "执行" -> "执行";
-            case "summary", "总结" -> "总结";
+            case "discovery", "发现" -> "discovery";
+            case "planning", "计划" -> "planning";
+            case "execution", "执行" -> "execution";
+            case "summary", "总结" -> "summary";
             default -> phase;
         };
-    }
-
-    /**
-     * 截断消息（用于确认信息）
-     */
-    private String truncateMessage(String message, int maxLength) {
-        if (message.length() <= maxLength) {
-            return message;
-        }
-        return message.substring(0, maxLength) + "...";
-    }
-
-    /**
-     * 获取原始状态历史（供内部使用）
-     */
-    public List<StatusUpdate> getRawStatusHistory(String sessionCode) {
-        return getStatusHistoryFromRedis(sessionCode);
     }
 
     /**

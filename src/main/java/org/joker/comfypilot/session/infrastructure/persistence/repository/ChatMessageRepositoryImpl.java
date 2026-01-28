@@ -56,6 +56,7 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
                         MessageRole.ASSISTANT.name(),
                         MessageRole.AGENT_MESSAGE.name(),
                         MessageRole.AGENT_PLAN.name(),
+                        MessageRole.AGENT_STATUS.name(),
                         MessageRole.USER_ORDER.name(),
                         MessageRole.AGENT_ERROR.name()
                 ))

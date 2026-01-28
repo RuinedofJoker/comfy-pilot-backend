@@ -60,6 +60,11 @@ public enum AgentPromptType {
     TODO_WRITE("Agent计划", "Agent计划"),
 
     /**
+     * Agent状态
+     */
+    STATUS_UPDATE("Agent状态", "Agent状态"),
+
+    /**
      * 清空会话
      */
     CLEAR("清空会话", "清空会话"),
