@@ -45,8 +45,8 @@ public class SshConnectionConfig implements Serializable {
     private String password;
 
     /**
-     * SSH私钥路径
+     * SSH私钥内容
      */
-    private String privateKeyPath;
+    private String privateKeyContent;
 
 }

@@ -213,6 +213,27 @@ public interface WorkflowAgentPrompts {
             ---
             """.trim();
 
+    String COMFY_UI_SSH_ADVANCED_PROMPT = """
+            ## ComfyUI服务器SSH命令执行规范
+            
+            你当前允许使用 `executeComfyUIRemoteSSHCommand` 工具在用户连接的ComfyUI服务器上执行一些终端命令操作，该工具是通过ssh连接到ComfyUI所在服务实现的。
+            用户认为该ComfyUI服务器所用操作系统为 `%s`。
+            如果你需要执行终端命令，你应该首先使用 `executeComfyUIRemoteSSHCommand` 工具执行两条测试命令，来完全确认当前的操作系统类型和终端类型，以及当前连接到终端后的默认目录，后续的命令必须符合你刚刚查询到的操作系统类型和终端类型的格式。
+            命令默认是使用UTF8的编码执行和输出的。
+            用户指定了你接下来工作环境的几个重要路径：
+            1. 当前工作目录路径 `%s`
+            2. 运行ComfyUI使用的 Python 命令路径路径 `%s`
+            3. ComfyUI安装目录路径 `%s`
+            4. ComfyUI启动脚本路径 `%s`
+            
+            上面的当前工作目录路径如果没有指定，则使用连接到终端后的默认目录作为当前工作目录。
+            运行ComfyUI使用的 Python 命令路径路径和ComfyUI安装目录路径等其他路径可能为空/null或路径对应的目录或文件不存在，这种情况下你应该与用户确认他的意图，看看他是想要你帮忙安装Python/ComfyUI还是想干什么。
+            
+            你可以使用 `/user-python-path/python -s /user-comfyui-path/main.py -h` 来查看ComfyUI启动命令和一些启动参数信息，其中就包括了ComfyUI内一些目录位置的配置。
+            
+            ---
+            """.trim();
+
     String USER_MULTIMODAL_CONTENT_PROMPT = """
             用户消息里包含了 %s %s %s %s 类型的多模态数据文件，你可以使用多模态模型模型工具处理这些多模态数据文件。
             我们使用 `文件类型_该类型的文件传入下标` 组成该文件的唯一索引，你能够使用这个文件唯一索引来获取到该文件，多模态模型模型工具也是接收该文件唯一索引来获取你指定的文件。

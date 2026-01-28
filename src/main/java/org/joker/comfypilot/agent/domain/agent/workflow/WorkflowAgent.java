@@ -3,14 +3,11 @@ package org.joker.comfypilot.agent.domain.agent.workflow;
 import com.alibaba.fastjson2.JSON;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
 import dev.langchain4j.data.message.*;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.request.ToolChoice;
 import dev.langchain4j.model.output.TokenUsage;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
@@ -38,9 +35,9 @@ import org.joker.comfypilot.common.config.JacksonConfig;
 import org.joker.comfypilot.common.domain.content.*;
 import org.joker.comfypilot.common.domain.message.PersistableChatMessage;
 import org.joker.comfypilot.common.enums.MessageRole;
-import org.joker.comfypilot.common.event.WorkflowAgentOnPromptEvent;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.tool.command.ComfyUILocalCommandTools;
+import org.joker.comfypilot.common.tool.command.ComfyUIRemoteSSHCommandTools;
 import org.joker.comfypilot.common.tool.filesystem.ServerFileSystemTools;
 import org.joker.comfypilot.common.util.TraceIdUtil;
 import org.joker.comfypilot.model.application.dto.AiModelDTO;
@@ -60,7 +57,6 @@ import org.joker.comfypilot.tool.domain.service.ToolRegistry;
 import org.joker.comfypilot.agent.domain.react.ReactExecutor;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -282,7 +278,22 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                                     directoryConfig != null ? directoryConfig.getComfyuiStartupPath() : null
                             )).append("\n");
                 } else {
+                    List<Tool> comfyUIRemoteCommandTools = toolRegistry.getToolsByClass(ComfyUIRemoteSSHCommandTools.class);
+                    for (Tool comfyUIRemoteCommandTool : comfyUIRemoteCommandTools) {
+                        if (executionContext.getClientToolNames().contains(comfyUIRemoteCommandTool.toolName())) {
+                            throw new BusinessException("客户端工具" + comfyUIRemoteCommandTool.toolName() + "与服务内部工具重名");
+                        }
+                    }
+                    toolSpecs.addAll(comfyUIRemoteCommandTools.stream().map(Tool::toolSpecification).toList());
 
+                    systemMessageBuilder.append(WorkflowAgentPrompts.COMFY_UI_SSH_ADVANCED_PROMPT
+                            .formatted(
+                                    advancedFeatures.getOsType(),
+                                    advancedFeatures.getWorkingDirectory(),
+                                    advancedFeatures.getPythonCommand(),
+                                    directoryConfig != null ? directoryConfig.getComfyuiInstallPath() : null,
+                                    directoryConfig != null ? directoryConfig.getComfyuiStartupPath() : null
+                            )).append("\n");
                 }
 
                 agentScope.put("SystemPrompt", systemMessageBuilder.toString());
