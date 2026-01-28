@@ -148,7 +148,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
         } catch (Exception e) {
             log.error("处理WebSocket消息失败: wsSessionId={}, error={}", wsSessionId, e.getMessage(), e);
-            sendErrorMessage(session, e.getMessage(), sessionCode, requestId);
+            sendErrorMessage(session, "未知错误", sessionCode, requestId);
         }
     }
 
