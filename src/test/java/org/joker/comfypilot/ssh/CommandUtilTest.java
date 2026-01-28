@@ -103,7 +103,7 @@ public class CommandUtilTest extends BaseTest {
                 ? "Write-Output 'Line 1'; Write-Output 'Line 2'; Write-Output 'Line 3'"
                 : "echo 'Line 1'; echo 'Line 2'; echo 'Line 3'";
 
-        CommandResult result = CommandUtil.executeWithRealTimeOutput(command, (line, isError) -> {
+        CommandResult result = CommandUtil.executeWithRealTimeOutput(command, (line, isError, process) -> {
             System.out.println("实时输出 [" + lineCount.incrementAndGet() + "]: " + line);
         });
 

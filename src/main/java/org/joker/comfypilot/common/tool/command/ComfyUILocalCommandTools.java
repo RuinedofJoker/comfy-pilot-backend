@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.*;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 本地命令执行工具集
@@ -74,15 +75,23 @@ public class ComfyUILocalCommandTools {
             String finalCommand = buildFinalCommand(command, environmentInitScript);
             log.debug("最终执行命令: {}", finalCommand);
 
+            AtomicBoolean interrupted = new AtomicBoolean(false);
+
             // 使用 CommandUtil 执行命令
             CommandResult result;
             if (workingDir != null && !workingDir.trim().isEmpty()) {
-                result = CommandUtil.executeWithRealTimeOutput(finalCommand, workingDir.trim(), (chunk, isError) -> {
+                result = CommandUtil.executeWithRealTimeOutput(finalCommand, workingDir.trim(), (chunk, isError, process) -> {
                     executionContext.getAgentCallback().onStream(chunk);
+                    if (executionContext.isInterrupted() && interrupted.compareAndSet(false, true)) {
+                        process.destroy();
+                    }
                 });
             } else {
-                result = CommandUtil.executeWithRealTimeOutput(finalCommand, (chunk, isError) -> {
+                result = CommandUtil.executeWithRealTimeOutput(finalCommand, (chunk, isError, process) -> {
                     executionContext.getAgentCallback().onStream((isError ? "1 " : "0 ") + chunk);
+                    if (executionContext.isInterrupted() && interrupted.compareAndSet(false, true)) {
+                        process.destroy();
+                    }
                 });
             }
 

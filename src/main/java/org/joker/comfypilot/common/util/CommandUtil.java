@@ -12,8 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 /**
  * 命令执行工具类
@@ -33,6 +31,15 @@ import java.util.function.Consumer;
  */
 @Slf4j
 public class CommandUtil {
+
+    /**
+     * 输出回调接口（带进程控制）
+     * 参数：输出内容、是否错误输出、Process 对象（用于中断）
+     */
+    @FunctionalInterface
+    public interface OutputCallbackWithProcess {
+        void accept(String output, Boolean isError, Process process);
+    }
 
     /**
      * 默认超时时间（秒）
@@ -96,7 +103,7 @@ public class CommandUtil {
      */
     public static CommandResult executeWithRealTimeOutput(
             String command,
-            BiConsumer<String, Boolean> outputCallback
+            OutputCallbackWithProcess outputCallback
     ) throws IOException, InterruptedException {
         return executeWithRealTimeOutput(command, null, outputCallback);
     }
@@ -105,6 +112,7 @@ public class CommandUtil {
      * 执行命令并实时输出（使用默认配置）
      *
      * @param command        命令字符串
+     * @param workingDir     工作目录
      * @param outputCallback 实时输出回调（每行输出都会调用）
      * @return 命令执行结果
      * @throws IOException          IO 异常
@@ -113,13 +121,13 @@ public class CommandUtil {
     public static CommandResult executeWithRealTimeOutput(
             String command,
             String workingDir,
-            BiConsumer<String, Boolean> outputCallback
+            OutputCallbackWithProcess outputCallback
     ) throws IOException, InterruptedException {
         CommandConfig config = CommandConfig.builder()
                 .command(command)
                 .charset(StandardCharsets.UTF_8)
                 .workingDir(workingDir)
-                .outputCallback(outputCallback)
+                .outputCallbackWithProcess(outputCallback)
                 .build();
         return execute(config);
     }
@@ -160,7 +168,12 @@ public class CommandUtil {
         // 6. 启动进程
         Process process = processBuilder.start();
 
-        // 7. 读取输出
+        // 7. 输出命令本身（如果有回调）
+        if (config.outputCallbackWithProcess != null) {
+            config.outputCallbackWithProcess.accept(config.command + System.lineSeparator(), false, process);
+        }
+
+        // 8. 读取输出
         StringBuilder output = new StringBuilder();
         StringBuilder error = new StringBuilder();
 
@@ -171,8 +184,8 @@ public class CommandUtil {
                 while ((line = reader.readLine()) != null) {
                     output.append(line).append(System.lineSeparator());
                     // 实时输出回调
-                    if (config.outputCallback != null) {
-                        config.outputCallback.accept(line + System.lineSeparator(), false);
+                    if (config.outputCallbackWithProcess != null) {
+                        config.outputCallbackWithProcess.accept(line + System.lineSeparator(), false, process);
                     }
                 }
             } catch (IOException e) {
@@ -186,8 +199,8 @@ public class CommandUtil {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     error.append(line).append(System.lineSeparator());
-                    if (config.outputCallback != null) {
-                        config.outputCallback.accept(line + System.lineSeparator(), true);
+                    if (config.outputCallbackWithProcess != null) {
+                        config.outputCallbackWithProcess.accept(line + System.lineSeparator(), true, process);
                     }
                 }
             } catch (IOException e) {
@@ -198,7 +211,7 @@ public class CommandUtil {
         outputThread.start();
         errorThread.start();
 
-        // 8. 等待进程完成（带超时）
+        // 9. 等待进程完成（带超时）
         boolean finished = process.waitFor(config.timeout, TimeUnit.SECONDS);
 
         if (!finished) {
@@ -206,11 +219,11 @@ public class CommandUtil {
             throw new IOException("命令执行超时: " + config.timeout + " 秒");
         }
 
-        // 9. 等待输出线程完成
+        // 10. 等待输出线程完成
         outputThread.join();
         errorThread.join();
 
-        // 10. 获取退出码
+        // 11. 获取退出码
         int exitCode = process.exitValue();
 
         log.info("命令执行完成，退出码: {}", exitCode);
@@ -479,9 +492,9 @@ public class CommandUtil {
         private final boolean redirectErrorStream;
 
         /**
-         * 实时输出回调（每行输出都会调用）
+         * 实时输出回调（带进程控制，每行输出都会调用）
          */
-        private final BiConsumer<String, Boolean> outputCallback;
+        private final OutputCallbackWithProcess outputCallbackWithProcess;
 
         /**
          * 终端类型（默认自动选择）
@@ -495,7 +508,7 @@ public class CommandUtil {
             this.charset = builder.charset;
             this.environment = builder.environment;
             this.redirectErrorStream = builder.redirectErrorStream;
-            this.outputCallback = builder.outputCallback;
+            this.outputCallbackWithProcess = builder.outputCallbackWithProcess;
             this.shellType = builder.shellType;
         }
 
@@ -513,7 +526,7 @@ public class CommandUtil {
             private Charset charset = DEFAULT_CHARSET;
             private Map<String, String> environment;
             private boolean redirectErrorStream = false;
-            private BiConsumer<String, Boolean> outputCallback;
+            private OutputCallbackWithProcess outputCallbackWithProcess;
             private ShellType shellType = ShellType.AUTO;
 
             public Builder command(String command) {
@@ -554,8 +567,8 @@ public class CommandUtil {
                 return this;
             }
 
-            public Builder outputCallback(BiConsumer<String, Boolean> outputCallback) {
-                this.outputCallback = outputCallback;
+            public Builder outputCallbackWithProcess(OutputCallbackWithProcess outputCallbackWithProcess) {
+                this.outputCallbackWithProcess = outputCallbackWithProcess;
                 return this;
             }
 
