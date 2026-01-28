@@ -1,0 +1,1 @@
+import{Q as o}from"./index-DUI3biLs.js";function s(t){return o.post("/api/v1/auth/login",t)}function a(t){return o.post("/api/v1/auth/register",t)}function n(t){return o.post("/api/v1/auth/forgot-password",t)}function u(t){return o.post("/api/v1/auth/reset-password",t)}function i(){return o.post("/api/v1/auth/logout")}export{u as a,i as b,n as f,s as l,a as r};

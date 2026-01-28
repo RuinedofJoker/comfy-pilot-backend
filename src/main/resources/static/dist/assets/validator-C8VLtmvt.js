@@ -1,0 +1,1 @@
+function s(e){return/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)}function t(e){return/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/.test(e)}function n(e){return/^[a-zA-Z0-9_]{3,20}$/.test(e)}export{s as a,t as b,n as v};

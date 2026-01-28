@@ -22,7 +22,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(chatWebSocketHandler, "/ws/chat")
+        registry.addHandler(chatWebSocketHandler, "/api/ws/chat")
                 .addInterceptors(webSocketAuthInterceptor)
                 .setAllowedOrigins("*"); // 生产环境需要配置具体的域名
     }

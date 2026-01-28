@@ -15,6 +15,9 @@ spring:
     multipart:
       max-file-size: 100MB
       max-request-size: 100MB
+  web:
+    resources:
+      static-locations: classpath:/static/dist/
 
   # PostgreSQL 数据源配置
   datasource:
