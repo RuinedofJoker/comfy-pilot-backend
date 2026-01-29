@@ -19,12 +19,12 @@ import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
 import org.joker.comfypilot.session.application.service.ChatSessionService;
 import org.joker.comfypilot.session.domain.enums.AgentPromptType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executor;
 
 @Component
 @Slf4j
@@ -36,6 +36,9 @@ public class OrderAgent {
     private ChatSessionService chatSessionService;
     @Autowired
     private ChatMemoryChatMemoryStore chatMemoryChatMemoryStore;
+    @Autowired
+    @Qualifier("agentExecutor")
+    private Executor agentExecutor;
 
     public static final Set<String> ALLOWED_PROMPTS = Set.of("/help", "/clear", "/compact");
 
@@ -89,7 +92,7 @@ public class OrderAgent {
                             agentCallback.onPrompt(AgentPromptType.COMPLETE, null, false);
                             executionContext.executeCompleteCallbacks(true, null);
                         }
-                    }).exceptionally((e) -> {
+                    }, agentExecutor).exceptionallyAsync((e) -> {
                         if (executionContext.isInterrupted()) {
                             agentCallback.onInterrupted();
                         } else {
@@ -103,7 +106,7 @@ public class OrderAgent {
 
                         agentCallback.onPrompt(AgentPromptType.COMPLETE, null, false);
                         return null;
-                    });
+                    }, agentExecutor);
                 }
             }
         } catch (Exception e) {
@@ -182,7 +185,7 @@ public class OrderAgent {
 
             chatSessionService.archiveSession(executionContext.getSessionCode(), executionContext.getUserId(), summeryMessageDTOList);
             return chatResponse;
-        });
+        }, agentExecutor);
     }
 
 }

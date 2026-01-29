@@ -17,6 +17,7 @@ import org.joker.comfypilot.common.constant.AuthConstants;
 import org.joker.comfypilot.common.domain.message.PersistableChatMessage;
 import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.util.SpringContextUtil;
+import org.joker.comfypilot.common.util.TraceIdUtil;
 import org.joker.comfypilot.session.application.dto.AgentCallToolResult;
 import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
 import org.joker.comfypilot.session.application.dto.WebSocketMessage;
@@ -89,67 +90,74 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        String wsSessionId = session.getId();
-        WebSocketSessionContext context = sessionManager.getContext(wsSessionId);
-
-        if (context == null) {
-            log.warn("未找到WebSocket会话上下文: wsSessionId={}", wsSessionId);
-            return;
-        }
-
-        context.updateActiveTime();
-        String sessionCode = null;
-        String requestId = null;
+        String traceId = TraceIdUtil.generateTraceId();
+        TraceIdUtil.setTraceId(traceId);
 
         try {
-            String payload = message.getPayload();
+            String wsSessionId = session.getId();
+            WebSocketSessionContext context = sessionManager.getContext(wsSessionId);
 
-            // 直接反序列化为 WebSocketMessage，Jackson会根据type字段自动选择正确的data类型
-            WebSocketMessage<? extends WebSocketMessageData> wsMessage =
-                    objectMapper.readValue(payload, new TypeReference<WebSocketMessage<WebSocketMessageData>>() {
-                    });
-
-            // 验证消息类型
-            if (wsMessage.getType() == null) {
-                sendErrorMessage(session, "消息类型不能为空", sessionCode, requestId);
+            if (context == null) {
+                log.warn("未找到WebSocket会话上下文: wsSessionId={}", wsSessionId);
                 return;
             }
 
-            WebSocketMessageType messageType;
+            context.updateActiveTime();
+            String sessionCode = null;
+            String requestId = null;
+
             try {
-                messageType = WebSocketMessageType.valueOf(wsMessage.getType());
-            } catch (IllegalArgumentException e) {
-                log.error("未知的消息类型: {}", wsMessage.getType());
-                sendErrorMessage(session, "未知的消息类型: " + wsMessage.getType(), sessionCode, requestId);
-                return;
-            }
+                String payload = message.getPayload();
 
-            log.info("收到WebSocket消息: wsSessionId={}, type={}", wsSessionId, messageType);
+                // 直接反序列化为 WebSocketMessage，Jackson会根据type字段自动选择正确的data类型
+                WebSocketMessage<? extends WebSocketMessageData> wsMessage =
+                        objectMapper.readValue(payload, new TypeReference<WebSocketMessage<WebSocketMessageData>>() {
+                        });
 
-            sessionCode = wsMessage.getSessionCode();
-            requestId = wsMessage.getRequestId();
-            if (sessionCode == null) {
-                sendErrorMessage(session, "会话编码不能为空", sessionCode, requestId);
-                return;
-            }
-            if (requestId == null) {
-                sendErrorMessage(session, "请求ID不能为空", sessionCode, requestId);
-                return;
-            }
+                // 验证消息类型
+                if (wsMessage.getType() == null) {
+                    sendErrorMessage(session, "消息类型不能为空", sessionCode, requestId);
+                    return;
+                }
 
-            // 根据消息类型处理
-            switch (messageType) {
-                case USER_MESSAGE -> handleUserMessage(session, context, wsMessage);
-                case USER_ORDER -> handleUserOrder(session, context, wsMessage);
-                case AGENT_TOOL_CALL_RESPONSE -> handleToolCallResponse(session, context, wsMessage);
-                case INTERRUPT -> handleInterrupt(session, context, wsMessage);
-                case PING -> handlePing(session, context, wsMessage);
-                default -> log.warn("未处理的消息类型: {}", messageType);
-            }
+                WebSocketMessageType messageType;
+                try {
+                    messageType = WebSocketMessageType.valueOf(wsMessage.getType());
+                } catch (IllegalArgumentException e) {
+                    log.error("未知的消息类型: {}", wsMessage.getType());
+                    sendErrorMessage(session, "未知的消息类型: " + wsMessage.getType(), sessionCode, requestId);
+                    return;
+                }
 
-        } catch (Exception e) {
-            log.error("处理WebSocket消息失败: wsSessionId={}, error={}", wsSessionId, e.getMessage(), e);
-            sendErrorMessage(session, "未知错误", sessionCode, requestId);
+                log.info("收到WebSocket消息: wsSessionId={}, type={}", wsSessionId, messageType);
+
+                sessionCode = wsMessage.getSessionCode();
+                requestId = wsMessage.getRequestId();
+                if (sessionCode == null) {
+                    sendErrorMessage(session, "会话编码不能为空", sessionCode, requestId);
+                    return;
+                }
+                if (requestId == null) {
+                    sendErrorMessage(session, "请求ID不能为空", sessionCode, requestId);
+                    return;
+                }
+
+                // 根据消息类型处理
+                switch (messageType) {
+                    case USER_MESSAGE -> handleUserMessage(session, context, wsMessage);
+                    case USER_ORDER -> handleUserOrder(session, context, wsMessage);
+                    case AGENT_TOOL_CALL_RESPONSE -> handleToolCallResponse(session, context, wsMessage);
+                    case INTERRUPT -> handleInterrupt(session, context, wsMessage);
+                    case PING -> handlePing(session, context, wsMessage);
+                    default -> log.warn("未处理的消息类型: {}", messageType);
+                }
+
+            } catch (Exception e) {
+                log.error("处理WebSocket消息失败: wsSessionId={}, error={}", wsSessionId, e.getMessage(), e);
+                sendErrorMessage(session, "未知错误", sessionCode, requestId);
+            }
+        } finally {
+            TraceIdUtil.clear();
         }
     }
 

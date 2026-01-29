@@ -16,13 +16,16 @@ import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.joker.comfypilot.agent.domain.event.*;
 import org.joker.comfypilot.agent.domain.toolcall.ToolCallWaitManager;
 import org.joker.comfypilot.common.exception.BusinessException;
+import org.joker.comfypilot.common.util.TraceIdUtil;
 import org.joker.comfypilot.session.application.dto.AgentCallToolResult;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -35,6 +38,10 @@ public class ReactExecutor {
 
     @Autowired
     private ToolCallWaitManager toolCallWaitManager;
+
+    @Autowired
+    @Qualifier("agentExecutor")
+    private Executor agentExecutor;
 
     /**
      * 执行 ReAct 循环（响应式，非阻塞）
@@ -126,7 +133,7 @@ public class ReactExecutor {
 
         // 1. 异步调用 LLM
         callLlmStreamingAsync(streamingModel, finalRequest, context, iteration.get())
-                .thenAccept(response -> {
+                .thenAcceptAsync(response -> {
                     try {
                         AiMessage aiMessage = response.aiMessage();
 
@@ -159,7 +166,7 @@ public class ReactExecutor {
 
                             // 4. 异步处理工具调用
                             handleToolCallsAsync(aiMessage.toolExecutionRequests(), context, iteration.get())
-                                    .thenAccept(toolResults -> {
+                                    .thenAcceptAsync(toolResults -> {
                                         // 发布工具调用后
                                         if (context.getEventPublisher() != null) {
                                             AfterToolCallEvent afterToolCallEvent = new AfterToolCallEvent(context, iteration.get(), false, toolResults, null);
@@ -191,8 +198,8 @@ public class ReactExecutor {
                                             context.getEventPublisher().publishEvent(iterationEndEvent);
                                         }
                                         executeNextIteration(streamingModel, nextRequest, context, iteration, maxIterations);
-                                    })
-                                    .exceptionally(ex -> {
+                                    }, agentExecutor)
+                                    .exceptionallyAsync(ex -> {
                                         log.error("处理工具调用失败", ex);
 
                                         // 发布工具调用后
@@ -206,7 +213,7 @@ public class ReactExecutor {
                                             context.getEventPublisher().publishEvent(iterationEndEvent);
                                         }
                                         return null;
-                                    });
+                                    }, agentExecutor);
                         } else {
                             // 没有工具调用，对话完成
                             log.info("ReAct 循环完成: iterations={}", iteration.get());
@@ -225,15 +232,15 @@ public class ReactExecutor {
                             context.getEventPublisher().publishEvent(iterationEndEvent);
                         }
                     }
-                })
-                .exceptionally(ex -> {
+                }, agentExecutor)
+                .exceptionallyAsync(ex -> {
                     // 发布迭代结束事件
                     if (context.getEventPublisher() != null) {
                         IterationEndEvent iterationEndEvent = new IterationEndEvent(context, iteration.get(), false, false, false, false, ex);
                         context.getEventPublisher().publishEvent(iterationEndEvent);
                     }
                     return null;
-                });
+                }, agentExecutor);
     }
 
     /**
@@ -250,42 +257,59 @@ public class ReactExecutor {
             throw new BusinessException("Agent LLM并发执行");
         }
 
+        String traceId = TraceIdUtil.getTraceId();
+
         streamingModel.chat(chatRequest, new StreamingChatResponseHandler() {
             @Override
             public void onPartialResponse(String partialResponse) {
-                // 检查是否被中断
-                if (context.isInterrupted()) {
-                    log.info("流式输出被中断");
-                    throw new BusinessException(new InterruptedException("迭代被手动中断"));
-                }
+                try {
+                    TraceIdUtil.setTraceId(traceId);
+                    // 检查是否被中断
+                    if (context.isInterrupted()) {
+                        log.info("流式输出被中断");
+                        throw new BusinessException(new InterruptedException("迭代被手动中断"));
+                    }
 
-                // 发布流式输出事件
-                if (partialResponse != null && context.getEventPublisher() != null) {
-                    StreamEvent streamEvent = new StreamEvent(context, iteration, partialResponse);
-                    context.getEventPublisher().publishEvent(streamEvent);
+                    // 发布流式输出事件
+                    if (partialResponse != null && context.getEventPublisher() != null) {
+                        StreamEvent streamEvent = new StreamEvent(context, iteration, partialResponse);
+                        context.getEventPublisher().publishEvent(streamEvent);
+                    }
+                } finally {
+                    TraceIdUtil.clear();
                 }
             }
 
             @Override
             public void onCompleteResponse(ChatResponse completeResponse) {
-                // 检查是否被中断
-                if (context.isInterrupted()) {
-                    log.info("流式输出被中断");
-                    throw new BusinessException(new InterruptedException("迭代被手动中断"));
+                try {
+                    TraceIdUtil.setTraceId(traceId);
+                    // 检查是否被中断
+                    if (context.isInterrupted()) {
+                        log.info("流式输出被中断");
+                        throw new BusinessException(new InterruptedException("迭代被手动中断"));
+                    }
+                    // 发布流式输出完成事件
+                    if (context.getEventPublisher() != null) {
+                        StreamCompleteEvent completeEvent = new StreamCompleteEvent(context, completeResponse);
+                        context.getEventPublisher().publishEvent(completeEvent);
+                    }
+                    context.getLastLLMFuture().compareAndSet(future, null);
+                    future.completeAsync(() -> completeResponse, agentExecutor);
+                } finally {
+                    TraceIdUtil.clear();
                 }
-                // 发布流式输出完成事件
-                if (context.getEventPublisher() != null) {
-                    StreamCompleteEvent completeEvent = new StreamCompleteEvent(context, completeResponse);
-                    context.getEventPublisher().publishEvent(completeEvent);
-                }
-                context.getLastLLMFuture().compareAndSet(future, null);
-                future.complete(completeResponse);
             }
 
             @Override
             public void onError(Throwable error) {
-                log.error("LLM 流式调用失败", error);
-                future.completeExceptionally(error);
+                try {
+                    TraceIdUtil.setTraceId(traceId);
+                    log.error("LLM 流式调用失败", error);
+                    future.completeExceptionally(error);
+                } finally {
+                    TraceIdUtil.clear();
+                }
             }
         });
 
@@ -330,7 +354,7 @@ public class ReactExecutor {
 
             // 将响应 Future 转换为结果消息 Future
             CompletableFuture<ToolExecutionResultMessage> resultFuture = responseFuture
-                    .handle((responseData, ex) -> {
+                    .handleAsync((responseData, ex) -> {
                         if (ex != null) {
                             log.error("等待工具调用响应失败: toolName={}", toolName, ex);
                             responseData = AgentCallToolResult.builder()
@@ -352,7 +376,7 @@ public class ReactExecutor {
 
                         log.info("工具调用完成: toolName={}, success={}", toolName, responseData.getSuccess());
                         return resultMessage;
-                    });
+                    }, agentExecutor);
 
             toolFutures.add(resultFuture);
 
