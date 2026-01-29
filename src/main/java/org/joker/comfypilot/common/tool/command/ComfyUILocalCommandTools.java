@@ -41,7 +41,7 @@ public class ComfyUILocalCommandTools {
     /**
      * 在 ComfyUI服务器上执行本地命令
      *
-     * @param command    要执行的命令字符串（必填）
+     * @param command 要执行的命令字符串（必填）
      * @return 命令执行结果，包含退出码、标准输出和错误输出
      * @throws IOException 如果命令执行失败或超时
      */
@@ -81,16 +81,34 @@ public class ComfyUILocalCommandTools {
             CommandResult result;
             if (workingDir != null && !workingDir.trim().isEmpty()) {
                 result = CommandUtil.executeWithRealTimeOutput(finalCommand, workingDir.trim(), (chunk, isError, process) -> {
-                    executionContext.getAgentCallback().onStream((isError ? "1 " : "0 ") + chunk);
+                    chunk = chunk.replaceAll("(\\r?\\n)+", "\n");
+                    if (chunk.contains("Downloading")) {
+                        chunk = chunk.replace("\r\n", "\r");
+                    }
+                    if (isError) {
+                        chunk = "<span class=\"f-terminal-error\">" + chunk + "</span>";
+                    }
+                    executionContext.getAgentCallback().onStream(chunk);
                     if (executionContext.isInterrupted() && interrupted.compareAndSet(false, true)) {
-                        process.destroy();
+                        if (process != null) {
+                            process.destroy();
+                        }
                     }
                 });
             } else {
                 result = CommandUtil.executeWithRealTimeOutput(finalCommand, (chunk, isError, process) -> {
-                    executionContext.getAgentCallback().onStream((isError ? "1 " : "0 ") + chunk);
+                    chunk = chunk.replaceAll("(\\r?\\n)+", "\n");
+                    if (chunk.contains("Downloading")) {
+                        chunk = chunk.replace("\r\n", "\r");
+                    }
+                    if (isError) {
+                        chunk = "<span class=\"f-terminal-error\">" + chunk + "</span>";
+                    }
+                    executionContext.getAgentCallback().onStream(chunk);
                     if (executionContext.isInterrupted() && interrupted.compareAndSet(false, true)) {
-                        process.destroy();
+                        if (process != null) {
+                            process.destroy();
+                        }
                     }
                 });
             }
@@ -138,8 +156,8 @@ public class ComfyUILocalCommandTools {
      * 构建最终执行的命令
      * 如果有环境初始化脚本，则先执行初始化脚本，再执行用户命令
      *
-     * @param userCommand            用户要执行的命令
-     * @param environmentInitScript  环境初始化脚本（可选）
+     * @param userCommand           用户要执行的命令
+     * @param environmentInitScript 环境初始化脚本（可选）
      * @return 最终执行的命令字符串
      */
     private String buildFinalCommand(String userCommand, String environmentInitScript) {

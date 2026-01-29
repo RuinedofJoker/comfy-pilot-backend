@@ -6,6 +6,7 @@ import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
 
 /**
  * WebSocket会话执行上下文
@@ -49,6 +50,11 @@ public class WebSocketSessionContext {
      * 当前Agent执行上下文
      */
     private AtomicReference<AgentExecutionContext> agentExecutionContext;
+
+    /**
+     * 消息发送锁
+     */
+    private Lock sendMessageLock;
 
     /**
      * 开始执行

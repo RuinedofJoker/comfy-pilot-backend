@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 命令执行工具类
@@ -144,7 +145,7 @@ public class CommandUtil {
         log.info("执行命令: {}", config.command);
 
         // 1. 构建命令数组
-        List<String> commandList = buildCommandList(config.command, config.shellType, config.charset);
+        List<String> commandList = buildCommandList(config.command, config.shellType);
 
         // 2. 创建 ProcessBuilder
         ProcessBuilder processBuilder = new ProcessBuilder(commandList);
@@ -165,28 +166,30 @@ public class CommandUtil {
         // 5. 合并错误流到标准输出
         processBuilder.redirectErrorStream(config.redirectErrorStream);
 
-        // 6. 启动进程
-        Process process = processBuilder.start();
-
         // 7. 输出命令本身（如果有回调）
         if (config.outputCallbackWithProcess != null) {
-            config.outputCallbackWithProcess.accept(config.command + System.lineSeparator(), false, process);
+            config.outputCallbackWithProcess.accept(commandList.stream().collect(Collectors.joining(System.lineSeparator())) + System.lineSeparator(), false, null);
         }
+
+        // 6. 启动进程
+        Process process = processBuilder.start();
 
         // 8. 读取输出
         StringBuilder output = new StringBuilder();
         StringBuilder error = new StringBuilder();
 
         Thread outputThread = new Thread(() -> {
+            char[] buf = new char[1024];
             try (BufferedReader reader = new BufferedReader(
                     new InputStreamReader(process.getInputStream(), config.charset))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    output.append(line).append(System.lineSeparator());
+                int flag;
+                while ((flag = reader.read(buf, 0, 1024)) != -1) {
+                    String next = new String(buf, 0, flag);
                     // 实时输出回调
                     if (config.outputCallbackWithProcess != null) {
-                        config.outputCallbackWithProcess.accept(line + System.lineSeparator(), false, process);
+                        config.outputCallbackWithProcess.accept(next, false, process);
                     }
+                    output.append(next);
                 }
             } catch (IOException e) {
                 log.error("读取标准输出失败", e);
@@ -196,12 +199,15 @@ public class CommandUtil {
         Thread errorThread = new Thread(() -> {
             try (BufferedReader reader = new BufferedReader(
                     new InputStreamReader(process.getErrorStream(), config.charset))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    error.append(line).append(System.lineSeparator());
+                char[] buf = new char[1024];
+                int flag;
+                while ((flag = reader.read(buf, 0, 1024)) != -1) {
+                    String next = new String(buf, 0, flag);
+                    // 实时输出回调
                     if (config.outputCallbackWithProcess != null) {
-                        config.outputCallbackWithProcess.accept(line + System.lineSeparator(), true, process);
+                        config.outputCallbackWithProcess.accept(next, true, process);
                     }
+                    error.append(next);
                 }
             } catch (IOException e) {
                 log.error("读取错误输出失败", e);
@@ -238,7 +244,7 @@ public class CommandUtil {
      * @return 命令列表
      */
     private static List<String> buildCommandList(String command) {
-        return buildCommandList(command, ShellType.AUTO, null);
+        return buildCommandList(command, ShellType.AUTO);
     }
 
     /**
@@ -248,7 +254,7 @@ public class CommandUtil {
      * @param shellType 终端类型
      * @return 命令列表
      */
-    private static List<String> buildCommandList(String command, ShellType shellType, Charset charset) {
+    private static List<String> buildCommandList(String command, ShellType shellType) {
         List<String> commandList = new ArrayList<>();
 
         // 如果是自动选择，根据操作系统决定
@@ -268,56 +274,43 @@ public class CommandUtil {
 
         // 根据终端类型构建命令
         switch (shellType) {
-            case POWERSHELL:
-                commandList.add("powershell");
-                commandList.add("-Command");
-                // 如果指定了字符编码，在 PowerShell 命令前设置输出编码
-                if (charset != null) {
-                    String encodingPrefix = getPowerShellEncodingPrefix(charset);
-                    commandList.add(encodingPrefix + command);
-                } else {
-                    commandList.add(command);
-                }
-                break;
-
-            case CMD:
+            case POWERSHELL -> {
                 commandList.add("cmd");
                 commandList.add("/c");
-                // 如果指定了字符编码，在 CMD 命令前设置代码页
-                if (charset != null) {
-                    String chcpPrefix = getCmdCodePagePrefix(charset);
-                    commandList.add(chcpPrefix + command);
-                } else {
-                    commandList.add(command);
-                }
-                break;
 
-            case BASH:
+                // 构建完整的 PowerShell 命令（包含编码设置）
+                String fullCommand = getPowerShellEncodingPrefix(StandardCharsets.UTF_8) + command;
+
+                // 转义命令中的特殊字符（主要是引号）
+                String escapedCommand = escapeForCmdPowerShell(fullCommand);
+
+                // chcp 65001 设置 UTF-8 代码页，>nul 隐藏输出
+                // 然后启动 PowerShell 执行命令
+                commandList.add("chcp 65001 >nul && powershell -Command \"" + escapedCommand + "\"");
+            }
+            case CMD -> {
+                commandList.add("cmd");
+                commandList.add("/c");
+
+                // 先设置代码页，再执行命令
+                String chcpPrefix = getCmdCodePagePrefix(StandardCharsets.UTF_8);
+                commandList.add(chcpPrefix + command);
+            }
+            case BASH -> {
                 commandList.add("bash");
                 commandList.add("-c");
-                // 如果指定了字符编码，在 Bash 命令前设置 LANG 环境变量
-                if (charset != null) {
-                    String langPrefix = getBashLangPrefix(charset);
-                    commandList.add(langPrefix + command);
-                } else {
-                    commandList.add(command);
-                }
-                break;
-
-            case SH:
+                String langPrefix = getBashLangPrefix(StandardCharsets.UTF_8);
+                commandList.add(langPrefix + command);
+            }
+            case SH -> {
                 commandList.add("sh");
                 commandList.add("-c");
-                // 如果指定了字符编码，在 Sh 命令前设置 LANG 环境变量
-                if (charset != null) {
-                    String langPrefix = getBashLangPrefix(charset);
-                    commandList.add(langPrefix + command);
-                } else {
-                    commandList.add(command);
-                }
-                break;
-
-            default:
+                String langPrefix = getBashLangPrefix(StandardCharsets.UTF_8);
+                commandList.add(langPrefix + command);
+            }
+            default -> {
                 throw new IllegalArgumentException("不支持的终端类型: " + shellType);
+            }
         }
 
         return commandList;
@@ -352,7 +345,13 @@ public class CommandUtil {
             encodingName = charset.name();
         }
 
-        return "[Console]::OutputEncoding = [System.Text.Encoding]::" + encodingName + "; ";
+        // 同时设置三个编码相关配置，确保输入输出编码一致
+        // 1. [Console]::OutputEncoding - 控制台输出编码
+        // 2. [Console]::InputEncoding - 控制台输入编码
+        // 3. $OutputEncoding - PowerShell 管道输出编码
+        return "[Console]::OutputEncoding = [System.Text.Encoding]::" + encodingName + "; " +
+                "[Console]::InputEncoding = [System.Text.Encoding]::" + encodingName + "; " +
+                "$OutputEncoding = [System.Text.Encoding]::" + encodingName + "; ";
     }
 
     /**
@@ -386,7 +385,9 @@ public class CommandUtil {
             codePage = 65001;
         }
 
-        return "chcp " + codePage + " >nul && ";
+        // 移除所有重定向，确保 chcp 命令完全生效
+        // chcp 命令需要输出到控制台才能真正改变编码
+        return "chcp " + codePage + " && ";
     }
 
     /**
@@ -421,6 +422,31 @@ public class CommandUtil {
         }
 
         return "export LANG=" + langValue + "; export LC_ALL=" + langValue + "; ";
+    }
+
+    /**
+     * 转义命令字符串，使其可以安全地在 CMD 中传递给 PowerShell
+     * <p>
+     * 转义规则：
+     * 1. 双引号 " 转义为 \"
+     * 2. 反斜杠 \ 在双引号前需要转义为 \\
+     *
+     * @param command 原始命令字符串
+     * @return 转义后的命令字符串
+     */
+    private static String escapeForCmdPowerShell(String command) {
+        if (command == null || command.isEmpty()) {
+            return command;
+        }
+
+        // 替换反斜杠（必须先处理反斜杠，再处理引号）
+        // 将 \ 替换为 \\，但只在引号前的反斜杠需要转义
+        String escaped = command.replace("\\", "\\\\");
+
+        // 替换双引号
+        escaped = escaped.replace("\"", "\\\"");
+
+        return escaped;
     }
 
     /**

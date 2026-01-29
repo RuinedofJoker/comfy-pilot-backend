@@ -24,6 +24,8 @@ import org.springframework.web.socket.WebSocketSession;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
@@ -42,6 +44,9 @@ public class WebSocketAgentCallback implements AgentCallback {
     private final ChatMemoryChatMemoryStore chatMemoryChatMemoryStore;
     private final ChatSessionService chatSessionService;
 
+    private final StringBuffer chunkBuffer = new StringBuffer();
+    private volatile long lastSendChunkTime = 0;
+
     public WebSocketAgentCallback(WebSocketSession webSocketSession, WebSocketSessionContext sessionContext, AgentExecutionContext agentExecutionContext, String sessionCode, String requestId, ObjectMapper objectMapper) {
         this.webSocketSession = webSocketSession;
         this.sessionContext = sessionContext;
@@ -57,6 +62,12 @@ public class WebSocketAgentCallback implements AgentCallback {
     @Override
     public void onPrompt(AgentPromptType promptType, String message, boolean needSave) {
         log.debug("Agent提示: sessionCode={}, promptType={}, message={}", sessionCode, promptType, message);
+
+        if (AgentPromptType.TERMINAL_OUTPUT_END.equals(promptType) && !chunkBuffer.isEmpty()) {
+            sendMessage(WebSocketMessageType.AGENT_STREAM, chunkBuffer.toString());
+            chunkBuffer.setLength(0);
+            lastSendChunkTime = System.currentTimeMillis();
+        }
 
         // 构建提示数据
         AgentPromptData promptData = AgentPromptData.builder()
@@ -125,7 +136,12 @@ public class WebSocketAgentCallback implements AgentCallback {
 
     @Override
     public void onStream(String chunk) {
-        sendMessage(WebSocketMessageType.AGENT_STREAM, chunk);
+        chunkBuffer.append(chunk);
+        if (System.currentTimeMillis() - lastSendChunkTime > 200 || chunkBuffer.length() >= 100) {
+            sendMessage(WebSocketMessageType.AGENT_STREAM, chunkBuffer.toString());
+            chunkBuffer.setLength(0);
+            lastSendChunkTime = System.currentTimeMillis();
+        }
     }
 
     @Override
@@ -164,6 +180,12 @@ public class WebSocketAgentCallback implements AgentCallback {
     @Override
     public void onStreamComplete(Map<String, Object> agentScope, String fullContent, Integer inputTokens, Integer outputTokens, Integer totalTokens, Integer messageCount) {
         log.info("Agent流式输出执行完成: sessionCode={}", sessionCode);
+
+        if (!chunkBuffer.isEmpty()) {
+            sendMessage(WebSocketMessageType.AGENT_STREAM, chunkBuffer.toString());
+            chunkBuffer.setLength(0);
+            lastSendChunkTime = System.currentTimeMillis();
+        }
 
         // 流式调用不需要返回
         WebSocketMessage<?> message = WebSocketMessage.builder()
@@ -242,7 +264,12 @@ public class WebSocketAgentCallback implements AgentCallback {
         try {
             if (webSocketSession.isOpen()) {
                 String json = objectMapper.writeValueAsString(message);
-                webSocketSession.sendMessage(new TextMessage(json));
+                try {
+                    sessionContext.getSendMessageLock().lock();
+                    webSocketSession.sendMessage(new TextMessage(json));
+                } finally {
+                    sessionContext.getSendMessageLock().unlock();
+                }
             } else {
                 log.warn("WebSocket连接已关闭,无法发送消息: sessionCode={}", sessionCode);
                 throw new BusinessException("WebSocket连接已关闭,无法发送消息");

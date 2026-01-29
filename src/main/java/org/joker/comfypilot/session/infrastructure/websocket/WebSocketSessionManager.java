@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * WebSocket会话管理器
@@ -41,6 +42,7 @@ public class WebSocketSessionManager {
                 .createTime(System.currentTimeMillis())
                 .agentExecutionContext(new AtomicReference<>(null))
                 .lastActiveTime(System.currentTimeMillis())
+                .sendMessageLock(new ReentrantLock())
                 .build();
 
         sessionRemoveCallbacks.put(wsSessionId, new ConcurrentLinkedQueue<>());
