@@ -10,10 +10,14 @@ import dev.langchain4j.model.chat.response.ChatResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.agent.domain.callback.AgentCallback;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
+import org.joker.comfypilot.agent.domain.entity.AgentExecutionLog;
+import org.joker.comfypilot.agent.domain.enums.ExecutionStatus;
+import org.joker.comfypilot.agent.domain.repository.AgentExecutionLogRepository;
 import org.joker.comfypilot.agent.infrastructure.memory.ChatMemoryChatMemoryStore;
 import org.joker.comfypilot.common.domain.message.PersistableChatMessage;
 import org.joker.comfypilot.common.enums.MessageRole;
 import org.joker.comfypilot.common.exception.BusinessException;
+import org.joker.comfypilot.common.util.TraceIdUtil;
 import org.joker.comfypilot.model.domain.service.ChatModelFactory;
 import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
 import org.joker.comfypilot.session.application.service.ChatSessionService;
@@ -36,6 +40,8 @@ public class OrderAgent {
     private ChatSessionService chatSessionService;
     @Autowired
     private ChatMemoryChatMemoryStore chatMemoryChatMemoryStore;
+    @Autowired
+    private AgentExecutionLogRepository executionLogRepository;
     @Autowired
     @Qualifier("agentExecutor")
     private Executor agentExecutor;
@@ -70,28 +76,19 @@ public class OrderAgent {
             switch (userMessage) {
                 case "/help" -> {
                     agentCallback.onPrompt(AgentPromptType.AGENT_MESSAGE_BLOCK, HELP, true);
-                    if (executionContext.getWebSocketSessionContext().completeExecution(executionContext.getRequestId())) {
-                        agentCallback.onPrompt(AgentPromptType.COMPLETE, null, false);
-                        executionContext.executeCompleteCallbacks(true, null);
-                    }
+                    completeOrder(executionContext, true, null);
                 }
                 case "/clear" -> {
                     chatSessionService.clearSession(executionContext.getSessionCode(), executionContext.getUserId());
                     chatMemoryChatMemoryStore.updateMessages(executionContext.getConnectSessionId(), new ArrayList<>());
                     agentCallback.onPrompt(AgentPromptType.CLEAR, null, false);
-                    if (executionContext.getWebSocketSessionContext().completeExecution(executionContext.getRequestId())) {
-                        agentCallback.onPrompt(AgentPromptType.COMPLETE, null, false);
-                        executionContext.executeCompleteCallbacks(true, null);
-                    }
+                    completeOrder(executionContext, true, null);
                 }
                 case "/compact" -> {
                     CompletableFuture<ChatResponse> future = summery(executionContext);
                     executionContext.getLastLLMFuture().set(future);
                     future.thenRunAsync(() -> {
-                        if (executionContext.getWebSocketSessionContext().completeExecution(executionContext.getRequestId())) {
-                            agentCallback.onPrompt(AgentPromptType.COMPLETE, null, false);
-                            executionContext.executeCompleteCallbacks(true, null);
-                        }
+                        completeOrder(executionContext, true, null);
                     }, agentExecutor).exceptionallyAsync((e) -> {
                         if (executionContext.isInterrupted()) {
                             agentCallback.onInterrupted();
@@ -99,12 +96,7 @@ public class OrderAgent {
                             log.error("压缩命令执行失败", e);
                             agentCallback.onPrompt(AgentPromptType.ERROR, e.getMessage(), true);
                         }
-                        if (executionContext.getWebSocketSessionContext().completeExecution(executionContext.getRequestId())) {
-                            agentCallback.onPrompt(AgentPromptType.COMPLETE, null, false);
-                        }
-                        executionContext.executeCompleteCallbacks(true, null);
-
-                        agentCallback.onPrompt(AgentPromptType.COMPLETE, null, false);
+                        completeOrder(executionContext, false, e);
                         return null;
                     }, agentExecutor);
                 }
@@ -112,10 +104,7 @@ public class OrderAgent {
         } catch (Exception e) {
             log.error("OrderAgent执行出错", e);
             agentCallback.onPrompt(AgentPromptType.ERROR, e.getMessage(), true);
-            if (executionContext.getWebSocketSessionContext().completeExecution(executionContext.getRequestId())) {
-                agentCallback.onPrompt(AgentPromptType.COMPLETE, null, false);
-                executionContext.executeCompleteCallbacks(false, e);
-            }
+            completeOrder(executionContext, false, e);
         }
     }
 
@@ -186,6 +175,32 @@ public class OrderAgent {
             chatSessionService.archiveSession(executionContext.getSessionCode(), executionContext.getUserId(), summeryMessageDTOList);
             return chatResponse;
         }, agentExecutor);
+    }
+
+    private void completeOrder(AgentExecutionContext executionContext, boolean isSuccess, Throwable e) {
+        AgentCallback agentCallback = executionContext.getAgentCallback();
+        if (executionContext.getWebSocketSessionContext().completeExecution(executionContext.getRequestId())) {
+            agentCallback.onPrompt(AgentPromptType.COMPLETE, null, false);
+        }
+
+        AgentExecutionLog executionLog = executionContext.getExecutionLog();
+        if (executionLog != null) {
+            if (!isSuccess) {
+                if (executionContext.isInterrupted()) {
+                    executionLog.setStatus(ExecutionStatus.INTERRUPTED);
+                } else {
+                    executionLog.setStatus(ExecutionStatus.FAILED);
+                    executionLog.setErrorMessage(e != null ? e.getMessage() : "");
+                }
+            } else {
+                executionLog.setStatus(ExecutionStatus.SUCCESS);
+            }
+            executionLog.setExecutionTimeMs(executionContext.getStartTime() != null ? System.currentTimeMillis() - executionContext.getStartTime() : null);
+            executionLog.setOutput(TraceIdUtil.getTraceId());
+            executionLogRepository.update(executionLog);
+        }
+
+        executionContext.executeCompleteCallbacks(isSuccess, e);
     }
 
 }

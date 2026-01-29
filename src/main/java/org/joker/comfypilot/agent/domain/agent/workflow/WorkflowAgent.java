@@ -60,7 +60,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -180,8 +179,6 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                     agentConfig.get("llmModelIdentifier").toString(),
                     agentConfig
             );
-
-            ConcurrentLinkedQueue<String> messageIds = new ConcurrentLinkedQueue<>();
 
             // 构建用户消息+Agent提示词
             StringBuilder userMessageBuilder = new StringBuilder();
@@ -377,7 +374,6 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                         .chatContent(PersistableChatMessage.toJsonString(chatMessage))
                         .build();
                 userChatMessage = chatSessionService.saveMessage(userChatMessage);
-                messageIds.add(userChatMessage.getId() + "");
             }, null);
 
             // 构建 ChatRequest
@@ -470,7 +466,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                         executionLog.setErrorMessage("traceId: " + TraceIdUtil.getTraceId() + " ; " + event.getException().getMessage());
                     }
                     executionLog.setExecutionTimeMs(executionContext.getStartTime() != null ? System.currentTimeMillis() - executionContext.getStartTime() : null);
-                    executionLog.setOutput(messageIds.toString());
+                    executionLog.setOutput(TraceIdUtil.getTraceId());
                     executionLogRepository.update(executionLog);
                 }
 
@@ -521,9 +517,6 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                     dbMessage = chatSessionService.saveMessage(dbMessage);
                     log.debug("消息已保存到数据库: sessionCode={}, messageType={}, iteration={}",
                             event.getContext().getSessionCode(), event.getMessageType(), event.getIteration());
-                    if (messageRole.equals(MessageRole.ASSISTANT)) {
-                        messageIds.add(dbMessage.getId() + "");
-                    }
                 } catch (Exception e) {
                     log.error("保存消息到数据库失败: sessionCode={}", event.getContext().getSessionCode(), e);
                     throw new BusinessException("保存消息到数据库失败");
