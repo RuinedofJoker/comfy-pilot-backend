@@ -257,59 +257,45 @@ public class ReactExecutor {
             throw new BusinessException("Agent LLM并发执行");
         }
 
-        String traceId = TraceIdUtil.getTraceId();
-
         streamingModel.chat(chatRequest, new StreamingChatResponseHandler() {
             @Override
             public void onPartialResponse(String partialResponse) {
-                try {
-                    TraceIdUtil.setTraceId(traceId);
-                    // 检查是否被中断
-                    if (context.isInterrupted()) {
-                        log.info("流式输出被中断");
-                        throw new BusinessException(new InterruptedException("迭代被手动中断"));
-                    }
+                TraceIdUtil.setTraceId(context.getTraceId());
+                // 检查是否被中断
+                if (context.isInterrupted()) {
+                    log.info("流式输出被中断");
+                    throw new BusinessException(new InterruptedException("迭代被手动中断"));
+                }
 
-                    // 发布流式输出事件
-                    if (partialResponse != null && context.getEventPublisher() != null) {
-                        StreamEvent streamEvent = new StreamEvent(context, iteration, partialResponse);
-                        context.getEventPublisher().publishEvent(streamEvent);
-                    }
-                } finally {
-                    TraceIdUtil.clear();
+                // 发布流式输出事件
+                if (partialResponse != null && context.getEventPublisher() != null) {
+                    StreamEvent streamEvent = new StreamEvent(context, iteration, partialResponse);
+                    context.getEventPublisher().publishEvent(streamEvent);
                 }
             }
 
             @Override
             public void onCompleteResponse(ChatResponse completeResponse) {
-                try {
-                    TraceIdUtil.setTraceId(traceId);
-                    // 检查是否被中断
-                    if (context.isInterrupted()) {
-                        log.info("流式输出被中断");
-                        throw new BusinessException(new InterruptedException("迭代被手动中断"));
-                    }
-                    // 发布流式输出完成事件
-                    if (context.getEventPublisher() != null) {
-                        StreamCompleteEvent completeEvent = new StreamCompleteEvent(context, completeResponse);
-                        context.getEventPublisher().publishEvent(completeEvent);
-                    }
-                    context.getLastLLMFuture().compareAndSet(future, null);
-                    future.completeAsync(() -> completeResponse, agentExecutor);
-                } finally {
-                    TraceIdUtil.clear();
+                TraceIdUtil.setTraceId(context.getTraceId());
+                // 检查是否被中断
+                if (context.isInterrupted()) {
+                    log.info("流式输出被中断");
+                    throw new BusinessException(new InterruptedException("迭代被手动中断"));
                 }
+                // 发布流式输出完成事件
+                if (context.getEventPublisher() != null) {
+                    StreamCompleteEvent completeEvent = new StreamCompleteEvent(context, completeResponse);
+                    context.getEventPublisher().publishEvent(completeEvent);
+                }
+                context.getLastLLMFuture().compareAndSet(future, null);
+                future.completeAsync(() -> completeResponse, agentExecutor);
             }
 
             @Override
             public void onError(Throwable error) {
-                try {
-                    TraceIdUtil.setTraceId(traceId);
-                    log.error("LLM 流式调用失败", error);
-                    future.completeExceptionally(error);
-                } finally {
-                    TraceIdUtil.clear();
-                }
+                TraceIdUtil.setTraceId(context.getTraceId());
+                log.error("LLM 流式调用失败", error);
+                future.completeExceptionally(error);
             }
         });
 
@@ -355,6 +341,7 @@ public class ReactExecutor {
             // 将响应 Future 转换为结果消息 Future
             CompletableFuture<ToolExecutionResultMessage> resultFuture = responseFuture
                     .handleAsync((responseData, ex) -> {
+                        TraceIdUtil.setTraceId(context.getTraceId());
                         if (ex != null) {
                             log.error("等待工具调用响应失败: toolName={}", toolName, ex);
                             responseData = AgentCallToolResult.builder()
@@ -391,9 +378,9 @@ public class ReactExecutor {
 
         // 5. 等待所有工具调用完成，组合成一个 Future
         return CompletableFuture.allOf(toolFutures.toArray(new CompletableFuture[0]))
-                .thenApply(v -> toolFutures.stream()
+                .thenApplyAsync(v -> toolFutures.stream()
                         .map(CompletableFuture::join)
-                        .collect(java.util.stream.Collectors.toList()));
+                        .toList(), agentExecutor);
     }
 
     /**

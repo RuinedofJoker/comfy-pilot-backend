@@ -83,6 +83,7 @@ public class AgentExecutorImpl implements AgentExecutor {
                 .userId(request.getUserId())
                 .requestId(request.getRequestId())
                 .sessionId(request.getSessionId())
+                .traceId(TraceIdUtil.getTraceId())
                 .request(request)
                 .clientTools(clientTools)
                 .clientToolNames(clientToolNames)

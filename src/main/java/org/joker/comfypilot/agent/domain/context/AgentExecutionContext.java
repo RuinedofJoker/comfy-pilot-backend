@@ -86,6 +86,8 @@ public class AgentExecutionContext {
      */
     private Long startTime;
 
+    private String traceId;
+
     private AgentExecutionRequest request;
 
     private AgentExecutionResponse response;

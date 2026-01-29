@@ -287,6 +287,8 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                 throw new BusinessException("当前Agent执行上下文不正确");
             }
 
+            TraceIdUtil.setTraceId(executionContext.getTraceId());
+
             // 中断调用
             if (executionContext.isInterrupted()) {
                 toolCallWaitManager.cancelWait(responseData.getToolCallId(), responseData.getToolName());
@@ -362,6 +364,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         if (StringUtils.isNotBlank(requestId) && StringUtils.equals(requestId, executionContext.getRequestId())) {
             executionContext.getInterrupted().set(true);
         }
+        TraceIdUtil.setTraceId(executionContext.getTraceId());
         CompletableFuture<ChatResponse> lastLLMFuture = executionContext.getLastLLMFuture().get();
         if (lastLLMFuture != null) {
             lastLLMFuture.cancel(true);

@@ -2,11 +2,14 @@ package org.joker.comfypilot.agent.domain.toolcall;
 
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.session.application.dto.AgentCallToolResult;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -29,6 +32,10 @@ public class ToolCallWaitManager {
      */
     private static final int DEFAULT_TIMEOUT_SECONDS = 3600; // 一小时(连接断开时设置了回调，这个事件可以稍微长一点)
 
+    @Autowired
+    @Qualifier("agentExecutor")
+    private Executor agentExecutor;
+
     /**
      * 创建工具调用等待
      *
@@ -45,11 +52,11 @@ public class ToolCallWaitManager {
 
         // 设置超时处理
         future.orTimeout(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                .exceptionally(ex -> {
+                .exceptionallyAsync(ex -> {
                     log.warn("工具调用等待超时: key={}", key);
                     waitingToolCalls.remove(key);
                     return null;
-                });
+                }, agentExecutor);
 
         return future;
     }
