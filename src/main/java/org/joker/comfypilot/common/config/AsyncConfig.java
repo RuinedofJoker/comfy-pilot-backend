@@ -1,5 +1,6 @@
 package org.joker.comfypilot.common.config;
 
+import org.joker.comfypilot.common.util.TraceIdUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -21,14 +22,65 @@ public class AsyncConfig {
      * 命令执行线程池
      */
     @Bean
-    public ThreadPoolExecutor fetchCommandExecutor() {
+    public Executor commandExecutor() {
         return new ThreadPoolExecutor(
-                Runtime.getRuntime().availableProcessors() + 1,
-                Runtime.getRuntime().availableProcessors() + 1,
+                Runtime.getRuntime().availableProcessors() * 2 + 1,
+                Runtime.getRuntime().availableProcessors() * 4 + 1,
                 30,
                 TimeUnit.SECONDS,
-                new ArrayBlockingQueue<>(100)
-        );
+                new ArrayBlockingQueue<>(100),
+                new ThreadFactory() {
+                    private AtomicInteger count = new AtomicInteger(0);
+
+                    @Override
+                    public Thread newThread(Runnable r) {
+                        Thread thread = new Thread(r);
+                        thread.setName("command-executor-" + count.getAndIncrement());
+                        thread.setDaemon(true);
+                        return thread;
+                    }
+                }
+        ) {
+            @Override
+            public void execute(Runnable command) {
+                try {
+                    TraceIdUtil.setTraceId(TraceIdUtil.getTraceId());
+                    super.execute(command);
+                } finally {
+                    TraceIdUtil.clear();
+                }
+            }
+
+            @Override
+            public <T> Future<T> submit(Runnable task, T result) {
+                try {
+                    TraceIdUtil.setTraceId(TraceIdUtil.getTraceId());
+                    return super.submit(task, result);
+                } finally {
+                    TraceIdUtil.clear();
+                }
+            }
+
+            @Override
+            public <T> Future<T> submit(Callable<T> task) {
+                try {
+                    TraceIdUtil.setTraceId(TraceIdUtil.getTraceId());
+                    return super.submit(task);
+                } finally {
+                    TraceIdUtil.clear();
+                }
+            }
+
+            @Override
+            public Future<?> submit(Runnable task) {
+                try {
+                    TraceIdUtil.setTraceId(TraceIdUtil.getTraceId());
+                    return super.submit(task);
+                } finally {
+                    TraceIdUtil.clear();
+                }
+            }
+        };
     }
 
     /**
@@ -48,6 +100,7 @@ public class AsyncConfig {
                 new LinkedBlockingQueue<>(),
                 new ThreadFactory() {
                     private AtomicInteger count = new AtomicInteger(0);
+
                     @Override
                     public Thread newThread(Runnable r) {
                         Thread thread = new Thread(r);
@@ -56,7 +109,47 @@ public class AsyncConfig {
                         return thread;
                     }
                 }
-        );
+        ) {
+            @Override
+            public void execute(Runnable command) {
+                try {
+                    TraceIdUtil.setTraceId(TraceIdUtil.getTraceId());
+                    super.execute(command);
+                } finally {
+                    TraceIdUtil.clear();
+                }
+            }
+
+            @Override
+            public <T> Future<T> submit(Runnable task, T result) {
+                try {
+                    TraceIdUtil.setTraceId(TraceIdUtil.getTraceId());
+                    return super.submit(task, result);
+                } finally {
+                    TraceIdUtil.clear();
+                }
+            }
+
+            @Override
+            public <T> Future<T> submit(Callable<T> task) {
+                try {
+                    TraceIdUtil.setTraceId(TraceIdUtil.getTraceId());
+                    return super.submit(task);
+                } finally {
+                    TraceIdUtil.clear();
+                }
+            }
+
+            @Override
+            public Future<?> submit(Runnable task) {
+                try {
+                    TraceIdUtil.setTraceId(TraceIdUtil.getTraceId());
+                    return super.submit(task);
+                } finally {
+                    TraceIdUtil.clear();
+                }
+            }
+        };
     }
 
 }
