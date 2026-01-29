@@ -166,7 +166,7 @@ script:
     # Linux/Mac: python3
     # 也可以指定绝对路径，如: /usr/local/bin/python3
     # 推荐使用venv虚拟环境的python
-    executable: C:/code/comfy-pilot/.venv/Scripts/python.exe
+    executable: D:/code/comfy-pilot/.venv/Scripts/python.exe
     # 是否在启动时检查版本
     version-check: true
     # 最低版本要求
