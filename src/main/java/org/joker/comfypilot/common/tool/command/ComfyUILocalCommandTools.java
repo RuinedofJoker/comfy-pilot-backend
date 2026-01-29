@@ -81,7 +81,7 @@ public class ComfyUILocalCommandTools {
             CommandResult result;
             if (workingDir != null && !workingDir.trim().isEmpty()) {
                 result = CommandUtil.executeWithRealTimeOutput(finalCommand, workingDir.trim(), (chunk, isError, process) -> {
-                    executionContext.getAgentCallback().onStream(chunk);
+                    executionContext.getAgentCallback().onStream((isError ? "1 " : "0 ") + chunk);
                     if (executionContext.isInterrupted() && interrupted.compareAndSet(false, true)) {
                         process.destroy();
                     }

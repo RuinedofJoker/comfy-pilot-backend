@@ -108,7 +108,7 @@ public class ComfyUIRemoteSSHCommandTools {
             AtomicBoolean interrupted = new AtomicBoolean(false);
             configBuilder.outputCallback((chunk, isError, channel) -> {
                 // 实时输出到前端
-                executionContext.getAgentCallback().onStream(chunk);
+                executionContext.getAgentCallback().onStream((isError ? "1 " : "0 ") + chunk);
 
                 // 检查是否需要中断
                 if (executionContext.isInterrupted() && interrupted.compareAndSet(false, true)) {
