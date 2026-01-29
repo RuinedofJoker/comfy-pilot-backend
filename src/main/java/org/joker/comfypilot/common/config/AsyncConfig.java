@@ -1,6 +1,5 @@
 package org.joker.comfypilot.common.config;
 
-import org.joker.comfypilot.common.util.TraceIdUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -43,42 +42,26 @@ public class AsyncConfig {
         ) {
             @Override
             public void execute(Runnable command) {
-                try {
-                    TraceIdUtil.setTraceId(TraceIdUtil.getTraceId());
-                    super.execute(command);
-                } finally {
-                    TraceIdUtil.clear();
-                }
+                command = TraceIdTaskDecorator.decorate(command);
+                super.execute(command);
             }
 
             @Override
             public <T> Future<T> submit(Runnable task, T result) {
-                try {
-                    TraceIdUtil.setTraceId(TraceIdUtil.getTraceId());
-                    return super.submit(task, result);
-                } finally {
-                    TraceIdUtil.clear();
-                }
+                task = TraceIdTaskDecorator.decorate(task);
+                return super.submit(task, result);
             }
 
             @Override
             public <T> Future<T> submit(Callable<T> task) {
-                try {
-                    TraceIdUtil.setTraceId(TraceIdUtil.getTraceId());
-                    return super.submit(task);
-                } finally {
-                    TraceIdUtil.clear();
-                }
+                task = TraceIdTaskDecorator.decorate(task);
+                return super.submit(task);
             }
 
             @Override
             public Future<?> submit(Runnable task) {
-                try {
-                    TraceIdUtil.setTraceId(TraceIdUtil.getTraceId());
-                    return super.submit(task);
-                } finally {
-                    TraceIdUtil.clear();
-                }
+                task = TraceIdTaskDecorator.decorate(task);
+                return super.submit(task);
             }
         };
     }
@@ -112,42 +95,26 @@ public class AsyncConfig {
         ) {
             @Override
             public void execute(Runnable command) {
-                try {
-                    TraceIdUtil.setTraceId(TraceIdUtil.getTraceId());
-                    super.execute(command);
-                } finally {
-                    TraceIdUtil.clear();
-                }
+                command = TraceIdTaskDecorator.decorate(command);
+                super.execute(command);
             }
 
             @Override
             public <T> Future<T> submit(Runnable task, T result) {
-                try {
-                    TraceIdUtil.setTraceId(TraceIdUtil.getTraceId());
-                    return super.submit(task, result);
-                } finally {
-                    TraceIdUtil.clear();
-                }
+                task = TraceIdTaskDecorator.decorate(task);
+                return super.submit(task, result);
             }
 
             @Override
             public <T> Future<T> submit(Callable<T> task) {
-                try {
-                    TraceIdUtil.setTraceId(TraceIdUtil.getTraceId());
-                    return super.submit(task);
-                } finally {
-                    TraceIdUtil.clear();
-                }
+                task = TraceIdTaskDecorator.decorate(task);
+                return super.submit(task);
             }
 
             @Override
             public Future<?> submit(Runnable task) {
-                try {
-                    TraceIdUtil.setTraceId(TraceIdUtil.getTraceId());
-                    return super.submit(task);
-                } finally {
-                    TraceIdUtil.clear();
-                }
+                task = TraceIdTaskDecorator.decorate(task);
+                return super.submit(task);
             }
         };
     }

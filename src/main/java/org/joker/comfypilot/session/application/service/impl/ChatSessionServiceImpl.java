@@ -244,7 +244,7 @@ public class ChatSessionServiceImpl implements ChatSessionService {
     }
 
     @Override
-    @Async
+    @Async("agentExecutor")
     public void sendMessageAsync(String sessionCode, String requestId, WebSocketMessage<?> wsMessage,
                                  WebSocketSessionContext wsContext,
                                  WebSocketSession webSocketSession) {

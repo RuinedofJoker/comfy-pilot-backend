@@ -21,7 +21,7 @@ public class TraceIdUtil {
      * @return TraceId
      */
     public static String generateTraceId() {
-        return UUID.randomUUID().toString().replace("-", "");
+        return UUID.randomUUID().toString();
     }
 
     /**
