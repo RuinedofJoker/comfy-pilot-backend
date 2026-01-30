@@ -14,9 +14,11 @@ import org.joker.comfypilot.agent.domain.entity.AgentExecutionLog;
 import org.joker.comfypilot.agent.domain.enums.ExecutionStatus;
 import org.joker.comfypilot.agent.domain.repository.AgentExecutionLogRepository;
 import org.joker.comfypilot.agent.infrastructure.memory.ChatMemoryChatMemoryStore;
+import org.joker.comfypilot.common.constant.RedisKeyConstants;
 import org.joker.comfypilot.common.domain.message.PersistableChatMessage;
 import org.joker.comfypilot.common.enums.MessageRole;
 import org.joker.comfypilot.common.exception.BusinessException;
+import org.joker.comfypilot.common.util.RedisUtil;
 import org.joker.comfypilot.common.util.TraceIdUtil;
 import org.joker.comfypilot.model.domain.service.ChatModelFactory;
 import org.joker.comfypilot.session.application.dto.ChatMessageDTO;
@@ -42,6 +44,8 @@ public class OrderAgent {
     private ChatMemoryChatMemoryStore chatMemoryChatMemoryStore;
     @Autowired
     private AgentExecutionLogRepository executionLogRepository;
+    @Autowired
+    private RedisUtil redisUtil;
     @Autowired
     @Qualifier("agentExecutor")
     private Executor agentExecutor;
@@ -173,6 +177,10 @@ public class OrderAgent {
             );
 
             chatSessionService.archiveSession(executionContext.getSessionCode(), executionContext.getUserId(), summeryMessageDTOList);
+
+            String tokenUsageRedisKey = RedisKeyConstants.getSessionTokenUsageKey(executionContext.getSessionCode());
+            redisUtil.set(tokenUsageRedisKey, 0L);
+
             return chatResponse;
         }, agentExecutor);
     }

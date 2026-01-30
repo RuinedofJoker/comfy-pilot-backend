@@ -10,6 +10,7 @@ import dev.langchain4j.model.chat.request.ToolChoice;
 import dev.langchain4j.model.output.TokenUsage;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.joker.comfypilot.agent.application.dto.AgentExecutionRequest;
 import org.joker.comfypilot.agent.domain.agent.AgentPrompts;
 import org.joker.comfypilot.agent.domain.agent.OrderAgent;
@@ -42,6 +43,8 @@ import org.joker.comfypilot.common.tool.filesystem.ServerFileSystemTools;
 import org.joker.comfypilot.common.tool.skills.SkillsDocumentTools;
 import org.joker.comfypilot.common.tool.skills.SkillsRegistry;
 import org.joker.comfypilot.common.tool.skills.SkillsTools;
+import org.joker.comfypilot.common.constant.RedisKeyConstants;
+import org.joker.comfypilot.common.util.RedisUtil;
 import org.joker.comfypilot.common.util.TraceIdUtil;
 import org.joker.comfypilot.model.application.dto.AiModelDTO;
 import org.joker.comfypilot.model.application.service.AiModelService;
@@ -96,6 +99,8 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
     private OrderAgent orderAgent;
     @Autowired
     private SkillsRegistry skillsRegistry;
+    @Autowired
+    private RedisUtil redisUtil;
 
     @Override
     public String getAgentCode() {
@@ -164,7 +169,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
         agentScope.put("SessionCode", executionContext.getSessionCode());
         agentScope.put("LLMModelConfig", modelConfig);
 
-        Integer maxTokens = modelConfig.get("maxTokens") != null ? Integer.parseInt(modelConfig.get("maxTokens").toString()) : 200_000;
+        Integer maxTokens = modelConfig.get("maxTokens") != null ? Integer.parseInt(modelConfig.get("maxTokens").toString()) : 32_000;
         Integer maxMessages = modelConfig.get("maxMessages") != null ? Integer.parseInt(modelConfig.get("maxMessages").toString()) : 500;
 
         agentScope.put("MaxTokens", maxTokens);
@@ -395,7 +400,14 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             eventPublisher.addEventListener(AgentEventType.STREAM_COMPLETE, (StreamCompleteEvent event) -> {
                 streamOutputBuilder.compareAndSet(streamOutputBuilder.get(), null);
                 TokenUsage tokenUsage = event.getCompleteResponse().tokenUsage();
-                agentCallback.onStreamComplete(agentScope, event.getCompleteResponse().aiMessage().text(), tokenUsage.inputTokenCount(), tokenUsage.outputTokenCount(), tokenUsage.totalTokenCount(), agentCallback.getMemoryMessages().size());
+                agentCallback.onStreamComplete(agentScope, event.getCompleteResponse().aiMessage().text(), (int) (tokenUsage.inputTokenCount() * 0.8), (int) (tokenUsage.outputTokenCount() * 0.8), (int) (tokenUsage.totalTokenCount() * 0.8), agentCallback.getMemoryMessages().size());
+
+                // 累加 token 消耗到 Redis
+                if (tokenUsage.totalTokenCount() != null) {
+                    String tokenUsageRedisKey = RedisKeyConstants.getSessionTokenUsageKey(executionContext.getSessionCode());
+                    long totalTokens = tokenUsage.totalTokenCount();
+                    redisUtil.set(tokenUsageRedisKey, totalTokens);
+                }
             });
 
             AtomicBoolean isStarted = new AtomicBoolean(false);
@@ -403,6 +415,23 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             eventPublisher.addEventListener(AgentEventType.ITERATION_START, (IterationStartEvent event) -> {
                 if (isStarted.compareAndSet(false, true)) {
                     agentCallback.onPrompt(AgentPromptType.STARTED, null, false);
+                }
+
+                boolean needAutoSummery = false;
+                String tokenUsageRedisKey = RedisKeyConstants.getSessionTokenUsageKey(executionContext.getSessionCode());
+                Object tokenUsageObj = redisUtil.get(tokenUsageRedisKey);
+                // 自动摘要
+                if (tokenUsageObj instanceof Long tokenUsage) {
+                    if (tokenUsage > maxTokens * 0.9) {
+                        needAutoSummery = true;
+                    }
+                }
+                if (agentCallback.getMemoryMessages().size() >= maxMessages) {
+                    needAutoSummery = true;
+                }
+
+                if (needAutoSummery) {
+                    orderAgent.summery(executionContext).join();
                 }
             });
 
