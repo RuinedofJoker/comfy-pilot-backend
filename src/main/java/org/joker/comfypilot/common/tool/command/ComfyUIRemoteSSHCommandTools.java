@@ -108,11 +108,28 @@ public class ComfyUIRemoteSSHCommandTools {
             AtomicBoolean interrupted = new AtomicBoolean(false);
             configBuilder.outputCallback((chunk, isError, channel) -> {
                 chunk = chunk.replaceAll("(\\r?\\n)+", "\n");
-                if (chunk.contains("Downloading")) {
-                    chunk = chunk.replace("\r\n", "\r");
-                }
                 if (isError) {
-                    chunk = "<span class=\"f-terminal-error\">" + chunk + "</span>";
+                    String[] splitLine = chunk.split("\n");
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < splitLine.length; i++) {
+                        String[] splitEnter = splitLine[i].split("\r");
+                        for (int j = 0; j < splitEnter.length; j++) {
+                            sb.append("<span class=\"f-terminal-error\">").append(splitEnter[j]).append("</span>");
+                            if (j != splitEnter.length - 1) {
+                                sb.append("\r");
+                            }
+                        }
+                        if (splitLine[i].endsWith("\r")) {
+                            sb.append("\r");
+                        }
+                        if (i != splitLine.length - 1) {
+                            sb.append("\n");
+                        }
+                    }
+                    if (chunk.endsWith("\n")) {
+                        sb.append("\n");
+                    }
+                    chunk = sb.toString();
                 }
                 // 实时输出到前端
                 executionContext.getAgentCallback().onStream(chunk);
