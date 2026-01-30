@@ -122,7 +122,7 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
     @Override
     public void archiveBySessionId(Long sessionId) {
         LambdaUpdateWrapper<ChatMessagePO> wrapper = new LambdaUpdateWrapper<>();
-        wrapper.eq(ChatMessagePO::getSessionId, sessionId).set(ChatMessagePO::getStatus, MessageStatus.ACTIVE.name());
+        wrapper.eq(ChatMessagePO::getSessionId, sessionId).set(ChatMessagePO::getStatus, MessageStatus.ARCHIVED.name());
         chatMessageMapper.update(wrapper);
     }
 }

@@ -145,6 +145,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
         try {
             executeWithAgentStreaming(executionContext);
         } catch (Exception e) {
+            log.error("WorkflowAgent 执行出错", e);
             executionContext.getAgentCallback().onPrompt(AgentPromptType.ERROR, e.getMessage(), true);
         }
     }
@@ -175,9 +176,9 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
         agentScope.put("MaxTokens", maxTokens);
         agentScope.put("MaxMessages", maxMessages);
 
-        String userMessage = agentScope.get("UserMessage").toString();
+        String userQueryMessage = agentScope.get("UserQueryMessage").toString();
 
-        if (userMessage.startsWith("/")) {
+        if (userQueryMessage.startsWith("/")) {
             // 命令执行
 
             orderAgent.execute(executionContext);
@@ -192,7 +193,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
 
             // 构建用户消息+Agent提示词
             StringBuilder userMessageBuilder = new StringBuilder();
-            userMessageBuilder.append(AgentPrompts.USER_QUERY_START_TOKEN).append(userMessage).append(AgentPrompts.USER_QUERY_END_TOKEN);
+            userMessageBuilder.append(AgentPrompts.USER_QUERY_START_TOKEN).append(userQueryMessage).append(AgentPrompts.USER_QUERY_END_TOKEN);
             List<ChatContent> multimodalContents = userMessageData.getMultimodalContents();
 
             // 准备工具规范
@@ -337,24 +338,26 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             }
 
             // 添加系统提示词
-            agentCallback.addMemoryMessage(SystemMessage.from(agentScope.get("SystemPrompt").toString()), null, null);
+            SystemMessage systemMessage = SystemMessage.from(agentScope.get("SystemPrompt").toString());
+            agentScope.put("SystemMessage", systemMessage);
+            agentCallback.addMemoryMessage(systemMessage, null, null);
 
             // 添加用户提示词
             userMessageContent.add(TextContent.from(userMessageBuilder.toString()));
             if (CollectionUtils.isNotEmpty(userMultimodalContents)) {
                 userMessageContent.addAll(userMultimodalContents);
             }
-            agentCallback.addMemoryMessage(UserMessage.from(
-                    userMessageContent
-            ), (chatMessage) -> {
+            UserMessage userMessage = UserMessage.from(userMessageContent);
+            agentScope.put("UserMessage", userMessage);
+            agentCallback.addMemoryMessage(userMessage, (chatMessage) -> {
                 // 保存用户消息
                 ChatMessageDTO userChatMessage = ChatMessageDTO.builder()
                         .sessionId(executionContext.getSessionId())
                         .sessionCode(executionContext.getSessionCode())
                         .requestId(executionContext.getRequestId())
-                        .role(userMessage.startsWith("/") ? MessageRole.USER_ORDER.name() : MessageRole.USER.name())
+                        .role(userQueryMessage.startsWith("/") ? MessageRole.USER_ORDER.name() : MessageRole.USER.name())
                         .metadata(new HashMap<>())
-                        .content(userMessage)
+                        .content(userQueryMessage)
                         .chatContent(PersistableChatMessage.toJsonString(chatMessage))
                         .build();
                 userChatMessage = chatSessionService.saveMessage(userChatMessage);

@@ -1,6 +1,7 @@
 package org.joker.comfypilot.agent.domain.agent;
 
 import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
@@ -61,7 +62,7 @@ public class OrderAgent {
      */
     public void execute(AgentExecutionContext executionContext) {
         Map<String, Object> agentScope = executionContext.getAgentScope();
-        String userMessage = agentScope.get("UserMessage").toString();
+        String userQueryMessage = agentScope.get("UserQueryMessage").toString();
 
         AgentCallback agentCallback = executionContext.getAgentCallback();
         agentCallback.onPrompt(AgentPromptType.STARTED, null, false);
@@ -72,12 +73,12 @@ public class OrderAgent {
                     .sessionCode(executionContext.getSessionCode())
                     .requestId(executionContext.getRequestId())
                     .role(MessageRole.USER_ORDER.name())
-                    .content(userMessage)
+                    .content(userQueryMessage)
                     .metadata(new HashMap<>())
                     .build();
             chatSessionService.saveMessage(orderMessage);
 
-            switch (userMessage) {
+            switch (userQueryMessage) {
                 case "/help" -> {
                     agentCallback.onPrompt(AgentPromptType.AGENT_MESSAGE_BLOCK, HELP, true);
                     completeOrder(executionContext, true, null);
@@ -178,8 +179,19 @@ public class OrderAgent {
 
             chatSessionService.archiveSession(executionContext.getSessionCode(), executionContext.getUserId(), summeryMessageDTOList);
 
+            List<ChatMessage> newMessageList = new ArrayList<>(3);
+            if (agentScope.get("SystemMessage") != null) {
+                newMessageList.add((ChatMessage) agentScope.get("SystemMessage"));
+            }
+            newMessageList.add(summeryUserMessage);
+            newMessageList.add(summeryMessage);
+            chatMemoryChatMemoryStore.updateMessages(executionContext.getConnectSessionId(), newMessageList);
+            if (agentScope.get("UserMessage") != null) {
+                chatMemoryChatMemoryStore.addMessage(executionContext.getConnectSessionId(), (ChatMessage) agentScope.get("UserMessage"));
+            }
+
             String tokenUsageRedisKey = RedisKeyConstants.getSessionTokenUsageKey(executionContext.getSessionCode());
-            redisUtil.set(tokenUsageRedisKey, 0L);
+            redisUtil.del(tokenUsageRedisKey);
 
             return chatResponse;
         }, agentExecutor);

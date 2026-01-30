@@ -11,7 +11,9 @@ import org.joker.comfypilot.agent.application.executor.AgentExecutor;
 import org.joker.comfypilot.agent.application.service.AgentConfigService;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
 import org.joker.comfypilot.cfsvr.application.service.ComfyuiServerService;
+import org.joker.comfypilot.common.constant.RedisKeyConstants;
 import org.joker.comfypilot.common.exception.BusinessException;
+import org.joker.comfypilot.common.util.RedisUtil;
 import org.joker.comfypilot.session.application.converter.ChatSessionDTOConverter;
 import org.joker.comfypilot.session.application.dto.*;
 import org.joker.comfypilot.session.application.dto.client2server.UserMessageRequestData;
@@ -58,6 +60,8 @@ public class ChatSessionServiceImpl implements ChatSessionService {
     private AgentExecutor agentExecutor;
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private RedisUtil redisUtil;
 
     @Override
     @Transactional
@@ -215,6 +219,7 @@ public class ChatSessionServiceImpl implements ChatSessionService {
 
         chatMessageRepository.deleteBySessionId(chatSession.getId());
         chatSessionRepository.deleteById(chatSession.getId());
+        redisUtil.del(RedisKeyConstants.getSessionTokenUsageKey(chatSession.getSessionCode()));
 
         log.info("会话已删除: sessionCode={}", sessionCode);
     }
@@ -291,7 +296,7 @@ public class ChatSessionServiceImpl implements ChatSessionService {
             if (!wsContext.startExecution(requestId)) {
                 throw new BusinessException("会话未结束，请稍后再试");
             }
-            executionContext.getAgentScope().put("UserMessage", content);
+            executionContext.getAgentScope().put("UserQueryMessage", content);
             executionContext.getAgentScope().put("UserRules", chatSession.getRules() != null ? chatSession.getRules() : "");
 
             // 替换上下文
