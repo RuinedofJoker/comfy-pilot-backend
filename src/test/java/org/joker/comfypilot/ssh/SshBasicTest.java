@@ -226,7 +226,7 @@ public class SshBasicTest extends BaseTest {
                 "cd /tmp",                      // 切换目录
                 "pwd",                          // 再次打印目录（验证目录切换生效）
                 "ls -la | head -5",             // 列出文件
-//                "exit"                          // 退出 Shell
+                "exit"                          // 退出 Shell
         };
 
         // 将所有命令拼接成一个字符串（每条命令后加换行符）

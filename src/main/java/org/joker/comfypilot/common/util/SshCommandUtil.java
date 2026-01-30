@@ -214,8 +214,10 @@ public class SshCommandUtil {
         PipedOutputStream pipedOut = new PipedOutputStream();
         PipedInputStream pipedIn = new PipedInputStream(pipedOut);
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
+        PipedOutputStream outputStream = new PipedOutputStream();
+        PipedOutputStream errorStream = new PipedOutputStream();
+        PipedInputStream pipedOutput = new PipedInputStream(outputStream);
+        PipedInputStream pipedError = new PipedInputStream(errorStream);
 
         ClientChannel channel = session.createShellChannel();
 
@@ -229,10 +231,45 @@ public class SshCommandUtil {
             channel.open().verify(10, TimeUnit.SECONDS);
             log.debug("Shell 通道已打开");
 
-            // 如果有实时输出回调，启动输出读取线程
-            if (config.outputCallback != null) {
-                startOutputReaderThread(channel, outputStream, errorStream, config);
-            }
+            // 启动输出读取线程
+            StringBuilder output = new StringBuilder();
+            StringBuilder error = new StringBuilder();
+            // 标准输出读取线程
+            Thread outputThread = new Thread(() -> {
+                char[] buf = new char[1024];
+                try (InputStreamReader reader = new InputStreamReader(pipedOutput, config.charset)) {
+                    int flag;
+                    while ((flag = reader.read(buf)) != -1) {
+                        String line = new String(buf, 0, flag);
+                        output.append(line);
+                        if (config.outputCallback != null) {
+                            config.outputCallback.accept(line, false, channel);
+                        }
+                    }
+                } catch (IOException e) {
+                    log.error("读取标准输出失败", e);
+                }
+            });
+
+            // 错误输出读取线程
+            Thread errorThread = new Thread(() -> {
+                char[] buf = new char[1024];
+                try (InputStreamReader reader = new InputStreamReader(pipedError, config.charset)) {
+                    int flag;
+                    while ((flag = reader.read(buf)) != -1) {
+                        String line = new String(buf, 0, flag);
+                        error.append(line);
+                        if (config.outputCallback != null) {
+                            config.outputCallback.accept(line, false, channel);
+                        }
+                    }
+                } catch (IOException e) {
+                    log.error("读取错误输出失败", e);
+                }
+            });
+
+            outputThread.start();
+            errorThread.start();
 
             // 在单独的线程中发送命令
             Thread commandThread = new Thread(() -> {
@@ -268,15 +305,11 @@ public class SshCommandUtil {
             // 等待命令线程结束
             commandThread.join(5000);
 
-            // 获取所有输出
-            String output = outputStream.toString(config.charset);
-            String error = errorStream.toString(config.charset);
-
             // 获取退出状态
             Integer exitStatus = channel.getExitStatus();
             int exitCode = exitStatus != null ? exitStatus : -1;
 
-            return new CommandResult(exitCode, output, error);
+            return new CommandResult(exitCode, output.toString(), error.toString());
 
         } finally {
             // 关闭资源
@@ -296,56 +329,6 @@ public class SshCommandUtil {
                 log.warn("关闭错误流失败", e);
             }
         }
-    }
-
-    /**
-     * 启动输出读取线程（用于实时输出回调）
-     *
-     * @param channel      SSH 通道
-     * @param outputStream 标准输出流
-     * @param errorStream  错误输出流
-     * @param config       命令配置
-     */
-    private static void startOutputReaderThread(
-            ClientChannel channel,
-            ByteArrayOutputStream outputStream,
-            ByteArrayOutputStream errorStream,
-            SshCommandConfig config
-    ) {
-        // 标准输出读取线程
-        Thread outputThread = new Thread(() -> {
-            char[] buf = new char[1024];
-            try (InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(outputStream.toByteArray()), config.charset)) {
-                int flag;
-                while ((flag = reader.read(buf)) != -1) {
-                    String line = new String(buf, 0, flag);
-                    if (config.outputCallback != null) {
-                        config.outputCallback.accept(line, false, channel);
-                    }
-                }
-            } catch (IOException e) {
-                log.error("读取标准输出失败", e);
-            }
-        });
-
-        // 错误输出读取线程
-        Thread errorThread = new Thread(() -> {
-            char[] buf = new char[1024];
-            try (InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(errorStream.toByteArray()), config.charset)) {
-                int flag;
-                while ((flag = reader.read(buf)) != -1) {
-                    String line = new String(buf, 0, flag);
-                    if (config.outputCallback != null) {
-                        config.outputCallback.accept(line, false, channel);
-                    }
-                }
-            } catch (IOException e) {
-                log.error("读取错误输出失败", e);
-            }
-        });
-
-        outputThread.start();
-        errorThread.start();
     }
 
     /**
