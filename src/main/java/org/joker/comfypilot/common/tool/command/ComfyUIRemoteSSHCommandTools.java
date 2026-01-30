@@ -107,11 +107,14 @@ public class ComfyUIRemoteSSHCommandTools {
             // 11. 设置实时输出回调和中断处理
             AtomicBoolean interrupted = new AtomicBoolean(false);
             configBuilder.outputCallback((chunk, isError, channel) -> {
+                if (isError) {
+                    chunk = "<span class=\"f-terminal-error\">" + chunk + "</span>";
+                }
                 // 实时输出到前端
-                executionContext.getAgentCallback().onStream((isError ? "1 " : "0 ") + chunk);
+                executionContext.getAgentCallback().onStream(chunk);
 
                 // 检查是否需要中断
-                if (executionContext.isInterrupted() && interrupted.compareAndSet(false, true)) {
+                if (executionContext.isInterrupted() && channel != null && interrupted.compareAndSet(false, true)) {
                     try {
                         log.warn("检测到中断信号，正在关闭 SSH 通道");
                         channel.close();

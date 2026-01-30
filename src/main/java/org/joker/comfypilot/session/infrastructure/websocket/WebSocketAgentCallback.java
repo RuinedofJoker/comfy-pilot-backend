@@ -137,7 +137,7 @@ public class WebSocketAgentCallback implements AgentCallback {
     @Override
     public void onStream(String chunk) {
         chunkBuffer.append(chunk);
-        if (System.currentTimeMillis() - lastSendChunkTime > 200 || chunkBuffer.length() >= 100) {
+        if (System.currentTimeMillis() - lastSendChunkTime > 200 || chunkBuffer.length() >= 500) {
             sendMessage(WebSocketMessageType.AGENT_STREAM, chunkBuffer.toString());
             chunkBuffer.setLength(0);
             lastSendChunkTime = System.currentTimeMillis();

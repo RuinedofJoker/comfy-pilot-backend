@@ -145,7 +145,7 @@ public class CommandUtil {
         log.info("执行命令: {}", config.command);
 
         // 1. 构建命令数组
-        List<String> commandList = buildCommandList(config.command, config.shellType);
+        List<String> commandList = buildCommandList(config);
 
         // 2. 创建 ProcessBuilder
         ProcessBuilder processBuilder = new ProcessBuilder(commandList);
@@ -238,23 +238,14 @@ public class CommandUtil {
     }
 
     /**
-     * 构建命令列表（自动适配 Windows/Linux）
-     *
-     * @param command 命令字符串
-     * @return 命令列表
-     */
-    private static List<String> buildCommandList(String command) {
-        return buildCommandList(command, ShellType.AUTO);
-    }
-
-    /**
      * 构建命令列表（支持手动指定终端类型）
      *
-     * @param command   命令字符串
-     * @param shellType 终端类型
+     * @param config 命令配置
      * @return 命令列表
      */
-    private static List<String> buildCommandList(String command, ShellType shellType) {
+    private static List<String> buildCommandList(CommandConfig config) {
+        String command = config.command;
+        ShellType shellType = config.shellType;
         List<String> commandList = new ArrayList<>();
 
         // 如果是自动选择，根据操作系统决定
@@ -279,7 +270,7 @@ public class CommandUtil {
                 commandList.add("/c");
 
                 // 构建完整的 PowerShell 命令（包含编码设置）
-                String fullCommand = getPowerShellEncodingPrefix(StandardCharsets.UTF_8) + command;
+                String fullCommand = getPowerShellEncodingPrefix(config.charset) + command;
 
                 // 转义命令中的特殊字符（主要是引号）
                 String escapedCommand = escapeForCmdPowerShell(fullCommand);
@@ -293,19 +284,19 @@ public class CommandUtil {
                 commandList.add("/c");
 
                 // 先设置代码页，再执行命令
-                String chcpPrefix = getCmdCodePagePrefix(StandardCharsets.UTF_8);
+                String chcpPrefix = getCmdCodePagePrefix(config.charset);
                 commandList.add(chcpPrefix + command);
             }
             case BASH -> {
                 commandList.add("bash");
                 commandList.add("-c");
-                String langPrefix = getBashLangPrefix(StandardCharsets.UTF_8);
+                String langPrefix = getBashLangPrefix(config.charset);
                 commandList.add(langPrefix + command);
             }
             case SH -> {
                 commandList.add("sh");
                 commandList.add("-c");
-                String langPrefix = getBashLangPrefix(StandardCharsets.UTF_8);
+                String langPrefix = getBashLangPrefix(config.charset);
                 commandList.add(langPrefix + command);
             }
             default -> {

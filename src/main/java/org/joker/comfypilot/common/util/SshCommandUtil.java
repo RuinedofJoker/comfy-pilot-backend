@@ -133,7 +133,6 @@ public class SshCommandUtil {
 
         SshClient client = null;
         ClientSession session = null;
-        ClientChannel channel = null;
 
         try {
             // 1. 创建并启动 SSH 客户端
@@ -177,14 +176,7 @@ public class SshCommandUtil {
             return result;
 
         } finally {
-            // 6. 清理资源
-            if (channel != null) {
-                try {
-                    channel.close();
-                } catch (Exception e) {
-                    log.warn("关闭 SSH 通道失败", e);
-                }
-            }
+            // 清理资源
             if (session != null) {
                 try {
                     session.close();
@@ -237,6 +229,11 @@ public class SshCommandUtil {
             channel.open().verify(10, TimeUnit.SECONDS);
             log.debug("Shell 通道已打开");
 
+            // 如果有实时输出回调，启动输出读取线程
+            if (config.outputCallback != null) {
+                startOutputReaderThread(channel, outputStream, errorStream, config);
+            }
+
             // 在单独的线程中发送命令
             Thread commandThread = new Thread(() -> {
                 try {
@@ -256,11 +253,6 @@ public class SshCommandUtil {
 
             // 启动命令发送线程
             commandThread.start();
-
-            // 如果有实时输出回调，启动输出读取线程
-            if (config.outputCallback != null) {
-                startOutputReaderThread(channel, outputStream, errorStream, config);
-            }
 
             // 等待 Shell 通道关闭（命令执行完成）
             Set<ClientChannelEvent> events = channel.waitFor(
@@ -322,12 +314,13 @@ public class SshCommandUtil {
     ) {
         // 标准输出读取线程
         Thread outputThread = new Thread(() -> {
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(new ByteArrayInputStream(outputStream.toByteArray()), config.charset))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
+            char[] buf = new char[1024];
+            try (InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(outputStream.toByteArray()), config.charset)) {
+                int flag;
+                while ((flag = reader.read(buf)) != -1) {
+                    String line = new String(buf, 0, flag);
                     if (config.outputCallback != null) {
-                        config.outputCallback.accept(line + System.lineSeparator(), false, channel);
+                        config.outputCallback.accept(line, false, channel);
                     }
                 }
             } catch (IOException e) {
@@ -337,12 +330,13 @@ public class SshCommandUtil {
 
         // 错误输出读取线程
         Thread errorThread = new Thread(() -> {
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(new ByteArrayInputStream(errorStream.toByteArray()), config.charset))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
+            char[] buf = new char[1024];
+            try (InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(errorStream.toByteArray()), config.charset)) {
+                int flag;
+                while ((flag = reader.read(buf)) != -1) {
+                    String line = new String(buf, 0, flag);
                     if (config.outputCallback != null) {
-                        config.outputCallback.accept(line + System.lineSeparator(), true, channel);
+                        config.outputCallback.accept(line, false, channel);
                     }
                 }
             } catch (IOException e) {
@@ -421,31 +415,19 @@ public class SshCommandUtil {
     private static String buildFinalCommand(SshCommandConfig config) {
         StringBuilder commandBuilder = new StringBuilder();
 
-        // 1. 执行环境初始化脚本（完整脚本内容，类似 source ~/.bashrc）
+        // 执行环境初始化脚本（完整脚本内容，类似 source ~/.bashrc）
         if (config.environmentInitScript != null && !config.environmentInitScript.isEmpty()) {
-            commandBuilder.append(config.environmentInitScript.trim())
-                    .append(" && ");
+            commandBuilder.append(config.environmentInitScript.trim()).append("\n");
         }
 
-        // 2. 设置额外的环境变量（在初始化脚本之后，可以覆盖或补充）
-        if (config.environment != null && !config.environment.isEmpty()) {
-            for (Map.Entry<String, String> entry : config.environment.entrySet()) {
-                commandBuilder.append("export ")
-                        .append(entry.getKey())
-                        .append("=")
-                        .append(entry.getValue())
-                        .append(" && ");
-            }
-        }
-
-        // 3. 切换工作目录（在环境准备好后再切换）
+        // 切换工作目录（在环境准备好后再切换）
         if (config.workingDir != null && !config.workingDir.isEmpty()) {
             commandBuilder.append("cd ")
                     .append(config.workingDir)
-                    .append(" && ");
+                    .append("\n");
         }
 
-        // 4. 执行用户命令
+        // 执行用户命令
         commandBuilder.append(config.command);
 
         return commandBuilder.toString();
@@ -583,12 +565,6 @@ public class SshCommandUtil {
          * 字符编码
          */
         private final Charset charset;
-
-        /**
-         * 环境变量
-         */
-        private final Map<String, String> environment;
-
         /**
          * 实时输出回调（带通道控制，每行输出都会调用）
          */
@@ -601,7 +577,6 @@ public class SshCommandUtil {
             this.environmentInitScript = builder.environmentInitScript;
             this.timeout = builder.timeout;
             this.charset = builder.charset;
-            this.environment = builder.environment;
             this.outputCallback = builder.outputCallback;
         }
 
@@ -619,7 +594,6 @@ public class SshCommandUtil {
             private String environmentInitScript;
             private long timeout = DEFAULT_TIMEOUT;
             private Charset charset = DEFAULT_CHARSET;
-            private Map<String, String> environment;
             private OutputCallbackWithChannel outputCallback;
 
             public Builder sshConfig(SshConfig sshConfig) {
@@ -649,11 +623,6 @@ public class SshCommandUtil {
 
             public Builder charset(Charset charset) {
                 this.charset = charset;
-                return this;
-            }
-
-            public Builder environment(Map<String, String> environment) {
-                this.environment = environment;
                 return this;
             }
 
