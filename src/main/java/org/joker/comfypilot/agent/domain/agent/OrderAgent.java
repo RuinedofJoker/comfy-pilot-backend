@@ -86,6 +86,8 @@ public class OrderAgent {
                 case "/clear" -> {
                     chatSessionService.clearSession(executionContext.getSessionCode(), executionContext.getUserId());
                     chatMemoryChatMemoryStore.updateMessages(executionContext.getConnectSessionId(), new ArrayList<>());
+                    String tokenUsageRedisKey = RedisKeyConstants.getSessionTokenUsageKey(executionContext.getSessionCode());
+                    redisUtil.del(tokenUsageRedisKey);
                     agentCallback.onPrompt(AgentPromptType.CLEAR, null, false);
                     completeOrder(executionContext, true, null);
                 }
