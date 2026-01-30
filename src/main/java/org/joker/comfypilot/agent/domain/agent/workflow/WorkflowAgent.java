@@ -39,6 +39,7 @@ import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.tool.command.ComfyUILocalCommandTools;
 import org.joker.comfypilot.common.tool.command.ComfyUIRemoteSSHCommandTools;
 import org.joker.comfypilot.common.tool.filesystem.ServerFileSystemTools;
+import org.joker.comfypilot.common.tool.skills.SkillsDocumentTools;
 import org.joker.comfypilot.common.tool.skills.SkillsRegistry;
 import org.joker.comfypilot.common.tool.skills.SkillsTools;
 import org.joker.comfypilot.common.util.TraceIdUtil;
@@ -189,13 +190,6 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             userMessageBuilder.append(AgentPrompts.USER_QUERY_START_TOKEN).append(userMessage).append(AgentPrompts.USER_QUERY_END_TOKEN);
             List<ChatContent> multimodalContents = userMessageData.getMultimodalContents();
 
-            // 从 ToolRegistry 获取工具列表
-            List<Tool> todoTools = toolRegistry.getToolsByClass(TodoWriteTool.class);
-            List<Tool> statusTools = toolRegistry.getToolsByClass(StatusUpdateTool.class);
-            List<Tool> comfyuiServerTools = toolRegistry.getToolsByClass(ComfyUIServerTool.class);
-            List<Tool> serverFileSystemTools = toolRegistry.getToolsByClass(ServerFileSystemTools.class);
-            List<Tool> pythonScriptTools = toolRegistry.getToolsByClass(PythonScriptTools.class);
-
             // 准备工具规范
             List<ToolSpecification> toolSpecs = new ArrayList<>();
 
@@ -205,59 +199,28 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             }
 
             // 添加内置工具
-            for (Tool serverTool : todoTools) {
-                if (executionContext.getClientToolNames().contains(serverTool.toolName())) {
-                    throw new BusinessException("客户端工具" + serverTool.toolName() + "与服务内部工具重名");
-                }
-            }
-            toolSpecs.addAll(todoTools.stream().map(Tool::toolSpecification).toList());
-            for (Tool serverTool : statusTools) {
-                if (executionContext.getClientToolNames().contains(serverTool.toolName())) {
-                    throw new BusinessException("客户端工具" + serverTool.toolName() + "与服务内部工具重名");
-                }
-            }
-            toolSpecs.addAll(statusTools.stream().map(Tool::toolSpecification).toList());
-            for (Tool comfyuiServerTool : comfyuiServerTools) {
-                if (executionContext.getClientToolNames().contains(comfyuiServerTool.toolName())) {
-                    throw new BusinessException("客户端工具" + comfyuiServerTool.toolName() + "与服务内部工具重名");
-                }
-            }
-            toolSpecs.addAll(comfyuiServerTools.stream().map(Tool::toolSpecification).toList());
+            addAgentTools(executionContext, toolSpecs, TodoWriteTool.class);
+            addAgentTools(executionContext, toolSpecs, StatusUpdateTool.class);
+            addAgentTools(executionContext, toolSpecs, ComfyUIServerTool.class);
 
             if (ScriptRuntimeContext.isPythonAvailable()) {
                 // 添加python脚本的系统提示词
-                StringBuilder systemMessageBuilder = new StringBuilder(agentScope.get("SystemPrompt").toString()).append("\n");
 
-                systemMessageBuilder.append(WorkflowAgentPrompts.SERVER_FILE_TOOL_PROMPT).append("\n");
-                systemMessageBuilder.append(WorkflowAgentPrompts.SERVER_PYTHON_TOOL_PROMPT).append("\n");
+                String systemMessage = agentScope.get("SystemPrompt").toString() + "\n" +
+                        WorkflowAgentPrompts.SERVER_FILE_TOOL_PROMPT + "\n" +
+                        WorkflowAgentPrompts.SERVER_PYTHON_TOOL_PROMPT + "\n";
 
-                for (Tool serverFileSystemTool : serverFileSystemTools) {
-                    if (executionContext.getClientToolNames().contains(serverFileSystemTool.toolName())) {
-                        throw new BusinessException("客户端工具" + serverFileSystemTool.toolName() + "与服务内部工具重名");
-                    }
-                }
-                toolSpecs.addAll(serverFileSystemTools.stream().map(Tool::toolSpecification).toList());
+                addAgentTools(executionContext, toolSpecs, ServerFileSystemTools.class);
+                addAgentTools(executionContext, toolSpecs, PythonScriptTools.class);
 
-                for (Tool pythonScriptTool : pythonScriptTools) {
-                    if (executionContext.getClientToolNames().contains(pythonScriptTool.toolName())) {
-                        throw new BusinessException("客户端工具" + pythonScriptTool.toolName() + "与服务内部工具重名");
-                    }
-                }
-                toolSpecs.addAll(pythonScriptTools.stream().map(Tool::toolSpecification).toList());
-
-                agentScope.put("SystemPrompt", systemMessageBuilder.toString());
+                agentScope.put("SystemPrompt", systemMessage);
             }
 
             // 添加skills工具
             if (skillsRegistry.getSkillCount() > 0) {
                 agentScope.put("SystemPrompt", agentScope.get("SystemPrompt").toString() + "\n" + WorkflowAgentPrompts.SKILLS_PROMPT);
-                List<Tool> skillsTools = toolRegistry.getToolsByClass(SkillsTools.class);
-                for (Tool skillsTool : skillsTools) {
-                    if (executionContext.getClientToolNames().contains(skillsTool.toolName())) {
-                        throw new BusinessException("客户端工具" + skillsTool.toolName() + "与服务内部工具重名");
-                    }
-                }
-                toolSpecs.addAll(skillsTools.stream().map(Tool::toolSpecification).toList());
+                addAgentTools(executionContext, toolSpecs, SkillsTools.class);
+                addAgentTools(executionContext, toolSpecs, SkillsDocumentTools.class);
             }
 
             // Agent构建ComfyUI服务高级功能提示词和补充工具
@@ -555,5 +518,15 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
         }
 
         return defaultAgentConfig;
+    }
+
+    private void addAgentTools(AgentExecutionContext executionContext, List<ToolSpecification> toolSpecs, Class<?> toolSetClass) {
+        List<Tool> tools = toolRegistry.getToolsByClass(toolSetClass);
+        for (Tool tool : tools) {
+            if (executionContext.getClientToolNames().contains(tool.toolName())) {
+                throw new BusinessException("客户端工具" + tool.toolName() + "与服务内部工具重名");
+            }
+        }
+        toolSpecs.addAll(tools.stream().map(Tool::toolSpecification).toList());
     }
 }

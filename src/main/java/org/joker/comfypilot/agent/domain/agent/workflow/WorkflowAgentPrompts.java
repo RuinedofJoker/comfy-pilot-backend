@@ -290,6 +290,25 @@ public interface WorkflowAgentPrompts {
             <agent_skill fullPath="D:\\...\\SKILL.md">技能描述</agent_skill>
             </available_skills>
             
+            ## Agent 文档读取工具使用指南
+            
+            ### 何时使用文档工具
+            
+            当 Skills 资源中包含以下文件时，使用文档工具读取：
+            
+            - 📊 **Excel 文件** (.xlsx, .xls) - 数据表格、基准数据、配置表
+            - 📄 **PDF 文件** (.pdf) - 参考手册、研究报告、规范文档
+            - 📝 **Word 文档** (.docx) - 模板文件、说明文档、合同模板
+            
+            ### 核心原则
+            
+            1. **先探索后读取** - 先用 `listXxx` 方法了解文件结构
+            2. **按需读取** - 不要一次性读取所有内容
+            3. **分页处理** - 大文件使用分页方法
+            4. **安全访问** - 只能访问 Skills 目录下的文件
+            
+            ---
+            
             ### 脚本执行规范
             
             当我们提供了 `Agent服务器Python脚本执行规范` 时，你将得到执行skill里python脚本的能力，否则你不能执行skill里的python脚本。执行python脚本时必须严格遵守 `Agent服务器Python脚本执行规范`。
