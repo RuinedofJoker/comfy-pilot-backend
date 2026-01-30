@@ -15,10 +15,6 @@ spring:
     multipart:
       max-file-size: 100MB
       max-request-size: 100MB
-  web:
-    resources:
-      static-locations: D:\code\comfy-pilot\static\dist
-
   # PostgreSQL 数据源配置
   datasource:
     driver-class-name: ${DB_DRIVER}
@@ -182,3 +178,6 @@ script:
     version-check: true
     min-version: "14.0"
     timeout: 5000
+
+frontend:
+  dist-path: D:/code/comfy-pilot/static/dist

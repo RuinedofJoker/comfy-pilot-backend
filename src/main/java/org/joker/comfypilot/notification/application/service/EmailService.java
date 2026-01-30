@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 @Service
 public class EmailService {
 
-    @Autowired
+    @Autowired(required = false)
     private JavaMailSender mailSender;
     @Autowired
     private EmailLogRepository emailLogRepository;
