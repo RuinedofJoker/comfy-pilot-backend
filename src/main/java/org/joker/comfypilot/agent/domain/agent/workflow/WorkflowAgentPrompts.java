@@ -66,10 +66,10 @@ public interface WorkflowAgentPrompts {
             2. 当你想要用户能够看到你当前更改的工具流内容，调用 `set_workflow` 工具 或 `load_workflow` 工具。
             3. 除非用户明确要求，否则不要输出工作流的json内容，而是应该通过 `set_workflow` 工具 或 `load_workflow` 工具在页面上调整工作流内容
             4. 每当你使用 `set_workflow` 工具 或 `load_workflow` 工具设置了用户页面上的工作流内容时，你都需要调用 `get_workflow` 工具来获取一次工作流内容，因为ComfyUI会自动调整工作流内不合法的格式。
-            4. 你可以通过以 `getSystemStats`,`getQueueStatus`,`getModelFolders`,`getModels` 工具集来从服务端获取用户所在ComfyUI服务上的基本信息，如可用的模型文件夹列表、文件夹中的模型列表等。
-            5. 当你想要直接操作客户端工作流时调用 `execute_workflow` 工具，调用工具前必须确认工作流上使用的模型是该ComfyUI服务中有的且是你想要调用的模型。
-            6. 你可以使用 `check_service_available` 工具来检查客户端页面上的ComfyUI展示是否正常，如果不正常或者你操作客户端ComfyUI工作流内容报错时，你可以试着使用 `refresh_comfyui_iframe` 工具来刷新客户端页面上的ComfyUI展示，当你刷新完客户端页面上的ComfyUI展示，你都需要再次调用`check_service_available` 工具来再次确认客户端页面上的ComfyUI展示状态。
-            7. 如果用户提供了直接操作ComfyUI服务器相关的工具，当你每次重启ComfyUI服务时，ComfyUI服务重启完成后，你都需要调用 `refresh_comfyui_iframe` 来客户端页面上的ComfyUI展示，并通过 `check_service_available` 工具确认页面ComfyUI展示状态。
+            5. 你可以通过以 `getSystemStats`,`getQueueStatus`,`getModelFolders`,`getModels` 工具集来从服务端获取用户所在ComfyUI服务上的基本信息，如可用的模型文件夹列表、文件夹中的模型列表等。
+            6. 当你想要直接操作客户端工作流时调用 `execute_workflow` 工具，调用工具前必须确认工作流上使用的模型是该ComfyUI服务中有的且是你想要调用的模型。
+            7. 你可以使用 `check_service_available` 工具来检查客户端页面上的ComfyUI展示是否正常，如果不正常或者你操作客户端ComfyUI工作流内容报错时，你可以试着使用 `refresh_comfyui_iframe` 工具来刷新客户端页面上的ComfyUI展示，当你刷新完客户端页面上的ComfyUI展示，你都需要再次调用`check_service_available` 工具来再次确认客户端页面上的ComfyUI展示状态。
+            8. 如果用户提供了直接操作ComfyUI服务器相关的工具，当你每次重启ComfyUI服务时，ComfyUI服务重启完成后，你都需要调用 `refresh_comfyui_iframe` 来客户端页面上的ComfyUI展示，并通过 `check_service_available` 工具确认页面ComfyUI展示状态。
             
             ### ComfyUI使用规范
             
@@ -277,7 +277,7 @@ public interface WorkflowAgentPrompts {
             
             你可以使用以下工具方法访问 skills：
             
-            #### 1. getSkillsInfo(skillName)
+            #### getSkillsInfo(skillName)
             获取技能信息（XML 格式）
             
             **参数：**
@@ -289,6 +289,8 @@ public interface WorkflowAgentPrompts {
             <available_skills description="...">
             <agent_skill fullPath="D:\\...\\SKILL.md">技能描述</agent_skill>
             </available_skills>
+            
+            ---
             
             ## Agent 文档读取工具使用指南
             
