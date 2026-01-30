@@ -403,7 +403,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
             eventPublisher.addEventListener(AgentEventType.STREAM_COMPLETE, (StreamCompleteEvent event) -> {
                 streamOutputBuilder.compareAndSet(streamOutputBuilder.get(), null);
                 TokenUsage tokenUsage = event.getCompleteResponse().tokenUsage();
-                agentCallback.onStreamComplete(agentScope, event.getCompleteResponse().aiMessage().text(), (int) (tokenUsage.inputTokenCount() * 0.8), (int) (tokenUsage.outputTokenCount() * 0.8), (int) (tokenUsage.totalTokenCount() * 0.8), agentCallback.getMemoryMessages().size());
+                agentCallback.onStreamComplete(agentScope, event.getCompleteResponse().aiMessage().text(), tokenUsage.inputTokenCount(), tokenUsage.outputTokenCount(), tokenUsage.totalTokenCount(), agentCallback.getMemoryMessages().size());
 
                 // 累加 token 消耗到 Redis
                 if (tokenUsage.totalTokenCount() != null) {

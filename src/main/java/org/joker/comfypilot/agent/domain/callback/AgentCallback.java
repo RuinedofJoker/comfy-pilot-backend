@@ -36,6 +36,16 @@ public interface AgentCallback {
     void onComplete(String fullContent);
 
     /**
+     * 当Agent返回Token计数时调用
+     * @param agentScope agentScope
+     * @param inputTokens 输入消耗token
+     * @param outputTokens 输出消耗token
+     * @param totalTokens 总消耗token
+     * @param messageCount 当前消息总数
+     */
+    void onTokenUsage(Map<String, Object> agentScope, Integer inputTokens, Integer outputTokens, Integer totalTokens, Integer messageCount);
+
+    /**
      * 当Agent完成流式输出时调用
      *
      * @param fullContent 完整内容

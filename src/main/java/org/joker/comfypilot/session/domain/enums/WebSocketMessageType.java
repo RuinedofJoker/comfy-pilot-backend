@@ -55,6 +55,11 @@ public enum WebSocketMessageType {
     AGENT_COMPLETE("Agent完成", AgentCompleteResponseData.class),
 
     /**
+     * 服务端 -> 客户端：Agent Token计数
+     */
+    AGENT_TOKEN_USAGE("Agent Token计数", AgentCompleteResponseData.class),
+
+    /**
      * 服务端 -> 客户端：Agent请求调用Tool
      */
     AGENT_TOOL_CALL_REQUEST("Agent调用工具请求", AgentToolCallRequestData.class),

@@ -40,6 +40,7 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = AgentPromptData.class, name = "AGENT_PROMPT"),
         @JsonSubTypes.Type(value = VoidWebSocketMessageData.class, name = "AGENT_STREAM"),
         @JsonSubTypes.Type(value = AgentCompleteResponseData.class, name = "AGENT_COMPLETE"),
+        @JsonSubTypes.Type(value = AgentCompleteResponseData.class, name = "AGENT_TOKEN_USAGE"),
         @JsonSubTypes.Type(value = AgentToolCallRequestData.class, name = "AGENT_TOOL_CALL_REQUEST"),
         @JsonSubTypes.Type(value = VoidWebSocketMessageData.class, name = "PONG")
 })

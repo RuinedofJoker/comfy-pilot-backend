@@ -178,6 +178,27 @@ public class WebSocketAgentCallback implements AgentCallback {
     }
 
     @Override
+    public void onTokenUsage(Map<String, Object> agentScope, Integer inputTokens, Integer outputTokens, Integer totalTokens, Integer messageCount) {
+        WebSocketMessage<?> message = WebSocketMessage.builder()
+                .type(WebSocketMessageType.AGENT_TOKEN_USAGE.name())
+                .sessionCode(sessionCode)
+                .requestId(requestId)
+                .content(null)
+                .data(AgentCompleteResponseData.builder()
+                        .maxTokens((int) (Integer.parseInt(agentScope.get("MaxTokens").toString()) * 0.8))
+                        .maxMessages((int) (Integer.parseInt(agentScope.get("MaxMessages").toString()) * 0.8))
+                        .inputTokens(inputTokens)
+                        .outputTokens(outputTokens)
+                        .totalTokens(totalTokens)
+                        .messageCount(messageCount)
+                        .build())
+                .timestamp(System.currentTimeMillis())
+                .build();
+
+        sendWebSocketMessage(message);
+    }
+
+    @Override
     public void onStreamComplete(Map<String, Object> agentScope, String fullContent, Integer inputTokens, Integer outputTokens, Integer totalTokens, Integer messageCount) {
         log.info("Agent流式输出执行完成: sessionCode={}", sessionCode);
 
@@ -194,8 +215,8 @@ public class WebSocketAgentCallback implements AgentCallback {
                 .requestId(requestId)
                 .content(null)
                 .data(AgentCompleteResponseData.builder()
-                        .maxTokens(Integer.parseInt(agentScope.get("MaxTokens").toString()))
-                        .maxMessages(Integer.parseInt(agentScope.get("MaxMessages").toString()))
+                        .maxTokens((int) (Integer.parseInt(agentScope.get("MaxTokens").toString()) * 0.8))
+                        .maxMessages((int) (Integer.parseInt(agentScope.get("MaxMessages").toString()) * 0.8))
                         .inputTokens(inputTokens)
                         .outputTokens(outputTokens)
                         .totalTokens(totalTokens)

@@ -8,6 +8,7 @@ import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.request.ToolChoice;
 import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.model.output.TokenUsage;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.agent.domain.callback.AgentCallback;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
@@ -89,6 +90,7 @@ public class OrderAgent {
                     String tokenUsageRedisKey = RedisKeyConstants.getSessionTokenUsageKey(executionContext.getSessionCode());
                     redisUtil.del(tokenUsageRedisKey);
                     agentCallback.onPrompt(AgentPromptType.CLEAR, null, false);
+                    agentCallback.onTokenUsage(agentScope, 0, 0, 0, 0);
                     completeOrder(executionContext, true, null);
                 }
                 case "/compact" -> {
@@ -194,6 +196,9 @@ public class OrderAgent {
 
             String tokenUsageRedisKey = RedisKeyConstants.getSessionTokenUsageKey(executionContext.getSessionCode());
             redisUtil.del(tokenUsageRedisKey);
+
+            TokenUsage tokenUsage = chatResponse.tokenUsage();
+            agentCallback.onTokenUsage(agentScope, tokenUsage.inputTokenCount(), tokenUsage.outputTokenCount(), tokenUsage.totalTokenCount(), chatMemoryChatMemoryStore.getMessages(executionContext.getConnectSessionId()).size());
 
             return chatResponse;
         }, agentExecutor);
