@@ -158,8 +158,8 @@ script:
     # 是否启用 Python 支持
     enabled: true
     # Python 可执行文件路径（默认自动检测）
-    # Windows: python 或 python.exe
-    # Linux/Mac: python3
+    # Windows: python.exe
+    # Linux/Mac: python 或 python3
     # 也可以指定绝对路径，如: /usr/local/bin/python3
     # 推荐使用venv虚拟环境的python
     executable: D:/code/comfy-pilot/.venv/Scripts/python.exe
@@ -178,6 +178,14 @@ script:
     version-check: true
     min-version: "14.0"
     timeout: 5000
+
+skills:
+  # Skills 目录配置
+  # 可以配置多个目录，每个目录可以包含多个 skills
+  directories:
+    - D:/code/comfy-pilot/skills
+  # 可以添加更多目录：
+  #   - D:/code/custom-skills
 
 frontend:
   dist-path: D:/code/comfy-pilot/static/dist

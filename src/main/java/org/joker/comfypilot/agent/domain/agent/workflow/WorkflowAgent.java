@@ -39,6 +39,8 @@ import org.joker.comfypilot.common.exception.BusinessException;
 import org.joker.comfypilot.common.tool.command.ComfyUILocalCommandTools;
 import org.joker.comfypilot.common.tool.command.ComfyUIRemoteSSHCommandTools;
 import org.joker.comfypilot.common.tool.filesystem.ServerFileSystemTools;
+import org.joker.comfypilot.common.tool.skills.SkillsRegistry;
+import org.joker.comfypilot.common.tool.skills.SkillsTools;
 import org.joker.comfypilot.common.util.TraceIdUtil;
 import org.joker.comfypilot.model.application.dto.AiModelDTO;
 import org.joker.comfypilot.model.application.service.AiModelService;
@@ -91,6 +93,8 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
     private AgentExecutionLogRepository executionLogRepository;
     @Autowired
     private OrderAgent orderAgent;
+    @Autowired
+    private SkillsRegistry skillsRegistry;
 
     @Override
     public String getAgentCode() {
@@ -242,6 +246,18 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
                 toolSpecs.addAll(pythonScriptTools.stream().map(Tool::toolSpecification).toList());
 
                 agentScope.put("SystemPrompt", systemMessageBuilder.toString());
+            }
+
+            // 添加skills工具
+            if (skillsRegistry.getSkillCount() > 0) {
+                agentScope.put("SystemPrompt", agentScope.get("SystemPrompt").toString() + "\n" + WorkflowAgentPrompts.SKILLS_PROMPT);
+                List<Tool> skillsTools = toolRegistry.getToolsByClass(SkillsTools.class);
+                for (Tool skillsTool : skillsTools) {
+                    if (executionContext.getClientToolNames().contains(skillsTool.toolName())) {
+                        throw new BusinessException("客户端工具" + skillsTool.toolName() + "与服务内部工具重名");
+                    }
+                }
+                toolSpecs.addAll(skillsTools.stream().map(Tool::toolSpecification).toList());
             }
 
             // Agent构建ComfyUI服务高级功能提示词和补充工具

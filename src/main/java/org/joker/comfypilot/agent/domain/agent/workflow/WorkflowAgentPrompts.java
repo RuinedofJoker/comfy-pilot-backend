@@ -13,12 +13,12 @@ public interface WorkflowAgentPrompts {
             当你收到用户的消息时，你需要先获取到 `<cp_agent_user_query>` 标签对里用户的原始查询，并首先分析清楚用户当前查询的意图是什么。
             
             ## 输入规范
-
+            
             我们可能会在用户实际查询基础上加上一些其他的系统提示词做用户消息，其中我们会使用`cp_agent_user_query`标签对包裹真实的用户查询
             <cp_agent_user_query>
             该部分是用户真实的本次查询
             </cp_agent_user_query>
-
+            
             ## 输出规范
             
              - 该部分是你在执行过程中提供给用户查看的部分，只有使用该特殊标记包裹的部分能够被用户看到，其他部分只会保留在历史消息里只有你能看到。始终确保**只有相关部分**（代码片段、表格、命令或结构化数据）使用有效的 Markdown 格式，并正确设置代码块。
@@ -167,6 +167,7 @@ public interface WorkflowAgentPrompts {
             """.trim();
 
     String SERVER_FILE_TOOL_PROMPT = """
+            
             ## Agent服务器文件系统操作规范
             
             你当前允许使用Agent服务器创建一些脚本文件执行，但是你对Agent服务器上的所有文件操作都必须通过 `createTempDirectory` 工具获取到一个临时目录后，在此临时目录下执行。使用完该目录后你必须通过 `delete` 工具将该目录删除掉。
@@ -177,6 +178,7 @@ public interface WorkflowAgentPrompts {
             """.trim();
 
     String SERVER_PYTHON_TOOL_PROMPT = """
+            
             ## Agent服务器Python脚本执行规范
             
             你当前允许使用 `pipShow`, `pipInstall`, `executePythonFile` 这三个工具在Agent服务器上执行Python脚本来协助你处理复杂任务。
@@ -193,6 +195,7 @@ public interface WorkflowAgentPrompts {
             """.trim();
 
     String COMFY_UI_LOCAL_ADVANCED_PROMPT = """
+            
             ## ComfyUI服务器本地命令执行规范
             
             你当前允许使用 `executeComfyUILocalCommand` 工具在用户连接的ComfyUI服务器上执行一些终端命令操作。
@@ -214,6 +217,7 @@ public interface WorkflowAgentPrompts {
             """.trim();
 
     String COMFY_UI_SSH_ADVANCED_PROMPT = """
+            
             ## ComfyUI服务器SSH命令执行规范
             
             你当前允许使用 `executeComfyUIRemoteSSHCommand` 工具在用户连接的ComfyUI服务器上执行一些终端命令操作，该工具是通过ssh连接到ComfyUI所在服务实现的。
@@ -235,6 +239,7 @@ public interface WorkflowAgentPrompts {
             """.trim();
 
     String USER_MULTIMODAL_CONTENT_PROMPT = """
+            
             用户消息里包含了 %s %s %s %s 类型的多模态数据文件，你可以使用多模态模型模型工具处理这些多模态数据文件。
             我们使用 `文件类型_该类型的文件传入下标` 组成该文件的唯一索引，你能够使用这个文件唯一索引来获取到该文件，多模态模型模型工具也是接收该文件唯一索引来获取你指定的文件。
             以下是用户传入的文件唯一索引列表：
@@ -244,5 +249,51 @@ public interface WorkflowAgentPrompts {
             %s
             
              ---
+            """.trim();
+
+    String SKILLS_PROMPT = """
+            
+            ## Agent服务器 Skills 使用指南
+            
+            ### 什么是 Skills
+            
+            Skills（技能）是封装了专业知识、操作流程和可执行代码的能力包，能够让你在特定领域表现出专业水平。每个 skill 都包含：
+            - 详细的使用说明（SKILL.md）
+            - 可选的脚本代码（scripts/）
+            - 参考文档（REFERENCE.md）
+            - 其他资源文件
+            
+            ### Skills 的渐进式披露原则
+            
+            为了优化 token 使用，请遵循渐进式披露原则：
+            
+            1. **第一阶段：发现技能** - 只加载技能的名称和描述（~100 tokens）
+            2. **第二阶段：读取指令** - 需要时读取完整的 SKILL.md（~500-2000 tokens）
+            3. **第三阶段：访问资源** - 必要时读取 scripts、references 等文件
+            
+            **重要：** 不要一次性读取所有内容，按需加载！
+            
+            ### 可用的工具方法
+            
+            你可以使用以下工具方法访问 skills：
+            
+            #### 1. getSkillsInfo(skillName)
+            获取技能信息（XML 格式）
+            
+            **参数：**
+            - `skillName`（可选）：
+              - 为空或 null：返回所有根技能
+              - 指定名称：返回该技能的直接子技能
+            
+            **返回格式：**
+            <available_skills description="...">
+            <agent_skill fullPath="D:\\...\\SKILL.md">技能描述</agent_skill>
+            </available_skills>
+            
+            ### 脚本执行规范
+            
+            当我们提供了 `Agent服务器Python脚本执行规范` 时，你将得到执行skill里python脚本的能力，否则你不能执行skill里的python脚本。执行python脚本时必须严格遵守 `Agent服务器Python脚本执行规范`。
+            
+            ---
             """.trim();
 }
