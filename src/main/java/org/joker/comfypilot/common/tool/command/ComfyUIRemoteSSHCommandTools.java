@@ -107,6 +107,10 @@ public class ComfyUIRemoteSSHCommandTools {
             // 11. 设置实时输出回调和中断处理
             AtomicBoolean interrupted = new AtomicBoolean(false);
             configBuilder.outputCallback((chunk, isError, channel) -> {
+                chunk = chunk.replaceAll("(\\r?\\n)+", "\n");
+                if (chunk.contains("Downloading")) {
+                    chunk = chunk.replace("\r\n", "\r");
+                }
                 if (isError) {
                     chunk = "<span class=\"f-terminal-error\">" + chunk + "</span>";
                 }
