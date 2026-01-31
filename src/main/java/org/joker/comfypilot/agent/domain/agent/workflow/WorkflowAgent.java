@@ -159,6 +159,9 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
         Map<String, Object> agentConfig = getRuntimeAgentConfig(executionContext);
         Map<String, Object> agentScope = executionContext.getAgentScope();
 
+        if (!(agentConfig.get("llmModelIdentifier") instanceof String) || StringUtils.isBlank((String) agentConfig.get("llmModelIdentifier"))) {
+            throw new BusinessException("当前Agent未配置LLM大模型");
+        }
         AiModelDTO llmModel = aiModelService.getByModelIdentifier(agentConfig.get("llmModelIdentifier").toString());
         ObjectMapper objectMapper = JacksonConfig.getObjectMapper();
         Map<String, Object> modelConfig = objectMapper.readValue(llmModel.getModelConfig(), new TypeReference<>() {
