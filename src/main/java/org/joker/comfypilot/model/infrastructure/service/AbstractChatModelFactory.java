@@ -59,6 +59,10 @@ public abstract class AbstractChatModelFactory {
                 apiKey = provider.getApiKey();
             }
 
+            if (StringUtils.isBlank(apiBaseUrl)) {
+                throw new BusinessException("当前LLM模型未配置apiUrl");
+            }
+
             return new ModelConfig(apiKey, temperature, maxTokens, topP, timeoutSeconds != null ? timeoutSeconds : 60 * 60, apiBaseUrl);
 
         } catch (Exception e) {

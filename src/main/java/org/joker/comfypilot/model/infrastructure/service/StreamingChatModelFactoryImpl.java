@@ -170,6 +170,7 @@ public class StreamingChatModelFactoryImpl extends AbstractChatModelFactory impl
         ProviderType providerType = model.getProviderType();
 
         return switch (providerType) {
+            case null -> throw new BusinessException("当前LLM模型未配置模型提供协议类型");
             case OPENAI -> createOpenAiModel(model, null, config);
             case ANTHROPIC -> throw new BusinessException("暂不支持 Anthropic 提供商");
             default -> throw new BusinessException("暂不支持" + providerType.getName());
