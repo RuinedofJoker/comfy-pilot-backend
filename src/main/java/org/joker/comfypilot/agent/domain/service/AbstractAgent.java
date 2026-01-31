@@ -39,7 +39,7 @@ public abstract class AbstractAgent implements Agent {
                 );
             }
         } catch (Exception e) {
-            log.error("WorkflowAgent执行失败", e);
+            log.error(getClass().getSimpleName() + "执行失败", e);
             executionContext.setResponse(
                     AgentExecutionResponse.builder()
                             .status(ExecutionStatus.FAILED.name())

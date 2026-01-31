@@ -2,7 +2,14 @@ package org.joker.comfypilot.session.domain.context;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.joker.comfypilot.agent.domain.context.AgentExecutionContext;
+import org.joker.comfypilot.common.config.JacksonConfig;
+import org.joker.comfypilot.session.application.dto.WebSocketMessage;
+import org.joker.comfypilot.session.application.dto.server2client.AgentPromptData;
+import org.joker.comfypilot.session.domain.enums.AgentPromptType;
+import org.joker.comfypilot.session.domain.enums.WebSocketMessageType;
+import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -14,6 +21,7 @@ import java.util.concurrent.locks.Lock;
  */
 @Data
 @Builder
+@Slf4j
 public class WebSocketSessionContext {
 
     /**
@@ -79,5 +87,36 @@ public class WebSocketSessionContext {
      */
     public void updateActiveTime() {
         this.lastActiveTime = System.currentTimeMillis();
+    }
+
+    public void sendMessage(WebSocketMessage<?> message) {
+        try {
+            if (webSocketSession.isOpen()) {
+                String json = JacksonConfig.getObjectMapper().writeValueAsString(message);
+                try {
+                    getSendMessageLock().lock();
+                    webSocketSession.sendMessage(new TextMessage(json));
+                } finally {
+                    getSendMessageLock().unlock();
+                }
+            }
+        } catch (Exception e) {
+            log.error("发送WebSocket消息失败: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 发送错误消息
+     */
+    public void sendErrorMessage(String error, String requestId) {
+        WebSocketMessage<?> message = WebSocketMessage.builder()
+                .type(WebSocketMessageType.AGENT_PROMPT.name())
+                .sessionCode(sessionCode)
+                .requestId(requestId)
+                .data(AgentPromptData.builder().promptType(AgentPromptType.ERROR).message(error).build())
+                .timestamp(System.currentTimeMillis())
+                .build();
+
+        sendMessage(message);
     }
 }

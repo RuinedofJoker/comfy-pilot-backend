@@ -33,7 +33,7 @@ public class WebSocketSessionManager {
     /**
      * 添加会话
      */
-    public void addSession(String wsSessionId, WebSocketSession webSocketSession, Long userId, String sessionCode) {
+    public WebSocketSessionContext addSession(String wsSessionId, WebSocketSession webSocketSession, Long userId, String sessionCode) {
         WebSocketSessionContext context = WebSocketSessionContext.builder()
                 .webSocketSession(webSocketSession)
                 .userId(userId)
@@ -48,6 +48,7 @@ public class WebSocketSessionManager {
         sessionRemoveCallbacks.put(wsSessionId, new ConcurrentLinkedQueue<>());
         sessions.put(wsSessionId, context);
         log.info("WebSocket会话已添加: wsSessionId={}, userId={}", wsSessionId, userId);
+        return context;
     }
 
     /**

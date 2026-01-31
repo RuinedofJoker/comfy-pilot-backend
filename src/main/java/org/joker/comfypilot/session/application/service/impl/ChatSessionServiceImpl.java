@@ -17,12 +17,15 @@ import org.joker.comfypilot.common.util.RedisUtil;
 import org.joker.comfypilot.session.application.converter.ChatSessionDTOConverter;
 import org.joker.comfypilot.session.application.dto.*;
 import org.joker.comfypilot.session.application.dto.client2server.UserMessageRequestData;
+import org.joker.comfypilot.session.application.dto.server2client.AgentPromptData;
 import org.joker.comfypilot.session.application.service.ChatSessionService;
 import org.joker.comfypilot.session.domain.context.WebSocketSessionContext;
 import org.joker.comfypilot.session.domain.entity.ChatMessage;
 import org.joker.comfypilot.session.domain.entity.ChatSession;
+import org.joker.comfypilot.session.domain.enums.AgentPromptType;
 import org.joker.comfypilot.session.domain.enums.MessageStatus;
 import org.joker.comfypilot.session.domain.enums.SessionStatus;
+import org.joker.comfypilot.session.domain.enums.WebSocketMessageType;
 import org.joker.comfypilot.session.domain.repository.ChatMessageRepository;
 import org.joker.comfypilot.session.domain.repository.ChatSessionRepository;
 import org.joker.comfypilot.session.infrastructure.websocket.WebSocketAgentCallback;
@@ -31,6 +34,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.List;
@@ -316,8 +320,8 @@ public class ChatSessionServiceImpl implements ChatSessionService {
             log.info("消息发送成功: sessionCode={}, requestId={}", sessionCode, requestId);
         } catch (Exception e) {
             log.error("消息发送失败: sessionCode={}, requestId={}", sessionCode, requestId, e);
+            wsContext.sendErrorMessage(e.getMessage(), requestId);
             wsContext.completeExecution(requestId);
-            throw new BusinessException(e.getMessage(), e);
         }
     }
 

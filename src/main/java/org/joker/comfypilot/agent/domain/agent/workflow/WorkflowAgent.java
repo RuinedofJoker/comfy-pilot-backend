@@ -147,6 +147,7 @@ public class WorkflowAgent extends AbstractAgent implements Agent {
         } catch (Exception e) {
             log.error("WorkflowAgent 执行出错", e);
             executionContext.getAgentCallback().onPrompt(AgentPromptType.ERROR, e.getMessage(), true);
+            throw e;
         }
     }
 
