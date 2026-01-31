@@ -2,6 +2,10 @@
 
 ComfyUI 工作流管理和 AI 辅助编辑系统的后端服务。
 
+## 前端仓库地址
+
+[前端仓库地址](https://github.com/RuinedofJoker/comfy-pilot-h5)
+
 ## 功能概述
 
 - **统一管理**: 集中管理多个 ComfyUI 服务实例
