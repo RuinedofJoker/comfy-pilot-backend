@@ -79,8 +79,14 @@ public class StatusUpdateTool {
      * @param phase 当前执行阶段（discovery/planning/execution/summary）
      * @return 确认信息
      */
-    @Tool(name = "statusUpdate",value = "记录 Agent 执行过程中的状态更新。" +
-          "应在以下时机调用: 启动时、每个工具批次前后、待办事项更新后、编辑/构建/测试前、完成后、提交前。")
+    @Tool(name = "statusUpdate",value = "记录 Agent 执行过程中的状态更新，并展示给用户。\n" +
+          "**调用时机**: 启动时、每个工具批次前后、待办事项更新后、编辑/构建/测试前、完成后、提交前。\n" +
+          "**内容要求**:\n" +
+          "1. 使用简洁、用户友好的语言，避免技术术语\n" +
+          "2. 采用对话式风格，让用户感知到进度\n" +
+          "3. 包含: 刚完成的事情 + 即将进行的事情 + 障碍/风险（如有）\n" +
+          "4. 使用 Markdown 格式增强可读性（粗体、列表等）\n" +
+          "5. 总结时聚焦结果和影响，不描述搜索过程")
     public String statusUpdate(
             @P("包含: 刚刚发生的事情、即将要做的事情、相关的障碍或风险（1-3句话，对话式风格，用markdown的格式）。") String message,
             @P("表示当前阶段: discovery(发现)、planning(计划)、execution(执行)、summary(总结)") String phase,

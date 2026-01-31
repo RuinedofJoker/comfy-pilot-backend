@@ -91,8 +91,13 @@ public class TodoWriteTool {
      * @param merge     是否合并模式。true: 更新现有列表；false: 替换整个列表
      * @return 操作结果信息
      */
-    @Tool(name = "todoWrite",value = "创建或更新待办事项列表，并在用户界面展示该列表。用于跟踪任务执行进度，支持创建新任务、更新任务状态（pending 任务已创建但未执行到/in_progress 任务执行中/completed 任务已完成）。" +
-            "每个待办事项需要包含 content（任务描述，≤14个单词）、activeForm（进行中形式）和 status（状态）。" +
+    @Tool(name = "todoWrite",value = "创建或更新待办事项列表，并在用户界面展示该列表。用于跟踪任务执行进度。\n" +
+            "状态类型: pending(待执行) -> in_progress(执行中) -> completed(已完成)。\n" +
+            "**重要规则**:\n" +
+            "1. 必须严格按顺序更新状态：pending -> in_progress -> completed，不可跳过或倒退\n" +
+            "2. 同一时刻只能有一个 in_progress 任务\n" +
+            "3. 完成当前任务后，将其标记为 completed，然后将下一个 pending 任务标记为 in_progress\n" +
+            "4. 每个待办事项需要: content(任务描述,≤14个单词)、activeForm(进行中形式)、status(状态)\n" +
             "merge=true 时更新现有列表，merge=false 时替换整个列表。"
     )
     public String todoWrite(@P("待办事项列表的 JSON 字符串，格式: [{\"content\":\"任务内容\",\"activeForm\":\"进行中形式\",\"status\":\"pending|in_progress|completed\"}]") String todosJson, @P("是否合并模式。true: 更新现有列表；false: 替换整个列表") boolean merge) {
