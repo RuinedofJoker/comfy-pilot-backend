@@ -75,10 +75,16 @@ public class ComfyuiServerRepositoryImpl implements ComfyuiServerRepository {
         String cacheKey = CACHE_PREFIX + "key:" + serverKey;
 
         // 尝试从缓存获取
-        Object cached = redisUtil.get(cacheKey);
-        if (cached instanceof ComfyuiServer) {
+        ComfyuiServer cached = null;
+        try {
+            cached = (ComfyuiServer) redisUtil.get(cacheKey);
+        } catch (Exception e) {
+            redisUtil.del(cacheKey);
+            log.error("从缓存获取ComfyUI服务失败", e);
+        }
+        if (cached != null) {
             log.debug("从缓存获取ComfyUI服务, serverKey: {}", serverKey);
-            return Optional.of((ComfyuiServer) cached);
+            return Optional.of(cached);
         }
 
         // 缓存未命中，查询数据库
